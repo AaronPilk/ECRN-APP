@@ -1,4 +1,12 @@
-import type { Candidate, Job, Payout, Profile } from "@/types";
+import type {
+  Candidate,
+  Job,
+  JobApplication,
+  JobReferral,
+  Payout,
+  Profile,
+  Referral,
+} from "@/types";
 
 /**
  * Initial seed data for the mock store.
@@ -8,8 +16,13 @@ import type { Candidate, Job, Payout, Profile } from "@/types";
  */
 
 const now = new Date().toISOString();
+const daysAgo = (n: number) =>
+  new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
 
-// Master admin — Aaron at Skyway (configurable via NEXT_PUBLIC_ADMIN_EMAILS)
+// ─────────────────────────────────────────────────────────────────────
+// Profiles
+// ─────────────────────────────────────────────────────────────────────
+
 export const seedProfiles: Profile[] = [
   {
     id: "p_admin_aaron",
@@ -35,7 +48,7 @@ export const seedProfiles: Profile[] = [
     role: "referral_partner",
     firstName: "Demo",
     lastName: "Partner",
-    email: "partner@example.com",
+    email: "partner@demo.ecrn",
     phone: "+17275550100",
     locationCity: "Tampa",
     locationState: "FL",
@@ -44,10 +57,32 @@ export const seedProfiles: Profile[] = [
     externalCrmId: null,
     isActive: true,
     metadata: {},
-    createdAt: now,
-    updatedAt: now,
+    createdAt: daysAgo(45),
+    updatedAt: daysAgo(45),
+  },
+  {
+    id: "p_demo_candidate",
+    authUserId: null,
+    role: "candidate",
+    firstName: "Demo",
+    lastName: "Candidate",
+    email: "candidate@demo.ecrn",
+    phone: "+17275550200",
+    locationCity: "Tampa",
+    locationState: "FL",
+    linkedinUrl: "https://www.linkedin.com/in/demo-candidate",
+    companyName: null,
+    externalCrmId: null,
+    isActive: true,
+    metadata: {},
+    createdAt: daysAgo(10),
+    updatedAt: daysAgo(10),
   },
 ];
+
+// ─────────────────────────────────────────────────────────────────────
+// Jobs
+// ─────────────────────────────────────────────────────────────────────
 
 export const seedJobs: Job[] = [
   {
@@ -126,8 +161,8 @@ export const seedJobs: Job[] = [
     urgency: "critical",
     status: "open",
     isPublic: true,
-    referralPayoutAmount: 500000,
-    referralPayoutDisplay: "$5,000",
+    referralPayoutAmount: 1000000,
+    referralPayoutDisplay: "$10,000",
     internalNotes: null,
     externalCrmId: null,
     metadata: {},
@@ -164,5 +199,261 @@ export const seedJobs: Job[] = [
   },
 ];
 
-export const seedCandidates: Candidate[] = [];
-export const seedPayouts: Payout[] = [];
+// ─────────────────────────────────────────────────────────────────────
+// Sample referred candidates for the Demo Partner so the dashboard
+// shows real activity. Statuses span the pipeline so the user can see
+// every badge style and pipeline state in action.
+// ─────────────────────────────────────────────────────────────────────
+
+export const seedCandidates: Candidate[] = [
+  {
+    id: "c_001",
+    firstName: "Marcus",
+    lastName: "Reyes",
+    email: "marcus.reyes@example.com",
+    phone: "+18135550101",
+    locationCity: "Tampa",
+    locationState: "FL",
+    currentJobTitle: "Electrical Project Manager",
+    trade: "electrical",
+    yearsExperience: 9,
+    linkedinUrl: "https://www.linkedin.com/in/marcus-reyes-pm",
+    resumeUrl: null,
+    notes: "Strong PM background, looking to step up to senior PM role.",
+    sourceType: "referred",
+    primaryReferrerUserId: "p_demo_partner",
+    duplicateOfCandidateId: null,
+    status: "interviewing",
+    externalCrmId: null,
+    metadata: {},
+    createdAt: daysAgo(28),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: "c_002",
+    firstName: "Jasmine",
+    lastName: "Holloway",
+    email: "jasmine.holloway@example.com",
+    phone: "+14075550102",
+    locationCity: "Orlando",
+    locationState: "FL",
+    currentJobTitle: "Senior Estimator",
+    trade: "electrical",
+    yearsExperience: 12,
+    linkedinUrl: "https://www.linkedin.com/in/jasmine-holloway",
+    resumeUrl: null,
+    notes: "Worked at top-3 ENR contractor for 8 years.",
+    sourceType: "referred",
+    primaryReferrerUserId: "p_demo_partner",
+    duplicateOfCandidateId: null,
+    status: "placed",
+    externalCrmId: null,
+    metadata: {},
+    createdAt: daysAgo(40),
+    updatedAt: daysAgo(7),
+  },
+  {
+    id: "c_003",
+    firstName: "Diego",
+    lastName: "Alvarez",
+    email: "diego.alvarez@example.com",
+    phone: "+13055550103",
+    locationCity: "Miami",
+    locationState: "FL",
+    currentJobTitle: "Superintendent",
+    trade: "general_construction",
+    yearsExperience: 14,
+    linkedinUrl: null,
+    resumeUrl: null,
+    notes: "Healthcare experience, OSHA 30.",
+    sourceType: "referred",
+    primaryReferrerUserId: "p_demo_partner",
+    duplicateOfCandidateId: null,
+    status: "qualified",
+    externalCrmId: null,
+    metadata: {},
+    createdAt: daysAgo(15),
+    updatedAt: daysAgo(5),
+  },
+  {
+    id: "c_004",
+    firstName: "Priya",
+    lastName: "Shah",
+    email: "priya.shah@example.com",
+    phone: "+17275550104",
+    locationCity: "St. Petersburg",
+    locationState: "FL",
+    currentJobTitle: "Mechanical PM",
+    trade: "mechanical",
+    yearsExperience: 8,
+    linkedinUrl: "https://www.linkedin.com/in/priya-shah-mep",
+    resumeUrl: null,
+    notes: "PE certified, MEP design background before going PM.",
+    sourceType: "referred",
+    primaryReferrerUserId: "p_demo_partner",
+    duplicateOfCandidateId: null,
+    status: "contacted",
+    externalCrmId: null,
+    metadata: {},
+    createdAt: daysAgo(6),
+    updatedAt: daysAgo(3),
+  },
+  {
+    id: "c_005",
+    firstName: "Tyrell",
+    lastName: "Brooks",
+    email: "tyrell.brooks@example.com",
+    phone: "+18135550105",
+    locationCity: "Tampa",
+    locationState: "FL",
+    currentJobTitle: "Foreman",
+    trade: "electrical",
+    yearsExperience: 6,
+    linkedinUrl: null,
+    resumeUrl: null,
+    notes: "Hungry, looking to move into a PM track.",
+    sourceType: "referred",
+    primaryReferrerUserId: "p_demo_partner",
+    duplicateOfCandidateId: null,
+    status: "new",
+    externalCrmId: null,
+    metadata: {},
+    createdAt: daysAgo(2),
+    updatedAt: daysAgo(2),
+  },
+];
+
+// Matching referral rows for the seeded candidates
+export const seedReferrals: Referral[] = [
+  {
+    id: "r_001",
+    candidateId: "c_001",
+    referrerUserId: "p_demo_partner",
+    referralSource: "manual",
+    status: "interviewing",
+    isPrimary: true,
+    duplicateStatus: "unique",
+    notes: "Knows him from a previous project.",
+    metadata: {},
+    createdAt: daysAgo(28),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: "r_002",
+    candidateId: "c_002",
+    referrerUserId: "p_demo_partner",
+    referralSource: "manual",
+    status: "placed",
+    isPrimary: true,
+    duplicateStatus: "unique",
+    notes: null,
+    metadata: {},
+    createdAt: daysAgo(40),
+    updatedAt: daysAgo(7),
+  },
+  {
+    id: "r_003",
+    candidateId: "c_003",
+    referrerUserId: "p_demo_partner",
+    referralSource: "manual",
+    status: "qualified",
+    isPrimary: true,
+    duplicateStatus: "unique",
+    notes: null,
+    metadata: {},
+    createdAt: daysAgo(15),
+    updatedAt: daysAgo(5),
+  },
+  {
+    id: "r_004",
+    candidateId: "c_004",
+    referrerUserId: "p_demo_partner",
+    referralSource: "job_link",
+    status: "contacted",
+    isPrimary: true,
+    duplicateStatus: "unique",
+    notes: null,
+    metadata: {},
+    createdAt: daysAgo(6),
+    updatedAt: daysAgo(3),
+  },
+  {
+    id: "r_005",
+    candidateId: "c_005",
+    referrerUserId: "p_demo_partner",
+    referralSource: "manual",
+    status: "new",
+    isPrimary: true,
+    duplicateStatus: "unique",
+    notes: null,
+    metadata: {},
+    createdAt: daysAgo(2),
+    updatedAt: daysAgo(2),
+  },
+];
+
+// One job_referral so the demo partner has refer-to-job history
+export const seedJobReferrals: JobReferral[] = [
+  {
+    id: "jr_001",
+    jobId: "j_004",
+    candidateId: "c_004",
+    referrerUserId: "p_demo_partner",
+    status: "contacted",
+    notes: null,
+    metadata: {},
+    createdAt: daysAgo(6),
+    updatedAt: daysAgo(3),
+  },
+];
+
+// One direct application for the Demo Candidate
+export const seedJobApplications: JobApplication[] = [
+  {
+    id: "ja_001",
+    jobId: "j_002",
+    candidateId: "c_demo_candidate_self",
+    applicantUserId: "p_demo_candidate",
+    status: "reviewing",
+    resumeUrl: null,
+    linkedinUrl: "https://www.linkedin.com/in/demo-candidate",
+    notes: "Excited about the role.",
+    metadata: {},
+    createdAt: daysAgo(4),
+    updatedAt: daysAgo(2),
+  },
+];
+
+// Two payouts in different states tied to placed candidate Jasmine Holloway
+export const seedPayouts: Payout[] = [
+  {
+    id: "py_001",
+    candidateId: "c_002",
+    referrerUserId: "p_demo_partner",
+    jobId: "j_002",
+    amountCents: 350000,
+    status: "approved",
+    placementDate: daysAgo(7).slice(0, 10),
+    approvedAt: daysAgo(3),
+    paidAt: null,
+    notes: "Awaiting 30-day guarantee window.",
+    metadata: {},
+    createdAt: daysAgo(7),
+    updatedAt: daysAgo(3),
+  },
+  {
+    id: "py_002",
+    candidateId: "c_001",
+    referrerUserId: "p_demo_partner",
+    jobId: "j_001",
+    amountCents: 500000,
+    status: "pending",
+    placementDate: null,
+    approvedAt: null,
+    paidAt: null,
+    notes: "Pending placement confirmation.",
+    metadata: {},
+    createdAt: daysAgo(2),
+    updatedAt: daysAgo(2),
+  },
+];

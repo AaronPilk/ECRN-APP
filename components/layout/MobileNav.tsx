@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import type { NavItem } from "./nav-config";
+import { iconMap } from "./icon-map";
 
 interface MobileNavProps {
   items: NavItem[];
@@ -22,7 +23,7 @@ export function MobileNav({ items }: MobileNavProps) {
     >
       <ul className="grid grid-flow-col auto-cols-fr items-center px-2 pt-2">
         {items.map((item) => {
-          const Icon = item.icon;
+          const Icon = iconMap[item.icon];
           const active =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));

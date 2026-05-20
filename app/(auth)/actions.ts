@@ -81,6 +81,42 @@ export async function logoutAction(): Promise<void> {
   redirect("/");
 }
 
+/**
+ * V1-only convenience: one-click login as a demo profile.
+ *
+ * Used by the "Demo accounts" panel on /login to swap between Admin /
+ * Referral Partner / Candidate views during dev without re-signing-up.
+ * Disabled automatically once Supabase is wired up.
+ */
+const DemoSchema = z.object({
+  role: z.enum(["admin", "referral_partner", "candidate"]),
+});
+
+const DEMO_EMAILS: Record<"admin" | "referral_partner" | "candidate", string> = {
+  admin: "aaron@skyway.media",
+  referral_partner: "partner@demo.ecrn",
+  candidate: "candidate@demo.ecrn",
+};
+
+export async function demoLoginAction(formData: FormData): Promise<void> {
+  const parsed = DemoSchema.safeParse({ role: formData.get("role") });
+  if (!parsed.success) throw new Error("Invalid demo role");
+  const email = DEMO_EMAILS[parsed.data.role];
+  const profile = await loginAndStartSession(email);
+  if (!profile) throw new Error(`Demo profile not found: ${email}`);
+
+  switch (profile.role) {
+    case "admin":
+      redirect("/admin");
+    case "candidate":
+      redirect("/candidate");
+    case "referral_partner":
+    case "company_contact":
+    default:
+      redirect("/dashboard");
+  }
+}
+
 const RoleSchema = z.object({
   profileId: z.string().min(1),
   role: z.enum(["admin", "referral_partner", "candidate", "company_contact"]),

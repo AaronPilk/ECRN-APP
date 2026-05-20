@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { Logo } from "@/components/ui/Logo";
 import type { NavItem } from "./nav-config";
+import { iconMap } from "./icon-map";
 
 interface SidebarProps {
   items: NavItem[];
@@ -21,7 +22,7 @@ export function Sidebar({ items, user }: SidebarProps) {
       <nav className="flex-1 p-3 overflow-y-auto" aria-label="Primary">
         <ul className="space-y-1">
           {items.map((item) => {
-            const Icon = item.icon;
+            const Icon = iconMap[item.icon];
             const active =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));

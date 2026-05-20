@@ -1,10 +1,16 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
+import { InviteLink } from "@/components/profile/InviteLink";
 import { getCurrentProfile } from "@/lib/auth/mock";
 
 export default async function ProfilePage() {
   const profile = (await getCurrentProfile())!;
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === "production" ? "https://goecrn.com" : "http://localhost:3000");
+  const inviteUrl = `${appUrl}/r/${profile.id}`;
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
@@ -13,28 +19,36 @@ export default async function ProfilePage() {
 
       <Card>
         <CardContent className="py-5 space-y-3">
-          <Row label="Name" value={`${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "—"} />
+          <Row
+            label="Name"
+            value={`${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "—"}
+          />
           <Row label="Email" value={profile.email} />
           <Row label="Phone" value={profile.phone ?? "—"} />
-          <Row label="Role" value={profile.role.replace("_", " ")} />
+          <Row
+            label="Location"
+            value={
+              [profile.locationCity, profile.locationState].filter(Boolean).join(", ") || "—"
+            }
+          />
+          <Row label="Role" value={profile.role.replace(/_/g, " ")} />
         </CardContent>
       </Card>
 
-      <div id="invite">
-        <h2 className="text-base font-semibold text-ecrn-ink mb-3">Invite others to ECRN</h2>
-        <Card>
-          <CardContent className="py-5">
-            <p className="text-sm text-slate-600">
-              Sharable invite links land in Batch 2 alongside referral creation. The link will
-              attach your ambassador ID so anyone who signs up via your link is connected back to
-              you.
-            </p>
-            <Button size="sm" variant="secondary" disabled className="mt-3">
-              Copy invite link
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {profile.role === "referral_partner" && (
+        <div id="invite">
+          <h2 className="text-base font-semibold text-ecrn-ink mb-3">Invite others to ECRN</h2>
+          <Card>
+            <CardContent className="py-5">
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                Share your personal invite link. Anyone who signs up through it is connected back
+                to you.
+              </p>
+              <InviteLink inviteUrl={inviteUrl} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <AddToHomeScreenGuide persistent />
 

@@ -135,7 +135,7 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
-                <Stat label="Referral payouts" value="Up to $5,000 / placement" />
+                <Stat label="Referral payouts" value="$1,000–$10,000 / placement" />
                 <Stat label="Base reach" value="National · electrical + GC" />
                 <Stat
                   label="Total earning potential"

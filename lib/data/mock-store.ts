@@ -13,9 +13,12 @@ import type {
 } from "@/types";
 import {
   seedCandidates,
+  seedJobApplications,
+  seedJobReferrals,
   seedJobs,
   seedPayouts,
   seedProfiles,
+  seedReferrals,
 } from "./seeds";
 
 /**
@@ -53,10 +56,10 @@ function makeDb(): MockDb {
   return {
     profiles: [...seedProfiles],
     candidates: [...seedCandidates],
-    referrals: [],
+    referrals: [...seedReferrals],
     jobs: [...seedJobs],
-    jobReferrals: [],
-    jobApplications: [],
+    jobReferrals: [...seedJobReferrals],
+    jobApplications: [...seedJobApplications],
     companyLeads: [],
     payouts: [...seedPayouts],
     activityLogs: [],

@@ -1,47 +1,59 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  DollarSign,
-  User,
-  FileText,
-  Building2,
-  Settings,
-  ClipboardList,
-} from "lucide-react";
 import type { UserRole } from "@/types";
+
+/**
+ * Navigation config — pure data, no function references.
+ *
+ * Why string `iconName` instead of `icon: LucideIcon`:
+ *   The AppShell is a Server Component (it reads the session). MobileNav and
+ *   Sidebar are Client Components. Next.js App Router cannot serialize
+ *   function references across the server→client boundary — passing a Lucide
+ *   icon function in props throws a runtime error. So we keep this file
+ *   serializable (just strings + strings) and resolve the icon name to the
+ *   actual component inside the client component via `iconMap`.
+ */
+
+export type IconName =
+  | "dashboard"
+  | "referrals"
+  | "jobs"
+  | "earnings"
+  | "profile"
+  | "applications"
+  | "candidates"
+  | "companies"
+  | "users"
+  | "settings";
 
 export interface NavItem {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconName;
 }
 
 export const referralPartnerNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Referrals", href: "/referrals", icon: Users },
-  { label: "Jobs", href: "/jobs", icon: Briefcase },
-  { label: "Earnings", href: "/earnings", icon: DollarSign },
-  { label: "Profile", href: "/profile", icon: User },
+  { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
+  { label: "Referrals", href: "/referrals", icon: "referrals" },
+  { label: "Jobs", href: "/jobs", icon: "jobs" },
+  { label: "Earnings", href: "/earnings", icon: "earnings" },
+  { label: "Profile", href: "/profile", icon: "profile" },
 ];
 
 export const candidateNav: NavItem[] = [
-  { label: "Dashboard", href: "/candidate", icon: LayoutDashboard },
-  { label: "Jobs", href: "/candidate/jobs", icon: Briefcase },
-  { label: "Applications", href: "/candidate/applications", icon: FileText },
-  { label: "Profile", href: "/candidate/profile", icon: User },
+  { label: "Dashboard", href: "/candidate", icon: "dashboard" },
+  { label: "Jobs", href: "/candidate/jobs", icon: "jobs" },
+  { label: "Applications", href: "/candidate/applications", icon: "applications" },
+  { label: "Profile", href: "/candidate/profile", icon: "profile" },
 ];
 
 export const adminNav: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Candidates", href: "/admin/candidates", icon: Users },
-  { label: "Referrals", href: "/admin/referrals", icon: ClipboardList },
-  { label: "Jobs", href: "/admin/jobs", icon: Briefcase },
-  { label: "Companies", href: "/admin/companies", icon: Building2 },
-  { label: "Payouts", href: "/admin/payouts", icon: DollarSign },
-  { label: "Users", href: "/admin/users", icon: User },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Dashboard", href: "/admin", icon: "dashboard" },
+  { label: "Candidates", href: "/admin/candidates", icon: "candidates" },
+  { label: "Referrals", href: "/admin/referrals", icon: "referrals" },
+  { label: "Jobs", href: "/admin/jobs", icon: "jobs" },
+  { label: "Companies", href: "/admin/companies", icon: "companies" },
+  { label: "Payouts", href: "/admin/payouts", icon: "earnings" },
+  { label: "Users", href: "/admin/users", icon: "users" },
+  { label: "Settings", href: "/admin/settings", icon: "settings" },
 ];
 
 export function getNavForRole(role: UserRole): NavItem[] {

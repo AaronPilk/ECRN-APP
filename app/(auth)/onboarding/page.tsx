@@ -34,10 +34,10 @@ export default async function OnboardingPage() {
   return (
     <div className="space-y-4 animate-slide-up">
       <div className="text-center mb-2">
-        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-ecrn-amber-dark">
+        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-ecrn-green">
           Welcome to ECRN
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ecrn-ink">
           What brings you here?
         </h1>
         <p className="mt-2 text-slate-500 text-[15px]">
@@ -55,16 +55,16 @@ export default async function OnboardingPage() {
               className="w-full text-left group"
               aria-label={opt.title}
             >
-              <Card className="p-5 hover:shadow-float hover:border-delta-navy/40 transition-all">
+              <Card className="p-5 hover:shadow-float hover:border-ecrn-black/40 transition-all">
                 <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 shrink-0 rounded-2xl bg-delta-navy text-white grid place-items-center text-lg font-semibold">
+                  <div className="w-11 h-11 shrink-0 rounded-2xl bg-ecrn-black text-white grid place-items-center text-lg font-semibold">
                     {opt.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[15px] font-semibold text-delta-ink">{opt.title}</div>
+                    <div className="text-[15px] font-semibold text-ecrn-ink">{opt.title}</div>
                     <div className="mt-1 text-sm text-slate-500 leading-relaxed">{opt.body}</div>
                   </div>
-                  <div className="text-slate-300 group-hover:text-delta-navy text-lg">→</div>
+                  <div className="text-slate-300 group-hover:text-ecrn-black text-lg">→</div>
                 </div>
               </Card>
             </button>

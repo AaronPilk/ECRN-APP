@@ -8,7 +8,7 @@ const variants: Record<Variant, string> = {
   blue: "bg-blue-50 text-blue-700 border-blue-200/60",
   green: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
   red: "bg-red-50 text-red-700 border-red-200/60",
-  dark: "bg-delta-navy text-white",
+  dark: "bg-ecrn-black text-white",
 };
 
 export function Badge({

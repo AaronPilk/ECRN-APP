@@ -17,7 +17,7 @@ export default async function CandidateDashboard() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       <div>
         <p className="text-xs font-medium tracking-[0.18em] uppercase text-slate-500">Candidate</p>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
           Welcome, {profile.firstName ?? "there"}
         </h1>
         <p className="mt-1 text-slate-500">
@@ -39,7 +39,7 @@ export default async function CandidateDashboard() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold tracking-tight text-delta-ink">
+          <h2 className="text-lg font-semibold tracking-tight text-ecrn-ink">
             Suggested roles
           </h2>
           <Link href="/candidate/jobs" className="text-sm font-medium hover:underline">
@@ -51,7 +51,7 @@ export default async function CandidateDashboard() {
             <Card key={j.id}>
               <CardContent className="flex items-start justify-between gap-4 py-4">
                 <div className="min-w-0">
-                  <h3 className="text-[15px] font-semibold text-delta-ink">{j.title}</h3>
+                  <h3 className="text-[15px] font-semibold text-ecrn-ink">{j.title}</h3>
                   <p className="mt-1 text-sm text-slate-500">
                     {[j.locationCity, j.locationState].filter(Boolean).join(", ")} ·{" "}
                     {j.compensationDisplay ?? "Competitive"}
@@ -86,7 +86,7 @@ function StatCard({
         {icon}
         {label}
       </div>
-      <div className="mt-1 text-xl font-bold text-delta-ink">{value}</div>
+      <div className="mt-1 text-xl font-bold text-ecrn-ink">{value}</div>
     </Card>
   );
 }

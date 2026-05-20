@@ -8,9 +8,9 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
       className={cn(
         "w-full h-11 px-3.5 rounded-xl",
         "bg-white border border-slate-200",
-        "text-[15px] text-delta-ink placeholder:text-slate-400",
+        "text-[15px] text-ecrn-ink placeholder:text-slate-400",
         "transition-all duration-150",
-        "focus:outline-none focus:border-ecrn-amber focus:ring-2 focus:ring-ecrn-amber/20",
+        "focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20",
         "disabled:bg-slate-50 disabled:text-slate-400",
         className
       )}
@@ -29,9 +29,9 @@ export const Textarea = forwardRef<
     className={cn(
       "w-full min-h-[96px] px-3.5 py-3 rounded-xl resize-y",
       "bg-white border border-slate-200",
-      "text-[15px] text-delta-ink placeholder:text-slate-400",
+      "text-[15px] text-ecrn-ink placeholder:text-slate-400",
       "transition-all duration-150",
-      "focus:outline-none focus:border-ecrn-amber focus:ring-2 focus:ring-ecrn-amber/20",
+      "focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20",
       "disabled:bg-slate-50 disabled:text-slate-400",
       className
     )}

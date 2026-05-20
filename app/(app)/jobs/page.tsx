@@ -9,7 +9,7 @@ export default async function JobsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">Open roles</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">Open roles</h1>
         <p className="mt-1 text-slate-500">
           {jobs.length} role{jobs.length === 1 ? "" : "s"} available right now.
         </p>
@@ -22,7 +22,7 @@ export default async function JobsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold text-delta-ink">{j.title}</h3>
+                    <h3 className="text-base font-semibold text-ecrn-ink">{j.title}</h3>
                     {j.urgency === "critical" && <Badge variant="red">Urgent</Badge>}
                     {j.urgency === "high" && <Badge variant="amber">High priority</Badge>}
                   </div>

@@ -6,7 +6,7 @@ export default function InstallPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
           Install ECRN on your phone
         </h1>
         <p className="mt-1 text-slate-500">

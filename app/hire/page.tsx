@@ -43,14 +43,14 @@ interface PageProps {
 
 export default function HirePage({ searchParams }: PageProps) {
   return (
-    <div className="min-h-screen bg-delta-mist">
+    <div className="min-h-screen bg-ecrn-mist">
       <header className="px-5 sm:px-8 py-5 flex items-center justify-between">
         <Link href="/">
           <Logo />
         </Link>
         <Link
           href="/"
-          className="text-sm text-slate-500 hover:text-delta-ink"
+          className="text-sm text-slate-500 hover:text-ecrn-ink"
         >
           ← Back to home
         </Link>
@@ -62,7 +62,7 @@ export default function HirePage({ searchParams }: PageProps) {
             Welcome! Your account is created. Submit your first hiring need below.
           </p>
         )}
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-delta-ink">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-ecrn-ink">
           Get the right people, faster.
         </h1>
         <p className="mt-2 text-slate-600">

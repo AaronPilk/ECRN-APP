@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/Label";
 export default function ForgotPasswordPage() {
   return (
     <Card className="p-7 animate-slide-up">
-      <h1 className="text-2xl font-bold tracking-tight text-delta-ink">Reset your password</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-ecrn-ink">Reset your password</h1>
       <p className="mt-1.5 text-sm text-slate-500">
         Enter your email and we&apos;ll send a reset link.
       </p>
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm">
-        <Link href="/login" className="font-medium text-delta-ink hover:underline">
+        <Link href="/login" className="font-medium text-ecrn-ink hover:underline">
           Back to log in
         </Link>
       </div>

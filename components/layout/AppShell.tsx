@@ -21,7 +21,7 @@ interface AppShellProps {
 export function AppShell({ profile, children }: AppShellProps) {
   const items = getNavForRole(profile.role);
   return (
-    <div className="min-h-screen flex bg-delta-mist">
+    <div className="min-h-screen flex bg-ecrn-mist">
       <Sidebar
         items={items}
         user={{
@@ -37,7 +37,7 @@ export function AppShell({ profile, children }: AppShellProps) {
         <header className="lg:hidden sticky top-0 z-30 glass border-b border-slate-200/60 pt-safe">
           <div className="h-14 px-4 flex items-center justify-between">
             <Logo />
-            <div className="w-9 h-9 rounded-full bg-delta-navy text-white flex items-center justify-center text-sm font-semibold">
+            <div className="w-9 h-9 rounded-full bg-ecrn-black text-white flex items-center justify-center text-sm font-semibold">
               {(profile.firstName?.[0] ?? profile.email[0]).toUpperCase()}
             </div>
           </div>

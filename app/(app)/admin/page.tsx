@@ -19,7 +19,7 @@ export default async function AdminDashboard() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       <div>
         <p className="text-xs font-medium tracking-[0.18em] uppercase text-slate-500">Admin</p>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
           Delta Operations
         </h1>
         <p className="mt-1 text-slate-500">
@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
 
       <Card>
         <CardContent className="py-6">
-          <h2 className="text-lg font-semibold text-delta-ink">Coming online in Batch 4</h2>
+          <h2 className="text-lg font-semibold text-ecrn-ink">Coming online in Batch 4</h2>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-2xl">
             The full admin dashboard — candidate table, duplicate review queue, job CRUD, company
             leads, payout ledger, activity timeline, and CSV export — lands in Batch 4. The
@@ -53,7 +53,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <Card className="p-4">
       <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold tabular-nums text-delta-ink">{value}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums text-ecrn-ink">{value}</div>
     </Card>
   );
 }

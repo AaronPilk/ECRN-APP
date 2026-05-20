@@ -8,7 +8,7 @@ import { signupAction } from "../actions";
 export default function SignupPage() {
   return (
     <Card className="p-7 animate-slide-up">
-      <h1 className="text-2xl font-bold tracking-tight text-delta-ink">Create your account</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-ecrn-ink">Create your account</h1>
       <p className="mt-1.5 text-sm text-slate-500">
         Join the ECRN network. Free to join — no fees, no spam.
       </p>
@@ -59,7 +59,7 @@ export default function SignupPage() {
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm">
         <span className="text-slate-500">Already have an account?</span>{" "}
-        <Link href="/login" className="font-medium text-delta-ink hover:underline">
+        <Link href="/login" className="font-medium text-ecrn-ink hover:underline">
           Log in
         </Link>
       </div>

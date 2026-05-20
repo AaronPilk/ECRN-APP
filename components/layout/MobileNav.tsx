@@ -33,7 +33,7 @@ export function MobileNav({ items }: MobileNavProps) {
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl mx-1",
                   "text-[10px] font-medium tracking-tight transition-colors",
-                  active ? "text-delta-ink" : "text-slate-500 hover:text-delta-ink"
+                  active ? "text-ecrn-ink" : "text-slate-500 hover:text-ecrn-ink"
                 )}
               >
                 <Icon

@@ -7,7 +7,7 @@ import { Logo } from "@/components/ui/Logo";
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-delta-mist flex flex-col">
+    <div className="min-h-screen bg-ecrn-mist flex flex-col">
       <header className="px-5 sm:px-8 py-5">
         <Link href="/" className="inline-flex">
           <Logo />

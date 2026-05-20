@@ -21,11 +21,11 @@ export function ComingSoon({ title, description, batch, backHref = "/dashboard" 
       <Badge variant="amber" className="mb-3">
         Batch {batch}
       </Badge>
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">{title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">{title}</h1>
       <p className="mt-2 text-slate-600">{description}</p>
 
       <Card className="mt-6 p-6">
-        <h2 className="text-base font-semibold text-delta-ink">What&apos;s ready today</h2>
+        <h2 className="text-base font-semibold text-ecrn-ink">What&apos;s ready today</h2>
         <p className="mt-2 text-sm text-slate-600 leading-relaxed">
           The schema, types, and data-access layer for this feature are already wired up. We&apos;re
           building the UI in the next batch.

@@ -1,13 +1,16 @@
 import type { Config } from "tailwindcss";
 
 /**
- * ECRN brand tokens
+ * ECRN brand tokens (from the actual brand sheet provided by Aaron).
  *
  * Visual direction:
- *   - Marketing / landing surfaces lean on `delta.navy` for a bold, premium feel
- *     consistent with deltaconstructionpartners.com (#BuiltForLeaders).
- *   - Logged-in app surfaces are Apple-clean: white background, rounded-2xl cards,
- *     soft shadows, ECRN amber accents reserved for primary CTAs.
+ *   - Marketing surfaces: deep near-black background with a subtle green
+ *     undertone, vibrant ECRN green for accents/CTAs, white type.
+ *   - Logged-in app surfaces: Apple-clean white interior, ECRN green
+ *     reserved for primary CTAs and active states.
+ *
+ * Logo wordmark file: /public/brand/ecrn-horizontal-white.png
+ * Mark: triangle (mountain) silhouette in ECRN green.
  */
 const config: Config = {
   content: [
@@ -18,17 +21,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        delta: {
-          navy: "#0B1220",
-          ink: "#111827",
-          steel: "#1F2937",
-          mist: "#F8FAFC",
-        },
+        // Brand surface
         ecrn: {
-          amber: "#F5B419",
-          "amber-dark": "#D69910",
-          electric: "#2563EB",
-          "electric-dark": "#1D4ED8",
+          // Vibrant green from the brand logo
+          green: "#16C172",
+          "green-bright": "#22E380",
+          "green-dark": "#0FA15D",
+          // Near-black with slight green undertone, matches the casting-call site
+          black: "#0A100C",
+          ink: "#0F1612",
+          carbon: "#161F1B",
+          mist: "#F6F8F7",
+        },
+        // Kept under the `delta` namespace for code that references it; same
+        // visual identity now (Delta + ECRN share the dark canvas).
+        delta: {
+          navy: "#0A100C",
+          ink: "#0F1612",
+          steel: "#1F2A24",
+          mist: "#F6F8F7",
         },
       },
       fontFamily: {
@@ -47,9 +58,11 @@ const config: Config = {
         "3xl": "1.5rem",
       },
       boxShadow: {
-        soft: "0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06)",
-        float: "0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04)",
-        glow: "0 0 0 4px rgba(245, 180, 25, 0.18)",
+        soft: "0 1px 2px rgba(10, 16, 12, 0.04), 0 4px 12px rgba(10, 16, 12, 0.06)",
+        float: "0 8px 24px rgba(10, 16, 12, 0.10), 0 2px 6px rgba(10, 16, 12, 0.05)",
+        glow: "0 0 0 4px rgba(22, 193, 114, 0.22)",
+        "glow-lg":
+          "0 0 24px rgba(22, 193, 114, 0.35), 0 0 0 1px rgba(22, 193, 114, 0.4)",
       },
       animation: {
         "fade-in": "fadeIn 200ms ease-out",

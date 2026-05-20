@@ -30,7 +30,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0B1220",
+  themeColor: "#0A100C",
   viewportFit: "cover",
 };
 
@@ -41,7 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased text-delta-ink">
+      <body className="font-sans antialiased text-ecrn-ink">
         {children}
         <script
           dangerouslySetInnerHTML={{

@@ -41,22 +41,22 @@ export function AddToHomeScreenGuide({ persistent = false }: { persistent?: bool
   };
 
   return (
-    <Card className="p-5 relative border-amber-200/60 bg-amber-50/40">
+    <Card className="p-5 relative border-emerald-200/60 bg-emerald-50/40">
       {!persistent && (
         <button
           onClick={dismiss}
           aria-label="Dismiss"
-          className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-delta-ink hover:bg-white/60"
+          className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-ecrn-ink hover:bg-white/60"
         >
           <X className="w-4 h-4" />
         </button>
       )}
       <div className="flex items-start gap-4">
-        <div className="w-11 h-11 shrink-0 rounded-2xl bg-delta-navy text-white grid place-items-center">
+        <div className="w-11 h-11 shrink-0 rounded-2xl bg-ecrn-black text-white grid place-items-center">
           <Smartphone className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-semibold text-delta-ink">
+          <h3 className="text-[15px] font-semibold text-ecrn-ink">
             Add ECRN to your home screen
           </h3>
           <p className="mt-1 text-sm text-slate-600 leading-relaxed">
@@ -97,12 +97,12 @@ export function AddToHomeScreenGuide({ persistent = false }: { persistent?: bool
 
 function Instructions({ title, steps }: { title: string; steps: string[] }) {
   return (
-    <div className="rounded-xl border border-amber-200/60 bg-white p-3.5">
-      <div className="text-xs font-semibold tracking-wide uppercase text-amber-900">{title}</div>
+    <div className="rounded-xl border border-emerald-200/60 bg-white p-3.5">
+      <div className="text-xs font-semibold tracking-wide uppercase text-emerald-900">{title}</div>
       <ol className="mt-2 space-y-1.5 text-sm text-slate-700">
         {steps.map((step, i) => (
           <li key={i} className="flex gap-2">
-            <span className="text-amber-700 font-semibold tabular-nums">{i + 1}.</span>
+            <span className="text-emerald-700 font-semibold tabular-nums">{i + 1}.</span>
             <span>{step}</span>
           </li>
         ))}

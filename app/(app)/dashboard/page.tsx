@@ -29,7 +29,7 @@ export default async function ReferralPartnerDashboard() {
         <p className="text-xs font-medium tracking-[0.18em] uppercase text-slate-500">
           Referral Partner
         </p>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
           Hey {profile.firstName ?? "there"} 👋
         </h1>
         <p className="mt-1 text-slate-500">
@@ -76,10 +76,10 @@ export default async function ReferralPartnerDashboard() {
       {/* Open jobs preview */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold tracking-tight text-delta-ink">Open jobs</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ecrn-ink">Open jobs</h2>
           <Link
             href="/jobs"
-            className="text-sm font-medium text-delta-ink hover:underline"
+            className="text-sm font-medium text-ecrn-ink hover:underline"
           >
             See all →
           </Link>
@@ -97,7 +97,7 @@ export default async function ReferralPartnerDashboard() {
               <CardContent className="flex items-start justify-between gap-4 py-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-[15px] font-semibold text-delta-ink truncate">{j.title}</h3>
+                    <h3 className="text-[15px] font-semibold text-ecrn-ink truncate">{j.title}</h3>
                     {j.urgency === "critical" && <Badge variant="red">Urgent</Badge>}
                     {j.urgency === "high" && <Badge variant="amber">High priority</Badge>}
                   </div>
@@ -131,7 +131,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <Card className="p-4">
       <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold tabular-nums text-delta-ink">{value}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums text-ecrn-ink">{value}</div>
     </Card>
   );
 }
@@ -153,17 +153,17 @@ function ActionCard({
     <Link href={href}>
       <Card
         className={`h-full p-5 hover:shadow-float transition-all ${
-          accent ? "bg-delta-navy text-white border-delta-navy" : ""
+          accent ? "bg-ecrn-black text-white border-ecrn-black" : ""
         }`}
       >
         <div
           className={`w-9 h-9 rounded-xl grid place-items-center ${
-            accent ? "bg-ecrn-amber text-delta-ink" : "bg-slate-100 text-delta-ink"
+            accent ? "bg-ecrn-green text-ecrn-black" : "bg-slate-100 text-ecrn-ink"
           }`}
         >
           {icon}
         </div>
-        <h3 className={`mt-3 text-[15px] font-semibold ${accent ? "text-white" : "text-delta-ink"}`}>
+        <h3 className={`mt-3 text-[15px] font-semibold ${accent ? "text-white" : "text-ecrn-ink"}`}>
           {title}
         </h3>
         <p className={`mt-1 text-sm ${accent ? "text-slate-300" : "text-slate-500"}`}>{body}</p>
@@ -180,7 +180,7 @@ function BuildPhaseNotice() {
   return (
     <Card className="p-4 border-dashed border-slate-300 bg-slate-50/60">
       <p className="text-xs text-slate-600 leading-relaxed">
-        <strong className="text-delta-ink">Batch 1 of 8 shipped.</strong> Account creation,
+        <strong className="text-ecrn-ink">Batch 1 of 8 shipped.</strong> Account creation,
         role-based navigation, the app shell and the PWA scaffold are live. Batches 2+ will fill in
         the actual referral creation, job application, admin CRUD, and payout ledger flows on top
         of this foundation.

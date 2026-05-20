@@ -13,12 +13,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-ecrn-amber text-delta-ink hover:bg-ecrn-amber-dark active:bg-ecrn-amber-dark shadow-soft",
+    "bg-ecrn-green text-ecrn-black hover:bg-ecrn-green-bright active:bg-ecrn-green-dark shadow-soft",
   secondary:
-    "bg-white text-delta-ink border border-slate-200 hover:bg-slate-50 active:bg-slate-100 shadow-soft",
-  ghost: "bg-transparent text-delta-ink hover:bg-slate-100 active:bg-slate-200",
+    "bg-white text-ecrn-ink border border-slate-200 hover:bg-slate-50 active:bg-slate-100 shadow-soft",
+  ghost: "bg-transparent text-ecrn-ink hover:bg-slate-100 active:bg-slate-200",
   danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-soft",
-  dark: "bg-delta-navy text-white hover:bg-delta-ink active:bg-black shadow-soft",
+  dark: "bg-ecrn-black text-white hover:bg-ecrn-ink active:bg-black shadow-soft",
 };
 
 const sizes: Record<Size, string> = {
@@ -49,7 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center gap-2 font-medium",
           "transition-all duration-150 select-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ecrn-amber focus-visible:ring-offset-2",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ecrn-green focus-visible:ring-offset-2",
           variants[variant],
           sizes[size],
           fullWidth && "w-full",

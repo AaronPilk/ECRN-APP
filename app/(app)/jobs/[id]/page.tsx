@@ -17,10 +17,10 @@ export default async function JobDetailPage({ params }: PageProps) {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <div>
-        <Link href="/jobs" className="text-sm text-slate-500 hover:text-delta-ink">
+        <Link href="/jobs" className="text-sm text-slate-500 hover:text-ecrn-ink">
           ← All open roles
         </Link>
-        <h1 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-delta-ink">
+        <h1 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
           {job.title}
         </h1>
         <p className="mt-1 text-slate-500">
@@ -41,7 +41,7 @@ export default async function JobDetailPage({ params }: PageProps) {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               About the role
             </h2>
-            <p className="mt-2 text-[15px] text-delta-ink whitespace-pre-line leading-relaxed">
+            <p className="mt-2 text-[15px] text-ecrn-ink whitespace-pre-line leading-relaxed">
               {job.description}
             </p>
           </div>
@@ -50,7 +50,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Requirements
               </h2>
-              <p className="mt-2 text-[15px] text-delta-ink whitespace-pre-line leading-relaxed">
+              <p className="mt-2 text-[15px] text-ecrn-ink whitespace-pre-line leading-relaxed">
                 {job.requirements}
               </p>
             </div>
@@ -86,7 +86,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-slate-50 p-3">
       <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-[15px] font-semibold text-delta-ink">{value}</div>
+      <div className="mt-1 text-[15px] font-semibold text-ecrn-ink">{value}</div>
     </div>
   );
 }

@@ -23,3 +23,9 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# sed backups
+*.bak
+
+# brand source asset (the canonical file lives in /public/brand)
+/ECRN-Horizontal-Logo-White.png

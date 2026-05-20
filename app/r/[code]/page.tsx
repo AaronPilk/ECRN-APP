@@ -1,30 +1,21 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 /**
- * Invite-link landing route.
+ * Invite-link landing route — /r/<referrerProfileId>
  *
- * Format: /r/<referrerProfileId>
+ * V1 behavior: forward the visitor to /signup with the referrer ID
+ * encoded as a search param. The signup action reads it and attaches
+ * the new profile back to the original referrer.
  *
- * V1 behavior: store the referring partner's profile id in a long-lived
- * cookie, then send the visitor to /signup. When they create an account,
- * Batch 2.5 (next iteration) will read this cookie and attach them as the
- * referrer's downstream signup.
- *
- * We don't yet attribute downstream referrals — the schema is wired for it,
- * but the attribution logic happens server-side at signup time. The cookie
- * is the queueing primitive.
+ * Why a URL param instead of a cookie: Server Components can't write
+ * cookies during render. We could write the cookie inside a route
+ * handler, but a URL param works without any extra layer and is
+ * arguably more transparent.
  */
 interface PageProps {
   params: { code: string };
 }
 
 export default function InviteRedirect({ params }: PageProps) {
-  cookies().set("ecrn_invited_by", params.code, {
-    httpOnly: false,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 90, // 90 days
-  });
-  redirect("/signup?via=invite");
+  redirect(`/signup?via=invite&ref=${encodeURIComponent(params.code)}`);
 }

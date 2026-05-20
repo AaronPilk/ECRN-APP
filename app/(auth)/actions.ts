@@ -27,6 +27,7 @@ const SignupSchema = z.object({
   firstName: z.string().min(1, "First name required"),
   lastName: z.string().min(1, "Last name required"),
   phone: z.string().optional(),
+  invitedBy: z.string().optional(), // referrer profile id from /r/<code>
 });
 
 export async function signupAction(formData: FormData): Promise<void> {
@@ -35,6 +36,7 @@ export async function signupAction(formData: FormData): Promise<void> {
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     phone: formData.get("phone") || undefined,
+    invitedBy: formData.get("invitedBy") || undefined,
   });
 
   if (!parsed.success) {
@@ -42,6 +44,16 @@ export async function signupAction(formData: FormData): Promise<void> {
   }
 
   const profile = await signupAndStartSession(parsed.data);
+
+  // If they came through an ambassador's invite link, record the attribution
+  // on their profile metadata so the admin can see the connection.
+  if (parsed.data.invitedBy) {
+    profile.metadata = {
+      ...(profile.metadata ?? {}),
+      invitedByProfileId: parsed.data.invitedBy,
+      invitedAt: new Date().toISOString(),
+    };
+  }
 
   // Admin allowlist short-circuits the role-selector — straight to admin.
   if (isAdminEmail(profile.email)) {

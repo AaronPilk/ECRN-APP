@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { Logo } from "@/components/ui/Logo";
 import { getNavForRole } from "./nav-config";
+import { RoleSwitcher } from "@/components/dev/RoleSwitcher";
 import type { Profile } from "@/types";
 
 interface AppShellProps {
@@ -17,9 +18,14 @@ interface AppShellProps {
  *
  * The page content is rendered into the middle column with safe-area
  * padding for iOS home-bar.
+ *
+ * RoleSwitcher only renders while ECRN is on mock data (V1) — it auto-
+ * hides once NEXT_PUBLIC_SUPABASE_URL is set.
  */
 export function AppShell({ profile, children }: AppShellProps) {
   const items = getNavForRole(profile.role);
+  const isMockMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
+
   return (
     <div className="min-h-screen flex bg-ecrn-mist">
       <Sidebar
@@ -47,6 +53,10 @@ export function AppShell({ profile, children }: AppShellProps) {
 
         <MobileNav items={items} />
       </div>
+
+      {isMockMode && (
+        <RoleSwitcher currentRole={profile.role} currentEmail={profile.email} />
+      )}
     </div>
   );
 }

@@ -4,9 +4,12 @@ import type {
   Candidate,
   CandidateSource,
   CompanyLead,
+  CompanyLeadStatus,
   Job,
   JobApplication,
   JobReferral,
+  JobStatus,
+  JobUrgency,
   Payout,
   PayoutStatus,
   Profile,
@@ -577,3 +580,503 @@ export const PAYOUT_STATUS_LABEL: Record<PayoutStatus, string> = {
   denied: "Denied",
   disputed: "Disputed",
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// ADMIN-ONLY queries + mutations (Batch 4)
+//
+// These functions are called from /admin/* pages and routes. In a real
+// Supabase build they'd be enforced by RLS (see 0002_rls.sql); in V1
+// the AppShell guards the routes with profile.role === "admin".
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── enriched list queries ────────────────────────────────────────
+
+export interface ReferralEnriched {
+  referral: Referral;
+  candidate: Candidate;
+  referrer: Profile | null;
+}
+
+export async function listAllReferralsEnriched(): Promise<ReferralEnriched[]> {
+  const out: ReferralEnriched[] = [];
+  for (const r of [...db.referrals].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))) {
+    const candidate = await getCandidateById(r.candidateId);
+    if (!candidate) continue;
+    const referrer = await getProfileById(r.referrerUserId);
+    out.push({ referral: r, candidate, referrer });
+  }
+  return out;
+}
+
+export interface ApplicationEnriched {
+  application: JobApplication;
+  job: Job;
+  candidate: Candidate | null;
+  applicant: Profile | null;
+}
+
+export async function listAllApplicationsEnriched(): Promise<ApplicationEnriched[]> {
+  const out: ApplicationEnriched[] = [];
+  for (const a of [...db.jobApplications].sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1))) {
+    const job = await getJobById(a.jobId);
+    if (!job) continue;
+    const candidate = await getCandidateById(a.candidateId);
+    const applicant = a.applicantUserId ? await getProfileById(a.applicantUserId) : null;
+    out.push({ application: a, job, candidate, applicant });
+  }
+  return out;
+}
+
+export interface AdminPayoutEnriched {
+  payout: Payout;
+  candidate: Candidate | null;
+  referrer: Profile | null;
+  job: Job | null;
+}
+
+export async function listAllPayoutsEnriched(): Promise<AdminPayoutEnriched[]> {
+  const out: AdminPayoutEnriched[] = [];
+  for (const p of [...db.payouts].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))) {
+    const candidate = await getCandidateById(p.candidateId);
+    const referrer = await getProfileById(p.referrerUserId);
+    const job = p.jobId ? await getJobById(p.jobId) : null;
+    out.push({ payout: p, candidate, referrer, job });
+  }
+  return out;
+}
+
+export async function listAllProfiles(): Promise<Profile[]> {
+  return [...db.profiles].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+// ─── candidate search + filter ────────────────────────────────────
+
+export interface CandidateFilter {
+  search?: string; // matches first/last name, email, phone, current title
+  status?: ReferralStatus | "all";
+  source?: CandidateSource | "all";
+  trade?: string | "all";
+}
+
+export async function searchCandidates(filter: CandidateFilter): Promise<Candidate[]> {
+  const q = (filter.search ?? "").trim().toLowerCase();
+  return db.candidates
+    .filter((c) => {
+      if (filter.status && filter.status !== "all" && c.status !== filter.status) return false;
+      if (filter.source && filter.source !== "all" && c.sourceType !== filter.source) return false;
+      if (filter.trade && filter.trade !== "all" && c.trade !== filter.trade) return false;
+      if (!q) return true;
+      const hay = [
+        c.firstName,
+        c.lastName,
+        c.email ?? "",
+        c.phone ?? "",
+        c.currentJobTitle ?? "",
+        c.locationCity ?? "",
+        c.locationState ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    })
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+// ─── candidate full context (admin candidate detail) ──────────────
+
+export interface CandidateFullContext {
+  candidate: Candidate;
+  primaryReferrer: Profile | null;
+  referrals: { referral: Referral; referrer: Profile | null }[];
+  jobReferrals: { jobReferral: JobReferral; job: Job | null }[];
+  applications: { application: JobApplication; job: Job | null }[];
+  payouts: Payout[];
+  activity: ActivityLog[];
+}
+
+export async function getCandidateFullContext(
+  candidateId: string
+): Promise<CandidateFullContext | null> {
+  const candidate = await getCandidateById(candidateId);
+  if (!candidate) return null;
+
+  const primaryReferrer = candidate.primaryReferrerUserId
+    ? await getProfileById(candidate.primaryReferrerUserId)
+    : null;
+
+  const refRows = db.referrals.filter((r) => r.candidateId === candidateId);
+  const referrals = await Promise.all(
+    refRows.map(async (r) => ({
+      referral: r,
+      referrer: await getProfileById(r.referrerUserId),
+    }))
+  );
+
+  const jrRows = db.jobReferrals.filter((jr) => jr.candidateId === candidateId);
+  const jobReferrals = await Promise.all(
+    jrRows.map(async (jr) => ({
+      jobReferral: jr,
+      job: await getJobById(jr.jobId),
+    }))
+  );
+
+  const appRows = db.jobApplications.filter((a) => a.candidateId === candidateId);
+  const applications = await Promise.all(
+    appRows.map(async (a) => ({
+      application: a,
+      job: await getJobById(a.jobId),
+    }))
+  );
+
+  const payouts = db.payouts.filter((p) => p.candidateId === candidateId);
+
+  const activity = db.activityLogs
+    .filter(
+      (l) =>
+        (l.entityType === "candidate" && l.entityId === candidateId) ||
+        (l.entityType === "referral" &&
+          refRows.some((r) => r.id === l.entityId)) ||
+        (l.entityType === "job_application" &&
+          appRows.some((a) => a.id === l.entityId)) ||
+        (l.entityType === "payout" && payouts.some((p) => p.id === l.entityId))
+    )
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+
+  return {
+    candidate,
+    primaryReferrer,
+    referrals,
+    jobReferrals,
+    applications,
+    payouts,
+    activity,
+  };
+}
+
+// ─── duplicate review queue ───────────────────────────────────────
+
+export async function listDuplicateReferralAttempts(): Promise<ReferralEnriched[]> {
+  const all = await listAllReferralsEnriched();
+  return all.filter(
+    (r) =>
+      r.referral.duplicateStatus === "pending_review" ||
+      r.referral.status === "duplicate_review"
+  );
+}
+
+// ─── admin mutations ──────────────────────────────────────────────
+
+export async function updateCandidateStatus(
+  candidateId: string,
+  status: ReferralStatus,
+  actorId: string,
+  notes?: string
+): Promise<Candidate> {
+  const c = db.candidates.find((c) => c.id === candidateId);
+  if (!c) throw new Error("Candidate not found");
+  const previous = c.status;
+  c.status = status;
+  c.updatedAt = nowIso();
+  // Mirror onto the primary referral row so the partner sees it on their list
+  const primary = db.referrals.find((r) => r.candidateId === candidateId && r.isPrimary);
+  if (primary) {
+    primary.status = status;
+    primary.updatedAt = nowIso();
+  }
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "candidate",
+    entityId: candidateId,
+    action: "status_changed",
+    metadata: { from: previous, to: status, notes: notes ?? null },
+  });
+  return c;
+}
+
+export async function appendCandidateNote(
+  candidateId: string,
+  actorId: string,
+  note: string
+): Promise<Candidate> {
+  const c = db.candidates.find((c) => c.id === candidateId);
+  if (!c) throw new Error("Candidate not found");
+  const stamped = `[${new Date().toLocaleString("en-US")}] ${note}`;
+  c.notes = c.notes ? `${c.notes}\n\n${stamped}` : stamped;
+  c.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "candidate",
+    entityId: candidateId,
+    action: "note_added",
+    metadata: { note },
+  });
+  return c;
+}
+
+export async function reassignPrimaryReferrer(
+  candidateId: string,
+  newReferrerProfileId: string,
+  actorId: string
+): Promise<Candidate> {
+  const c = db.candidates.find((c) => c.id === candidateId);
+  if (!c) throw new Error("Candidate not found");
+  const previousReferrerId = c.primaryReferrerUserId;
+  c.primaryReferrerUserId = newReferrerProfileId;
+  c.updatedAt = nowIso();
+  // Update referrals: old primary → not primary, new primary → primary
+  for (const r of db.referrals.filter((r) => r.candidateId === candidateId)) {
+    if (r.referrerUserId === newReferrerProfileId) {
+      r.isPrimary = true;
+      r.duplicateStatus = "overridden_primary";
+    } else {
+      r.isPrimary = false;
+    }
+    r.updatedAt = nowIso();
+  }
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "candidate",
+    entityId: candidateId,
+    action: "primary_referrer_reassigned",
+    metadata: { from: previousReferrerId, to: newReferrerProfileId },
+  });
+  return c;
+}
+
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus,
+  actorId: string
+): Promise<JobApplication> {
+  const a = db.jobApplications.find((a) => a.id === applicationId);
+  if (!a) throw new Error("Application not found");
+  const previous = a.status;
+  a.status = status;
+  a.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "job_application",
+    entityId: applicationId,
+    action: "status_changed",
+    metadata: { from: previous, to: status },
+  });
+  return a;
+}
+
+export async function updatePayoutStatus(
+  payoutId: string,
+  status: PayoutStatus,
+  actorId: string,
+  notes?: string
+): Promise<Payout> {
+  const p = db.payouts.find((p) => p.id === payoutId);
+  if (!p) throw new Error("Payout not found");
+  const previous = p.status;
+  p.status = status;
+  if (status === "approved" && !p.approvedAt) p.approvedAt = nowIso();
+  if (status === "paid" && !p.paidAt) p.paidAt = nowIso();
+  if (notes) p.notes = notes;
+  p.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "payout",
+    entityId: payoutId,
+    action: "status_changed",
+    metadata: { from: previous, to: status, notes: notes ?? null },
+  });
+  return p;
+}
+
+export async function updateJobStatus(
+  jobId: string,
+  status: JobStatus,
+  actorId: string
+): Promise<Job> {
+  const j = db.jobs.find((j) => j.id === jobId);
+  if (!j) throw new Error("Job not found");
+  const previous = j.status;
+  j.status = status;
+  j.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "job",
+    entityId: jobId,
+    action: "status_changed",
+    metadata: { from: previous, to: status },
+  });
+  return j;
+}
+
+export interface JobInput {
+  title: string;
+  companyName?: string | null;
+  isCompanyPublic?: boolean;
+  locationCity?: string | null;
+  locationState?: string | null;
+  jobType?: string | null;
+  trade?: string | null;
+  description?: string | null;
+  requirements?: string | null;
+  compensationMin?: number | null;
+  compensationMax?: number | null;
+  compensationDisplay?: string | null;
+  startDate?: string | null;
+  urgency?: JobUrgency;
+  status?: JobStatus;
+  isPublic?: boolean;
+  referralPayoutAmount?: number | null;
+  referralPayoutDisplay?: string | null;
+  internalNotes?: string | null;
+}
+
+export async function createJob(input: JobInput, actorId: string): Promise<Job> {
+  const job: Job = {
+    id: generateId("j"),
+    title: input.title,
+    companyName: input.companyName ?? null,
+    isCompanyPublic: input.isCompanyPublic ?? false,
+    locationCity: input.locationCity ?? null,
+    locationState: input.locationState ?? null,
+    jobType: input.jobType ?? null,
+    trade: input.trade ?? null,
+    description: input.description ?? null,
+    requirements: input.requirements ?? null,
+    compensationMin: input.compensationMin ?? null,
+    compensationMax: input.compensationMax ?? null,
+    compensationDisplay: input.compensationDisplay ?? null,
+    startDate: input.startDate ?? null,
+    urgency: input.urgency ?? "normal",
+    status: input.status ?? "draft",
+    isPublic: input.isPublic ?? false,
+    referralPayoutAmount: input.referralPayoutAmount ?? null,
+    referralPayoutDisplay: input.referralPayoutDisplay ?? null,
+    internalNotes: input.internalNotes ?? null,
+    externalCrmId: null,
+    metadata: {},
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  db.jobs.push(job);
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "job",
+    entityId: job.id,
+    action: "created",
+    metadata: { title: job.title },
+  });
+  return job;
+}
+
+export async function updateJob(
+  jobId: string,
+  input: Partial<JobInput>,
+  actorId: string
+): Promise<Job> {
+  const j = db.jobs.find((j) => j.id === jobId);
+  if (!j) throw new Error("Job not found");
+  Object.assign(j, input);
+  j.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "job",
+    entityId: jobId,
+    action: "updated",
+    metadata: { fields: Object.keys(input) },
+  });
+  return j;
+}
+
+export async function updateCompanyLeadStatus(
+  leadId: string,
+  status: CompanyLeadStatus,
+  actorId: string,
+  notes?: string
+): Promise<CompanyLead> {
+  const l = db.companyLeads.find((l) => l.id === leadId);
+  if (!l) throw new Error("Lead not found");
+  const previous = l.status;
+  l.status = status;
+  if (notes) l.notes = notes;
+  l.updatedAt = nowIso();
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "company_lead",
+    entityId: leadId,
+    action: "status_changed",
+    metadata: { from: previous, to: status, notes: notes ?? null },
+  });
+  return l;
+}
+
+export async function getCompanyLeadById(id: string): Promise<CompanyLead | null> {
+  return db.companyLeads.find((l) => l.id === id) ?? null;
+}
+
+// ─── admin overview aggregates ─────────────────────────────────────
+
+export interface AdminDashboardStats {
+  candidates: number;
+  candidatesAddedThisWeek: number;
+  referrals: number;
+  referralsThisWeek: number;
+  placements: number;
+  jobsOpen: number;
+  applications: number;
+  newApplicationsThisWeek: number;
+  companyLeadsNew: number;
+  duplicateReviewCount: number;
+  payoutsPending: number;
+  payoutsPendingCents: number;
+  payoutsApprovedCents: number;
+  payoutsPaidCents: number;
+}
+
+export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const sinceWeek = (iso: string) => new Date(iso).getTime() >= weekAgo;
+
+  const candidates = db.candidates;
+  const referrals = db.referrals;
+  const applications = db.jobApplications;
+  const leads = db.companyLeads;
+  const payouts = db.payouts;
+  const jobs = db.jobs;
+
+  const placedStatuses: ReferralStatus[] = [
+    "placed",
+    "payout_pending",
+    "payout_approved",
+    "payout_paid",
+  ];
+
+  return {
+    candidates: candidates.length,
+    candidatesAddedThisWeek: candidates.filter((c) => sinceWeek(c.createdAt)).length,
+    referrals: referrals.length,
+    referralsThisWeek: referrals.filter((r) => sinceWeek(r.createdAt)).length,
+    placements: candidates.filter((c) => placedStatuses.includes(c.status)).length,
+    jobsOpen: jobs.filter((j) => j.status === "open").length,
+    applications: applications.length,
+    newApplicationsThisWeek: applications.filter((a) => sinceWeek(a.createdAt)).length,
+    companyLeadsNew: leads.filter((l) => l.status === "new").length,
+    duplicateReviewCount: referrals.filter(
+      (r) => r.duplicateStatus === "pending_review" || r.status === "duplicate_review"
+    ).length,
+    payoutsPending: payouts.filter((p) => p.status === "pending").length,
+    payoutsPendingCents: payouts
+      .filter((p) => p.status === "pending")
+      .reduce((s, p) => s + p.amountCents, 0),
+    payoutsApprovedCents: payouts
+      .filter((p) => p.status === "approved")
+      .reduce((s, p) => s + p.amountCents, 0),
+    payoutsPaidCents: payouts
+      .filter((p) => p.status === "paid")
+      .reduce((s, p) => s + p.amountCents, 0),
+  };
+}
+
+export async function listRecentActivity(limit = 20): Promise<ActivityLog[]> {
+  return [...db.activityLogs]
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, limit);
+}

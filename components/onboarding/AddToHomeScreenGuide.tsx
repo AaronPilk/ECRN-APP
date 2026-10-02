@@ -23,6 +23,8 @@ export function AddToHomeScreenGuide({ persistent = false }: { persistent?: bool
   useEffect(() => {
     // Already installed → don't show
     const isStandalone =
+      // Inside the native iOS/Android app there's nothing to install.
+      navigator.userAgent.includes("ECRNApp") ||
       window.matchMedia("(display-mode: standalone)").matches ||
       // @ts-expect-error iOS Safari
       window.navigator.standalone === true;

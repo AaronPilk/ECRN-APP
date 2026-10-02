@@ -41,7 +41,7 @@ export default async function HirePage(props: PageProps) {
   const searchParams = await props.searchParams;
   return (
     <div className="min-h-screen bg-ecrn-mist">
-      <header className="px-5 sm:px-8 py-5 flex items-center justify-between">
+      <header className="px-5 sm:px-8 py-5 pt-safe-plus flex items-center justify-between">
         <Link href="/">
           <Logo />
         </Link>

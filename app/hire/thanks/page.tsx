@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 export default function HireThanksPage() {
   return (
     <div className="min-h-screen bg-ecrn-mist flex flex-col">
-      <header className="px-5 sm:px-8 py-5">
+      <header className="px-5 sm:px-8 py-5 pt-safe-plus">
         <Link href="/"><Logo /></Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-5 sm:px-8">

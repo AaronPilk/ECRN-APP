@@ -25,6 +25,10 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+  /* Header padding that also clears the notch / Dynamic Island in the app. */
+  .pt-safe-plus {
+    padding-top: max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem)) !important;
+  }
 
   /* Inputs feel native */
   input,
@@ -35,6 +39,12 @@
 }
 
 @layer utilities {
+  /* Native app: no text selection callouts or tap flashes — feels native. */
+  .native-app body {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+  }
   .glass {
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);

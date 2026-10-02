@@ -74,8 +74,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
       </form>
 
       <p className="mt-6 text-xs text-slate-500 text-center leading-relaxed">
-        By creating an account you agree to receive transactional notifications from ECRN about your
-        referrals and applications. You can opt out at any time.
+        By creating an account you agree to the{" "}
+        <Link href="/terms" className="underline">Terms of Use</Link> and{" "}
+        <Link href="/privacy" className="underline">Privacy Policy</Link>, and to receive
+        notifications about your referrals and applications. You can opt out at any time.
       </p>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm">

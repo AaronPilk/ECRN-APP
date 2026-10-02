@@ -1099,6 +1099,28 @@ export async function listRecentActivity(limit = 20): Promise<ActivityLog[]> {
   return (data ?? []).map(toActivity);
 }
 
+// ─── native app ──────────────────────────────────────────────────────
+
+export async function registerDeviceToken(token: string, platform: "ios" | "android" | "web"): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.rpc("register_device_token", { p_token: token, p_platform: platform });
+  if (error) fail("registerDeviceToken", error);
+}
+
+export async function countMyDeviceTokens(): Promise<number> {
+  const sb = await db();
+  const { count } = await sb.from("device_tokens").select("id", { count: "exact", head: true });
+  return count ?? 0;
+}
+
+/** Apple-required in-app account deletion. Signs the user out afterwards. */
+export async function deleteMyAccount(): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.rpc("delete_my_account");
+  if (error) throw new Error(error.message);
+  await sb.auth.signOut().catch(() => {});
+}
+
 // ─── utils ───────────────────────────────────────────────────────────
 
 function isUuid(v: string): boolean {

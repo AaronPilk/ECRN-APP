@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ECRN</string>
+    <string name="title_activity_main">ECRN</string>
+    <string name="package_name">com.goecrn.app</string>
+    <string name="custom_url_scheme">com.goecrn.app</string>
+</resources>

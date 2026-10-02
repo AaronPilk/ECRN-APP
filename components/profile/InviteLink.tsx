@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, Copy, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Share } from "@capacitor/share";
+import { isNativeApp } from "@/lib/native/platform";
 
 interface InviteLinkProps {
   inviteUrl: string;
@@ -33,6 +35,19 @@ export function InviteLink({ inviteUrl }: InviteLinkProps) {
   };
 
   const share = async () => {
+    if (isNativeApp()) {
+      try {
+        await Share.share({
+          title: "Join me on ECRN",
+          text: "Your network in construction has value. Join ECRN and start referring talent.",
+          url: inviteUrl,
+          dialogTitle: "Share your ECRN invite",
+        });
+      } catch {
+        /* user cancelled */
+      }
+      return;
+    }
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
         await navigator.share({

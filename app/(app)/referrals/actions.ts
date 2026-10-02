@@ -21,6 +21,67 @@ const ReferralSchema = z.object({
   jobId: z.string().trim().optional(),
 });
 
+export interface ImportedContact {
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  currentJobTitle?: string | null;
+  company?: string | null;
+  locationCity?: string | null;
+  locationState?: string | null;
+}
+
+export interface ImportSummary {
+  created: number;
+  underReview: number;
+  skipped: number;
+  errors: string[];
+}
+
+/**
+ * Bulk "refer from my contacts". Each contact goes through the same
+ * database duplicate check as a hand-entered referral.
+ */
+export async function importContactsAction(contacts: ImportedContact[]): Promise<ImportSummary> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { created: 0, underReview: 0, skipped: 0, errors: ["Please sign in again."] };
+
+  const summary: ImportSummary = { created: 0, underReview: 0, skipped: 0, errors: [] };
+  const list = Array.isArray(contacts) ? contacts.slice(0, 200) : [];
+
+  for (const c of list) {
+    const first = String(c?.firstName ?? "").trim().slice(0, 100);
+    const last = String(c?.lastName ?? "").trim().slice(0, 100);
+    const email = String(c?.email ?? "").trim().slice(0, 200);
+    const phone = String(c?.phone ?? "").trim().slice(0, 50);
+    if (!first || (!email && !phone)) {
+      summary.skipped++;
+      continue;
+    }
+    try {
+      const r = await createReferral({
+        firstName: first,
+        lastName: last || "—",
+        email: email || null,
+        phone: phone || null,
+        currentJobTitle: String(c?.currentJobTitle ?? "").trim().slice(0, 200) || null,
+        locationCity: String(c?.locationCity ?? "").trim().slice(0, 100) || null,
+        locationState: String(c?.locationState ?? "").trim().slice(0, 50) || null,
+        notes: c?.company ? `Imported from contacts · ${String(c.company).slice(0, 200)}` : "Imported from contacts",
+      });
+      if (r.isDuplicate) summary.underReview++;
+      else summary.created++;
+    } catch (e) {
+      summary.errors.push(`${first} ${last}: ${e instanceof Error ? e.message : "failed"}`);
+    }
+  }
+
+  revalidatePath("/referrals");
+  revalidatePath("/dashboard");
+  return summary;
+}
+
 function fail(message: string, jobId?: string): never {
   const qs = new URLSearchParams({ error: message, ...(jobId ? { jobId } : {}) });
   redirect(`/referrals/new?${qs.toString()}`);

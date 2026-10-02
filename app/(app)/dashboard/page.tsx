@@ -8,7 +8,7 @@ import {
   getReferralPartnerDashboardStats,
   listPublicJobs,
 } from "@/lib/data/repository";
-import { Plus, Briefcase, Share2 } from "lucide-react";
+import { Plus, Briefcase, Share2, BookUser } from "lucide-react";
 
 /**
  * Referral partner dashboard.
@@ -51,13 +51,19 @@ export default async function ReferralPartnerDashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <ActionCard
           icon={<Plus className="w-5 h-5" />}
           title="Add a referral"
           body="Upload someone you know in the trade."
           href="/referrals/new"
           accent
+        />
+        <ActionCard
+          icon={<BookUser className="w-5 h-5" />}
+          title="From contacts"
+          body="Refer people straight from your phone."
+          href="/referrals/import"
         />
         <ActionCard
           icon={<Briefcase className="w-5 h-5" />}
@@ -122,7 +128,6 @@ export default async function ReferralPartnerDashboard() {
         </div>
       </section>
 
-      <BuildPhaseNotice />
     </div>
   );
 }
@@ -174,17 +179,4 @@ function ActionCard({
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
-
-function BuildPhaseNotice() {
-  return (
-    <Card className="p-4 border-dashed border-slate-300 bg-slate-50/60">
-      <p className="text-xs text-slate-600 leading-relaxed">
-        <strong className="text-ecrn-ink">Batch 1 of 8 shipped.</strong> Account creation,
-        role-based navigation, the app shell and the PWA scaffold are live. Batches 2+ will fill in
-        the actual referral creation, job application, admin CRUD, and payout ledger flows on top
-        of this foundation.
-      </p>
-    </Card>
-  );
 }

@@ -44,6 +44,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Inside the iOS/Android app, skip the marketing page and go straight in.
+  if (path === "/" && (request.headers.get("user-agent") ?? "").includes("ECRNApp")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/start";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 
   if (!user && isProtected) {

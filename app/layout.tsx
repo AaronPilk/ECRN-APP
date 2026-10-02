@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { NativeBootstrap } from "@/components/native/NativeBootstrap";
 
 export const metadata: Metadata = {
   title: {
@@ -43,10 +44,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans antialiased text-ecrn-ink">
         {children}
+        <NativeBootstrap />
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              // The native app loads pages live; skip the PWA service worker there.
+              if ('serviceWorker' in navigator && navigator.userAgent.indexOf('ECRNApp') === -1) {
                 window.addEventListener('load', function () {
                   navigator.serviceWorker.register('/sw.js').catch(function (e) {
                     console.warn('[ECRN] SW registration failed:', e);

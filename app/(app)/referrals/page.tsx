@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { listReferralsByReferrerEnriched } from "@/lib/data/repository";
-import { Plus, Users } from "lucide-react";
+import { BookUser, Plus, Users } from "lucide-react";
 
 interface PageProps {
   searchParams: Promise<{ status?: string }>;
@@ -47,13 +47,22 @@ export default async function ReferralsPage(props: PageProps) {
             {items.length} {items.length === 1 ? "referral" : "referrals"} in your network.
           </p>
         </div>
-        <Link href="/referrals/new">
-          <Button size="sm" variant="primary" className="shrink-0">
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add referral</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-        </Link>
+        <div className="flex gap-2 shrink-0">
+          <Link href="/referrals/import">
+            <Button size="sm" variant="secondary">
+              <BookUser className="w-4 h-4" />
+              <span className="hidden sm:inline">From contacts</span>
+              <span className="sm:hidden">Contacts</span>
+            </Button>
+          </Link>
+          <Link href="/referrals/new">
+            <Button size="sm" variant="primary">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add referral</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}

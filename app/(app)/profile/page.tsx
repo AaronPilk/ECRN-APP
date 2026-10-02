@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/Button";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
 import { InviteLink } from "@/components/profile/InviteLink";
 import { getCurrentProfile } from "@/lib/auth/session";
+import Link from "next/link";
+import { AppSettings } from "@/components/native/AppSettings";
 import { countInvitedBy } from "@/lib/data/repository";
 import { headers } from "next/headers";
 
@@ -59,14 +61,41 @@ export default async function ProfilePage() {
         </div>
       )}
 
+      <AppSettings />
+
       <AddToHomeScreenGuide persistent />
 
-      <form action="/api/logout" method="post">
-        <Button type="submit" variant="ghost" size="sm">
-          Log out
-        </Button>
-      </form>
+      <div>
+        <h2 className="text-base font-semibold text-ecrn-ink mb-3">Account</h2>
+        <Card className="divide-y divide-slate-100 overflow-hidden">
+          <LinkRow href="/support" label="Help & support" />
+          <LinkRow href="/privacy" label="Privacy policy" />
+          <LinkRow href="/terms" label="Terms of use" />
+          <form action="/api/logout" method="post">
+            <button type="submit" className="w-full text-left px-5 py-3.5 text-[15px] text-ecrn-ink active:bg-slate-50">
+              Log out
+            </button>
+          </form>
+          {profile.role !== "admin" && (
+            <LinkRow href="/profile/delete" label="Delete account" danger />
+          )}
+        </Card>
+      </div>
     </div>
+  );
+}
+
+function LinkRow({ href, label, danger }: { href: string; label: string; danger?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-between px-5 py-3.5 text-[15px] active:bg-slate-50 ${
+        danger ? "text-red-600" : "text-ecrn-ink"
+      }`}
+    >
+      {label}
+      <span className="text-slate-300">›</span>
+    </Link>
   );
 }
 

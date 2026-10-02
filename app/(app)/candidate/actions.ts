@@ -1,64 +1,78 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentProfile } from "@/lib/auth/mock";
-import { createJobApplication } from "@/lib/data/repository";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { createJobApplication, updateMyProfile } from "@/lib/data/repository";
 
 const ApplySchema = z.object({
-  jobId: z.string().min(1, "Missing job"),
-  firstName: z.string().min(1, "First name required"),
-  lastName: z.string().min(1, "Last name required"),
-  email: z.string().email("Enter a valid email"),
-  phone: z.string().optional(),
-  locationCity: z.string().optional(),
-  locationState: z.string().optional(),
-  currentJobTitle: z.string().optional(),
-  trade: z.string().optional(),
-  linkedinUrl: z.string().optional(),
-  resumeUrl: z.string().optional(),
-  notes: z.string().optional(),
+  jobId: z.string().uuid("Missing job"),
+  firstName: z.string().trim().min(1, "First name required"),
+  lastName: z.string().trim().min(1, "Last name required"),
+  phone: z.string().trim().optional(),
+  locationCity: z.string().trim().optional(),
+  locationState: z.string().trim().optional(),
+  currentJobTitle: z.string().trim().optional(),
+  trade: z.string().trim().optional(),
+  linkedinUrl: z.string().trim().optional(),
+  resumeUrl: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
 });
 
 export async function applyAction(formData: FormData): Promise<void> {
   const profile = await getCurrentProfile();
-  if (!profile) throw new Error("Not authenticated");
+  if (!profile) redirect("/login");
 
+  const get = (k: string) => (formData.get(k) as string | null) ?? "";
   const parsed = ApplySchema.safeParse({
-    jobId: formData.get("jobId"),
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    email: formData.get("email"),
-    phone: formData.get("phone") ?? "",
-    locationCity: formData.get("locationCity") ?? "",
-    locationState: formData.get("locationState") ?? "",
-    currentJobTitle: formData.get("currentJobTitle") ?? "",
-    trade: formData.get("trade") ?? "",
-    linkedinUrl: formData.get("linkedinUrl") ?? "",
-    resumeUrl: formData.get("resumeUrl") ?? "",
-    notes: formData.get("notes") ?? "",
+    jobId: get("jobId"),
+    firstName: get("firstName"),
+    lastName: get("lastName"),
+    phone: get("phone"),
+    locationCity: get("locationCity"),
+    locationState: get("locationState"),
+    currentJobTitle: get("currentJobTitle"),
+    trade: get("trade"),
+    linkedinUrl: get("linkedinUrl"),
+    resumeUrl: get("resumeUrl"),
+    notes: get("notes"),
   });
-
+  const jobId = get("jobId");
   if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? "Invalid input");
+    redirect(`/candidate/apply?jobId=${jobId}&error=${encodeURIComponent(parsed.error.errors[0]?.message ?? "Invalid input")}`);
+  }
+  const d = parsed.data;
+
+  let result;
+  try {
+    result = await createJobApplication({
+      jobId: d.jobId,
+      firstName: d.firstName,
+      lastName: d.lastName,
+      phone: d.phone || null,
+      locationCity: d.locationCity || null,
+      locationState: d.locationState || null,
+      currentJobTitle: d.currentJobTitle || null,
+      trade: d.trade || null,
+      linkedinUrl: d.linkedinUrl || null,
+      resumeUrl: d.resumeUrl || null,
+      notes: d.notes || null,
+    });
+  } catch (e) {
+    redirect(`/candidate/apply?jobId=${jobId}&error=${encodeURIComponent(e instanceof Error ? e.message : "Couldn't submit your application")}`);
   }
 
-  const data = parsed.data;
-  const { application } = await createJobApplication({
-    jobId: data.jobId,
-    applicantUserId: profile.id,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    email: data.email,
-    phone: data.phone || null,
-    locationCity: data.locationCity || null,
-    locationState: data.locationState || null,
-    currentJobTitle: data.currentJobTitle || null,
-    trade: data.trade || null,
-    linkedinUrl: data.linkedinUrl || null,
-    resumeUrl: data.resumeUrl || null,
-    notes: data.notes || null,
-  });
+  // Keep their profile current with what they just told us.
+  await updateMyProfile(profile.id, {
+    firstName: d.firstName,
+    lastName: d.lastName,
+    phone: d.phone || profile.phone,
+    locationCity: d.locationCity || profile.locationCity,
+    locationState: d.locationState || profile.locationState,
+    linkedinUrl: d.linkedinUrl || profile.linkedinUrl,
+  }).catch(() => {});
 
-  redirect(`/candidate/applications/${application.id}?welcome=1`);
+  revalidatePath("/candidate/applications");
+  redirect(`/candidate/applications/${result.applicationId}?welcome=1`);
 }

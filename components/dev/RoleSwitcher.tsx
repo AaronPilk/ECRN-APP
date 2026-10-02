@@ -11,30 +11,28 @@ interface RoleSwitcherProps {
 }
 
 /**
- * Floating "View as" widget shown on every authenticated page in V1
- * (while we're on mock data). Lets you flip between Admin / Referral
- * Partner / Candidate without navigating to /login.
- *
- * Auto-hides once real Supabase auth is wired in — the parent renders
- * this only when NEXT_PUBLIC_SUPABASE_URL is unset.
+ * Floating "View as" widget for demos. Only rendered when
+ * NEXT_PUBLIC_DEMO_MODE=true. Partner/Job Seeker sign into the demo
+ * accounts (sample data only); Admin signs out and asks for the real
+ * admin login.
  */
 const ROLES: { key: "admin" | "referral_partner" | "candidate"; label: string; subtitle: string; icon: React.ReactNode }[] = [
   {
     key: "admin",
     label: "Admin",
-    subtitle: "Delta operations view",
+    subtitle: "Sign in with your admin login",
     icon: <Shield className="w-4 h-4" />,
   },
   {
     key: "referral_partner",
     label: "Referral Partner",
-    subtitle: "Network ambassador view",
+    subtitle: "Demo account · sample data",
     icon: <Users className="w-4 h-4" />,
   },
   {
     key: "candidate",
     label: "Job Seeker",
-    subtitle: "Candidate view",
+    subtitle: "Demo account · sample data",
     icon: <Briefcase className="w-4 h-4" />,
   },
 ];
@@ -55,7 +53,7 @@ export function RoleSwitcher({ currentRole, currentEmail }: RoleSwitcherProps) {
             <div className="px-4 py-3 flex items-center justify-between border-b border-white/10">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.18em] text-ecrn-green font-semibold">
-                  Dev preview
+                  Demo preview
                 </div>
                 <div className="text-xs text-white/60 mt-0.5 truncate max-w-[200px]">
                   Logged in as {currentEmail}

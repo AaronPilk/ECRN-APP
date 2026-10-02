@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   getProfileById,
   searchCandidates,
@@ -13,12 +13,12 @@ import type { CandidateSource, ReferralStatus } from "@/types";
 import { Download, Search } from "lucide-react";
 
 interface PageProps {
-  searchParams?: {
+  searchParams: Promise<{
     q?: string;
     status?: string;
     source?: string;
     trade?: string;
-  };
+  }>;
 }
 
 const STATUS_FILTERS: { key: ReferralStatus | "all"; label: string }[] = [
@@ -39,7 +39,8 @@ const SOURCE_FILTERS: { key: CandidateSource | "all"; label: string }[] = [
   { key: "admin_import", label: "Admin import" },
 ];
 
-export default async function AdminCandidatesPage({ searchParams }: PageProps) {
+export default async function AdminCandidatesPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 
@@ -216,7 +217,7 @@ function FilterChip({
 }
 
 function buildHref(
-  current: PageProps["searchParams"] | undefined,
+  current: Awaited<PageProps["searchParams"]> | undefined,
   key: string,
   value: string
 ): string {

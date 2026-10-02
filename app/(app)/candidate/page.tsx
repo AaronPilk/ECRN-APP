@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listPublicJobs, listApplicationsByApplicant } from "@/lib/data/repository";
 import { Briefcase, FileText, User } from "lucide-react";
 

@@ -13,9 +13,10 @@ import { redirect } from "next/navigation";
  * arguably more transparent.
  */
 interface PageProps {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }
 
-export default function InviteRedirect({ params }: PageProps) {
+export default async function InviteRedirect(props: PageProps) {
+  const params = await props.params;
   redirect(`/signup?via=invite&ref=${encodeURIComponent(params.code)}`);
 }

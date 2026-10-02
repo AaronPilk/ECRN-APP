@@ -124,25 +124,25 @@ export function JobForm({ job }: JobFormProps) {
 
           <Section title="Referral payout">
             <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Payout amount (cents)" htmlFor="referralPayoutAmount">
+              <Field label="Payout amount ($)" htmlFor="referralPayoutAmount">
                 <Input
                   id="referralPayoutAmount"
                   name="referralPayoutAmount"
                   type="number"
                   min="0"
-                  step="100"
-                  defaultValue={job?.referralPayoutAmount ?? ""}
+                  max="10000"
+                  step="50"
+                  placeholder="5000"
+                  defaultValue={job?.referralPayoutAmount != null ? job.referralPayoutAmount / 100 : ""}
                 />
-                <p className="text-xs text-slate-500 mt-1">
-                  Stored in cents — $5,000 = 500000.
-                </p>
+                <p className="text-xs text-slate-500 mt-1">Typically $1,000–$10,000 per placement.</p>
               </Field>
-              <Field label="Payout display" htmlFor="referralPayoutDisplay">
+              <Field label="Payout label (optional)" htmlFor="referralPayoutDisplay">
                 <Input
                   id="referralPayoutDisplay"
                   name="referralPayoutDisplay"
                   defaultValue={job?.referralPayoutDisplay ?? ""}
-                  placeholder="$5,000"
+                  placeholder="Auto-filled from the amount"
                 />
               </Field>
             </div>

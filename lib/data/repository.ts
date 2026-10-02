@@ -1,7 +1,9 @@
+import "server-only";
 import type {
   ActivityLog,
   ApplicationStatus,
   Candidate,
+  CandidateNote,
   CandidateSource,
   CompanyLead,
   CompanyLeadStatus,
@@ -17,56 +19,87 @@ import type {
   ReferralStatus,
   UserRole,
 } from "@/types";
-import { db, generateId, nowIso } from "./mock-store";
-import { findDuplicate } from "@/lib/utils/duplicate-detection";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  candidateFromReferralSnapshot,
+  one,
+  toActivity,
+  toApplication,
+  toCandidate,
+  toCandidateNote,
+  toCompanyLead,
+  toJob,
+  toJobReferral,
+  toPayout,
+  toProfile,
+  toReferral,
+} from "./mappers";
 
 /**
- * The single data access layer for ECRN.
+ * The single data access layer for ECRN, backed by Supabase.
  *
- * Every page/route reads and writes through these functions. In V1 the
- * implementation is the in-memory mock store; in Batch 2+ we'll add a
- * Supabase-backed variant and choose at boot time via env vars.
- *
- * Keep this interface stable — when we swap to Supabase, only this file
- * changes.
+ * Every query runs as the signed-in user, so Row Level Security (see
+ * supabase/migrations/0002_rls.sql) decides what each person can read or
+ * write. Admin-only functions still double-check the role in app code.
  */
+
+const db = createSupabaseServerClient;
+
+function fail(context: string, error: { message: string } | null): never {
+  throw new Error(`${context}: ${error?.message ?? "unknown error"}`);
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // Profiles
 // ─────────────────────────────────────────────────────────────────────
 
-export async function getProfileByEmail(email: string): Promise<Profile | null> {
-  const e = email.toLowerCase().trim();
-  return db.profiles.find((p) => p.email.toLowerCase() === e) ?? null;
-}
-
 export async function getProfileById(id: string): Promise<Profile | null> {
-  return db.profiles.find((p) => p.id === id) ?? null;
+  const sb = await db();
+  const { data, error } = await sb.from("profiles").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getProfileById", error);
+  return data ? toProfile(data) : null;
 }
 
-export async function createProfile(
-  input: Omit<Profile, "id" | "createdAt" | "updatedAt" | "metadata" | "isActive"> & {
-    metadata?: Record<string, unknown>;
-  }
-): Promise<Profile> {
-  const profile: Profile = {
-    id: generateId("p"),
-    isActive: true,
-    metadata: input.metadata ?? {},
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-    ...input,
-  };
-  db.profiles.push(profile);
-  return profile;
+export async function updateMyProfile(
+  id: string,
+  input: Partial<Pick<Profile, "firstName" | "lastName" | "phone" | "locationCity" | "locationState" | "linkedinUrl" | "companyName">>
+): Promise<void> {
+  const sb = await db();
+  const patch: Record<string, unknown> = {};
+  if (input.firstName !== undefined) patch.first_name = input.firstName;
+  if (input.lastName !== undefined) patch.last_name = input.lastName;
+  if (input.phone !== undefined) patch.phone = input.phone;
+  if (input.locationCity !== undefined) patch.location_city = input.locationCity;
+  if (input.locationState !== undefined) patch.location_state = input.locationState;
+  if (input.linkedinUrl !== undefined) patch.linkedin_url = input.linkedinUrl;
+  if (input.companyName !== undefined) patch.company_name = input.companyName;
+  const { error } = await sb.from("profiles").update(patch).eq("id", id);
+  if (error) fail("updateMyProfile", error);
 }
 
-export async function updateProfileRole(id: string, role: UserRole): Promise<Profile> {
-  const p = db.profiles.find((p) => p.id === id);
-  if (!p) throw new Error(`Profile ${id} not found`);
-  p.role = role;
-  p.updatedAt = nowIso();
-  return p;
+/** Onboarding role choice. Admin role can never be self-assigned. */
+export async function setMyRole(role: Exclude<UserRole, "admin">): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.rpc("set_my_role", { p_role: role });
+  if (error) fail("setMyRole", error);
+}
+
+/** "Jane D." for the invite-link banner. Works without being signed in. */
+export async function getReferrerDisplayName(profileId: string): Promise<string | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(profileId)) return null;
+  const sb = await db();
+  const { data, error } = await sb.rpc("referrer_display_name", { p_id: profileId });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
+export async function countInvitedBy(profileId: string): Promise<number> {
+  const sb = await db();
+  const { count } = await sb
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("invited_by", profileId);
+  return count ?? 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -74,17 +107,30 @@ export async function updateProfileRole(id: string, role: UserRole): Promise<Pro
 // ─────────────────────────────────────────────────────────────────────
 
 export async function listPublicJobs(): Promise<Job[]> {
-  return db.jobs
-    .filter((j) => j.isPublic && (j.status === "open" || j.status === "paused"))
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb
+    .from("jobs")
+    .select("*")
+    .eq("is_public", true)
+    .in("status", ["open", "paused"])
+    .order("created_at", { ascending: false });
+  if (error) fail("listPublicJobs", error);
+  return (data ?? []).map(toJob);
 }
 
 export async function getJobById(id: string): Promise<Job | null> {
-  return db.jobs.find((j) => j.id === id) ?? null;
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb.from("jobs").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getJobById", error);
+  return data ? toJob(data) : null;
 }
 
 export async function listAllJobs(): Promise<Job[]> {
-  return [...db.jobs].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb.from("jobs").select("*").order("created_at", { ascending: false });
+  if (error) fail("listAllJobs", error);
+  return (data ?? []).map(toJob);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -92,15 +138,19 @@ export async function listAllJobs(): Promise<Job[]> {
 // ─────────────────────────────────────────────────────────────────────
 
 export async function listCandidates(): Promise<Candidate[]> {
-  return [...db.candidates];
+  return searchCandidates({});
 }
 
 export async function getCandidateById(id: string): Promise<Candidate | null> {
-  return db.candidates.find((c) => c.id === id) ?? null;
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb.from("candidates").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getCandidateById", error);
+  return data ? toCandidate(data) : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Referrals — the heart of Batch 2
+// Referrals
 // ─────────────────────────────────────────────────────────────────────
 
 export interface CreateReferralInput {
@@ -119,132 +169,53 @@ export interface CreateReferralInput {
 }
 
 export interface CreateReferralResult {
-  referral: Referral;
-  candidate: Candidate;
-  duplicateOf: Candidate | null;
-  duplicateReason?: string;
+  referralId: string;
+  candidateId: string;
+  isDuplicate: boolean;
 }
 
 /**
- * Create a referral.
- *
- * Logic:
- *   1. Check for an existing candidate matching by email / phone / linkedin
- *      / name+location.
- *   2. If a match exists, attach this referral as a "duplicate_review"
- *      attempt on the existing candidate. The original referrer stays
- *      primary; admin can review later.
- *   3. If no match, create a new candidate with this user as the primary
- *      referrer, and a primary referral row.
+ * Submit a referral. Duplicate detection (email → phone → LinkedIn →
+ * name + location) runs inside the database so partners never get read
+ * access to other people's contacts. The first referrer keeps ownership.
  */
 export async function createReferral(
   input: CreateReferralInput,
-  referrerUserId: string,
   options: { jobId?: string | null } = {}
 ): Promise<CreateReferralResult> {
-  const duplicate = findDuplicate(input, db.candidates);
-
-  let candidate: Candidate;
-  let referral: Referral;
-
-  if (duplicate) {
-    candidate = duplicate.candidate;
-    referral = {
-      id: generateId("r"),
-      candidateId: candidate.id,
-      referrerUserId,
-      referralSource: options.jobId ? "job_link" : "manual",
-      status: "duplicate_review",
-      isPrimary: false,
-      duplicateStatus: "pending_review",
-      notes: input.notes ?? null,
-      metadata: { duplicateReason: duplicate.reason },
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    db.referrals.push(referral);
-  } else {
-    candidate = {
-      id: generateId("c"),
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
-      email: input.email?.trim() ?? null,
-      phone: input.phone?.trim() ?? null,
-      locationCity: input.locationCity?.trim() ?? null,
-      locationState: input.locationState?.trim() ?? null,
-      currentJobTitle: input.currentJobTitle?.trim() ?? null,
-      trade: input.trade?.trim() ?? null,
-      yearsExperience: input.yearsExperience ?? null,
-      linkedinUrl: input.linkedinUrl?.trim() ?? null,
-      resumeUrl: input.resumeUrl?.trim() ?? null,
-      notes: input.notes ?? null,
-      sourceType: "referred" as CandidateSource,
-      primaryReferrerUserId: referrerUserId,
-      duplicateOfCandidateId: null,
-      status: "new" as ReferralStatus,
-      externalCrmId: null,
-      metadata: {},
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    db.candidates.push(candidate);
-
-    referral = {
-      id: generateId("r"),
-      candidateId: candidate.id,
-      referrerUserId,
-      referralSource: options.jobId ? "job_link" : "manual",
-      status: "new",
-      isPrimary: true,
-      duplicateStatus: "unique",
-      notes: input.notes ?? null,
-      metadata: {},
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    db.referrals.push(referral);
-  }
-
-  // If submitted in the context of a specific job, also create a job_referral row.
-  if (options.jobId) {
-    const jobReferral: JobReferral = {
-      id: generateId("jr"),
-      jobId: options.jobId,
-      candidateId: candidate.id,
-      referrerUserId,
-      status: duplicate ? "duplicate_review" : "submitted_to_job",
-      notes: input.notes ?? null,
-      metadata: {},
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    db.jobReferrals.push(jobReferral);
-  }
-
-  await logActivity({
-    actorUserId: referrerUserId,
-    entityType: "referral",
-    entityId: referral.id,
-    action: duplicate ? "duplicate_detected" : "created",
-    metadata: {
-      candidateId: candidate.id,
-      jobId: options.jobId ?? null,
-      duplicateReason: duplicate?.reason ?? null,
-    },
-  });
-
-  return {
-    referral,
-    candidate,
-    duplicateOf: duplicate?.candidate ?? null,
-    duplicateReason: duplicate?.reason,
+  const sb = await db();
+  const payload = {
+    first_name: input.firstName,
+    last_name: input.lastName,
+    email: input.email ?? "",
+    phone: input.phone ?? "",
+    location_city: input.locationCity ?? "",
+    location_state: input.locationState ?? "",
+    current_job_title: input.currentJobTitle ?? "",
+    trade: input.trade ?? "",
+    years_experience: input.yearsExperience != null ? String(input.yearsExperience) : "",
+    linkedin_url: input.linkedinUrl ?? "",
+    resume_url: input.resumeUrl ?? "",
+    notes: input.notes ?? "",
   };
+  const { data, error } = await sb.rpc("submit_referral", {
+    p: payload,
+    p_job_id: options.jobId || null,
+  });
+  if (error) throw new Error(error.message);
+  const r = data as { referral_id: string; candidate_id: string; is_duplicate: boolean };
+  return { referralId: r.referral_id, candidateId: r.candidate_id, isDuplicate: r.is_duplicate };
 }
 
 export async function listReferralsByReferrer(referrerUserId: string): Promise<Referral[]> {
-  return db.referrals
-    .filter((r) => r.referrerUserId === referrerUserId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb
+    .from("referrals")
+    .select("*")
+    .eq("referrer_user_id", referrerUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listReferralsByReferrer", error);
+  return (data ?? []).map(toReferral);
 }
 
 export interface ReferralWithCandidate {
@@ -255,35 +226,62 @@ export interface ReferralWithCandidate {
 export async function listReferralsByReferrerEnriched(
   referrerUserId: string
 ): Promise<ReferralWithCandidate[]> {
-  const rows = await listReferralsByReferrer(referrerUserId);
-  const enriched: ReferralWithCandidate[] = [];
-  for (const r of rows) {
-    const c = await getCandidateById(r.candidateId);
-    if (c) enriched.push({ referral: r, candidate: c });
-  }
-  return enriched;
+  const sb = await db();
+  const { data, error } = await sb
+    .from("referrals")
+    .select("*, candidate:candidates(*)")
+    .eq("referrer_user_id", referrerUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listReferralsByReferrerEnriched", error);
+  return (data ?? []).map((row) => {
+    const referral = toReferral(row);
+    const candidate = one(row.candidate, toCandidate) ?? candidateFromReferralSnapshot(referral);
+    return { referral, candidate };
+  });
 }
 
 export async function getReferralById(id: string): Promise<Referral | null> {
-  return db.referrals.find((r) => r.id === id) ?? null;
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb.from("referrals").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getReferralById", error);
+  return data ? toReferral(data) : null;
 }
 
-export async function getReferralWithCandidate(
-  id: string
-): Promise<ReferralWithCandidate | null> {
-  const referral = await getReferralById(id);
-  if (!referral) return null;
-  const candidate = await getCandidateById(referral.candidateId);
-  if (!candidate) return null;
+export async function getReferralWithCandidate(id: string): Promise<ReferralWithCandidate | null> {
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb
+    .from("referrals")
+    .select("*, candidate:candidates(*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("getReferralWithCandidate", error);
+  if (!data) return null;
+  const referral = toReferral(data);
+  const candidate = one(data.candidate, toCandidate) ?? candidateFromReferralSnapshot(referral);
   return { referral, candidate };
 }
 
 export async function listJobReferralsByReferrer(referrerUserId: string): Promise<JobReferral[]> {
-  return db.jobReferrals.filter((r) => r.referrerUserId === referrerUserId);
+  const sb = await db();
+  const { data, error } = await sb
+    .from("job_referrals")
+    .select("*")
+    .eq("referrer_user_id", referrerUserId);
+  if (error) fail("listJobReferralsByReferrer", error);
+  return (data ?? []).map(toJobReferral);
 }
 
 export async function listJobReferralsByCandidate(candidateId: string): Promise<JobReferral[]> {
-  return db.jobReferrals.filter((r) => r.candidateId === candidateId);
+  const sb = await db();
+  const { data, error } = await sb
+    .from("job_referrals")
+    .select("*")
+    .eq("candidate_id", candidateId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listJobReferralsByCandidate", error);
+  return (data ?? []).map(toJobReferral);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -292,14 +290,11 @@ export async function listJobReferralsByCandidate(candidateId: string): Promise<
 
 export interface CreateApplicationInput {
   jobId: string;
-  applicantUserId: string;
   resumeUrl?: string | null;
   linkedinUrl?: string | null;
   notes?: string | null;
-  // Candidate info if the applicant doesn't have a candidate row yet
   firstName?: string;
   lastName?: string;
-  email?: string | null;
   phone?: string | null;
   locationCity?: string | null;
   locationState?: string | null;
@@ -309,75 +304,37 @@ export interface CreateApplicationInput {
 
 export async function createJobApplication(
   input: CreateApplicationInput
-): Promise<{ application: JobApplication; candidate: Candidate }> {
-  // Get or create a candidate row tied to this applicant's profile
-  const applicant = await getProfileById(input.applicantUserId);
-  if (!applicant) throw new Error("Applicant profile not found");
-
-  // See if a candidate already exists for this person (by email, primarily)
-  const email = applicant.email;
-  let candidate =
-    db.candidates.find((c) => c.email?.toLowerCase() === email.toLowerCase()) ?? null;
-
-  if (!candidate) {
-    candidate = {
-      id: generateId("c"),
-      firstName: input.firstName ?? applicant.firstName ?? "Candidate",
-      lastName: input.lastName ?? applicant.lastName ?? "",
-      email,
-      phone: input.phone ?? applicant.phone ?? null,
-      locationCity: input.locationCity ?? applicant.locationCity ?? null,
-      locationState: input.locationState ?? applicant.locationState ?? null,
-      currentJobTitle: input.currentJobTitle ?? null,
-      trade: input.trade ?? null,
-      yearsExperience: null,
-      linkedinUrl: input.linkedinUrl ?? applicant.linkedinUrl ?? null,
-      resumeUrl: input.resumeUrl ?? null,
-      notes: input.notes ?? null,
-      sourceType: "direct_application",
-      primaryReferrerUserId: null,
-      duplicateOfCandidateId: null,
-      status: "new",
-      externalCrmId: null,
-      metadata: {},
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    db.candidates.push(candidate);
-  }
-
-  const application: JobApplication = {
-    id: generateId("ja"),
-    jobId: input.jobId,
-    candidateId: candidate.id,
-    applicantUserId: input.applicantUserId,
-    status: "submitted",
-    resumeUrl: input.resumeUrl ?? null,
-    linkedinUrl: input.linkedinUrl ?? applicant.linkedinUrl ?? null,
-    notes: input.notes ?? null,
-    metadata: {},
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-  };
-  db.jobApplications.push(application);
-
-  await logActivity({
-    actorUserId: input.applicantUserId,
-    entityType: "job_application",
-    entityId: application.id,
-    action: "submitted",
-    metadata: { jobId: input.jobId, candidateId: candidate.id },
+): Promise<{ applicationId: string; candidateId: string }> {
+  const sb = await db();
+  const { data, error } = await sb.rpc("apply_to_job", {
+    p_job_id: input.jobId,
+    p: {
+      first_name: input.firstName ?? "",
+      last_name: input.lastName ?? "",
+      phone: input.phone ?? "",
+      location_city: input.locationCity ?? "",
+      location_state: input.locationState ?? "",
+      current_job_title: input.currentJobTitle ?? "",
+      trade: input.trade ?? "",
+      linkedin_url: input.linkedinUrl ?? "",
+      resume_url: input.resumeUrl ?? "",
+      notes: input.notes ?? "",
+    },
   });
-
-  return { application, candidate };
+  if (error) throw new Error(error.message);
+  const r = data as { application_id: string; candidate_id: string };
+  return { applicationId: r.application_id, candidateId: r.candidate_id };
 }
 
-export async function listApplicationsByApplicant(
-  applicantUserId: string
-): Promise<JobApplication[]> {
-  return db.jobApplications
-    .filter((a) => a.applicantUserId === applicantUserId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+export async function listApplicationsByApplicant(applicantUserId: string): Promise<JobApplication[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("job_applications")
+    .select("*")
+    .eq("applicant_user_id", applicantUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listApplicationsByApplicant", error);
+  return (data ?? []).map(toApplication);
 }
 
 export interface ApplicationWithJob {
@@ -388,17 +345,27 @@ export interface ApplicationWithJob {
 export async function listApplicationsByApplicantEnriched(
   applicantUserId: string
 ): Promise<ApplicationWithJob[]> {
-  const apps = await listApplicationsByApplicant(applicantUserId);
+  const sb = await db();
+  const { data, error } = await sb
+    .from("job_applications")
+    .select("*, job:jobs(*)")
+    .eq("applicant_user_id", applicantUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listApplicationsByApplicantEnriched", error);
   const out: ApplicationWithJob[] = [];
-  for (const a of apps) {
-    const j = await getJobById(a.jobId);
-    if (j) out.push({ application: a, job: j });
+  for (const row of data ?? []) {
+    const job = one(row.job, toJob);
+    if (job) out.push({ application: toApplication(row), job });
   }
   return out;
 }
 
 export async function getApplicationById(id: string): Promise<JobApplication | null> {
-  return db.jobApplications.find((a) => a.id === id) ?? null;
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb.from("job_applications").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getApplicationById", error);
+  return data ? toApplication(data) : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -406,9 +373,14 @@ export async function getApplicationById(id: string): Promise<JobApplication | n
 // ─────────────────────────────────────────────────────────────────────
 
 export async function listPayoutsByReferrer(referrerUserId: string): Promise<Payout[]> {
-  return db.payouts
-    .filter((p) => p.referrerUserId === referrerUserId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb
+    .from("payouts")
+    .select("*")
+    .eq("referrer_user_id", referrerUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listPayoutsByReferrer", error);
+  return (data ?? []).map(toPayout);
 }
 
 export interface PayoutEnriched {
@@ -417,70 +389,122 @@ export interface PayoutEnriched {
   job: Job | null;
 }
 
-export async function listPayoutsByReferrerEnriched(
-  referrerUserId: string
-): Promise<PayoutEnriched[]> {
-  const payouts = await listPayoutsByReferrer(referrerUserId);
-  const out: PayoutEnriched[] = [];
-  for (const p of payouts) {
-    const candidate = await getCandidateById(p.candidateId);
-    const job = p.jobId ? await getJobById(p.jobId) : null;
-    out.push({ payout: p, candidate, job });
-  }
-  return out;
+export async function listPayoutsByReferrerEnriched(referrerUserId: string): Promise<PayoutEnriched[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("payouts")
+    .select("*, candidate:candidates(*), job:jobs(*)")
+    .eq("referrer_user_id", referrerUserId)
+    .order("created_at", { ascending: false });
+  if (error) fail("listPayoutsByReferrerEnriched", error);
+  return (data ?? []).map((row) => ({
+    payout: toPayout(row),
+    candidate: one(row.candidate, toCandidate),
+    job: one(row.job, toJob),
+  }));
 }
 
 // ─────────────────────────────────────────────────────────────────────
 // Company leads
 // ─────────────────────────────────────────────────────────────────────
 
-export async function createCompanyLead(
-  input: Omit<CompanyLead, "id" | "createdAt" | "updatedAt" | "metadata" | "status"> & {
-    metadata?: Record<string, unknown>;
-  }
-): Promise<CompanyLead> {
-  const lead: CompanyLead = {
-    id: generateId("cl"),
-    status: "new",
-    metadata: input.metadata ?? {},
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-    ...input,
-  };
-  db.companyLeads.push(lead);
-  return lead;
+export interface CompanyLeadInput {
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone?: string | null;
+  location?: string | null;
+  roleNeeded?: string | null;
+  numberOfCandidates?: number | null;
+  compensationRange?: string | null;
+  jobDescription?: string | null;
+  notes?: string | null;
+}
+
+/** Public hiring form — works without an account. */
+export async function createCompanyLead(input: CompanyLeadInput): Promise<string> {
+  const sb = await db();
+  const { data, error } = await sb.rpc("submit_company_lead", {
+    p: {
+      company_name: input.companyName,
+      contact_name: input.contactName,
+      email: input.email,
+      phone: input.phone ?? "",
+      location: input.location ?? "",
+      role_needed: input.roleNeeded ?? "",
+      number_of_candidates: input.numberOfCandidates != null ? String(input.numberOfCandidates) : "",
+      compensation_range: input.compensationRange ?? "",
+      job_description: input.jobDescription ?? "",
+      notes: input.notes ?? "",
+    },
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
 }
 
 export async function listCompanyLeads(): Promise<CompanyLead[]> {
-  return [...db.companyLeads].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb
+    .from("company_leads")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) fail("listCompanyLeads", error);
+  return (data ?? []).map(toCompanyLead);
+}
+
+export async function getCompanyLeadById(id: string): Promise<CompanyLead | null> {
+  if (!isUuid(id)) return null;
+  const sb = await db();
+  const { data, error } = await sb.from("company_leads").select("*").eq("id", id).maybeSingle();
+  if (error) fail("getCompanyLeadById", error);
+  return data ? toCompanyLead(data) : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────
 // Activity log
 // ─────────────────────────────────────────────────────────────────────
 
-export async function logActivity(
-  input: Omit<ActivityLog, "id" | "createdAt" | "metadata"> & {
-    metadata?: Record<string, unknown>;
-  }
-): Promise<ActivityLog> {
-  const log: ActivityLog = {
-    id: generateId("al"),
-    createdAt: nowIso(),
+export async function logActivity(input: {
+  actorUserId: string | null;
+  entityType: string;
+  entityId: string | null;
+  action: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.from("activity_logs").insert({
+    actor_user_id: input.actorUserId,
+    entity_type: input.entityType,
+    entity_id: input.entityId,
+    action: input.action,
     metadata: input.metadata ?? {},
-    ...input,
-  };
-  db.activityLogs.push(log);
-  return log;
+  });
+  // Audit logging must never break the user's action.
+  if (error) console.error("[ECRN] logActivity failed:", error.message);
 }
 
-export async function listActivityForEntity(
-  entityType: string,
-  entityId: string
-): Promise<ActivityLog[]> {
-  return db.activityLogs
-    .filter((l) => l.entityType === entityType && l.entityId === entityId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+export async function listActivityForEntity(entityType: string, entityId: string): Promise<ActivityLog[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("activity_logs")
+    .select("*")
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .order("created_at", { ascending: true });
+  if (error) fail("listActivityForEntity", error);
+  return (data ?? []).map(toActivity);
+}
+
+/** Timeline for a partner's referral: their actions + Delta's status changes. */
+export async function listReferralTimeline(referral: Referral, candidateId: string): Promise<ActivityLog[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("activity_logs")
+    .select("*")
+    .in("entity_id", [referral.id, candidateId])
+    .order("created_at", { ascending: true });
+  if (error) fail("listReferralTimeline", error);
+  return (data ?? []).map(toActivity);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -497,57 +521,38 @@ export interface ReferralPartnerDashboardStats {
   openJobsCount: number;
 }
 
-export async function getReferralPartnerDashboardStats(
-  profileId: string
-): Promise<ReferralPartnerDashboardStats> {
-  const referrals = await listReferralsByReferrer(profileId);
-  const payouts = await listPayoutsByReferrer(profileId);
-  const openJobs = await listPublicJobs();
+const IN_PROCESS: ReferralStatus[] = ["contacted", "qualified", "submitted_to_job", "interviewing", "offer_stage"];
+const PLACED: ReferralStatus[] = ["placed", "payout_pending", "payout_approved", "payout_paid"];
+const INACTIVE: ReferralStatus[] = ["rejected", "inactive", "not_qualified"];
 
-  // For aggregation, look at the underlying candidate's status since that's
-  // what drives the pipeline. Referral.status is the row-level pin; the
-  // candidate.status is the canonical lifecycle state.
-  const candidateStatuses: ReferralStatus[] = [];
-  for (const r of referrals) {
-    const c = await getCandidateById(r.candidateId);
-    if (c) candidateStatuses.push(c.status);
-  }
-
-  const active = candidateStatuses.filter(
-    (s) => s !== "rejected" && s !== "inactive" && s !== "not_qualified"
-  ).length;
-
-  const inProcess = candidateStatuses.filter((s) =>
-    ["contacted", "qualified", "submitted_to_job", "interviewing", "offer_stage"].includes(s)
-  ).length;
-
-  const placements = candidateStatuses.filter((s) =>
-    ["placed", "payout_pending", "payout_approved", "payout_paid"].includes(s)
-  ).length;
-
-  const estimatedEarningsCents = payouts
-    .filter((p: Payout) => p.status === "pending" || p.status === "approved")
-    .reduce((sum: number, p: Payout) => sum + p.amountCents, 0);
-
-  const paidEarningsCents = payouts
-    .filter((p: Payout) => p.status === "paid")
-    .reduce((sum: number, p: Payout) => sum + p.amountCents, 0);
+export async function getReferralPartnerDashboardStats(profileId: string): Promise<ReferralPartnerDashboardStats> {
+  const [referrals, payouts, openJobs] = await Promise.all([
+    listReferralsByReferrerEnriched(profileId),
+    listPayoutsByReferrer(profileId),
+    listPublicJobs(),
+  ]);
+  const statuses = referrals.map((r) => r.candidate.status);
 
   return {
     totalReferrals: referrals.length,
-    activeReferrals: active,
-    inProcess,
-    placements,
-    estimatedEarningsCents,
-    paidEarningsCents,
+    activeReferrals: statuses.filter((s) => !INACTIVE.includes(s)).length,
+    inProcess: statuses.filter((s) => IN_PROCESS.includes(s)).length,
+    placements: statuses.filter((s) => PLACED.includes(s)).length,
+    estimatedEarningsCents: payouts
+      .filter((p) => p.status === "pending" || p.status === "approved")
+      .reduce((sum, p) => sum + p.amountCents, 0),
+    paidEarningsCents: payouts.filter((p) => p.status === "paid").reduce((sum, p) => sum + p.amountCents, 0),
     openJobsCount: openJobs.length,
   };
 }
 
-// Re-export status helpers used by UI labels
+// ─────────────────────────────────────────────────────────────────────
+// Labels
+// ─────────────────────────────────────────────────────────────────────
+
 export const STATUS_LABEL: Record<ReferralStatus, string> = {
   submitted: "Submitted",
-  duplicate_review: "Duplicate review",
+  duplicate_review: "Under review",
   new: "New",
   contacted: "Contacted",
   qualified: "Qualified",
@@ -582,14 +587,8 @@ export const PAYOUT_STATUS_LABEL: Record<PayoutStatus, string> = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// ADMIN-ONLY queries + mutations (Batch 4)
-//
-// These functions are called from /admin/* pages and routes. In a real
-// Supabase build they'd be enforced by RLS (see 0002_rls.sql); in V1
-// the AppShell guards the routes with profile.role === "admin".
+// ADMIN — RLS only returns everything to admins; pages also check role.
 // ═══════════════════════════════════════════════════════════════════
-
-// ─── enriched list queries ────────────────────────────────────────
 
 export interface ReferralEnriched {
   referral: Referral;
@@ -598,12 +597,17 @@ export interface ReferralEnriched {
 }
 
 export async function listAllReferralsEnriched(): Promise<ReferralEnriched[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("referrals")
+    .select("*, candidate:candidates(*), referrer:profiles(*)")
+    .order("created_at", { ascending: false });
+  if (error) fail("listAllReferralsEnriched", error);
   const out: ReferralEnriched[] = [];
-  for (const r of [...db.referrals].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))) {
-    const candidate = await getCandidateById(r.candidateId);
+  for (const row of data ?? []) {
+    const candidate = one(row.candidate, toCandidate);
     if (!candidate) continue;
-    const referrer = await getProfileById(r.referrerUserId);
-    out.push({ referral: r, candidate, referrer });
+    out.push({ referral: toReferral(row), candidate, referrer: one(row.referrer, toProfile) });
   }
   return out;
 }
@@ -616,13 +620,22 @@ export interface ApplicationEnriched {
 }
 
 export async function listAllApplicationsEnriched(): Promise<ApplicationEnriched[]> {
+  const sb = await db();
+  const { data, error } = await sb
+    .from("job_applications")
+    .select("*, job:jobs(*), candidate:candidates(*), applicant:profiles(*)")
+    .order("created_at", { ascending: false });
+  if (error) fail("listAllApplicationsEnriched", error);
   const out: ApplicationEnriched[] = [];
-  for (const a of [...db.jobApplications].sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1))) {
-    const job = await getJobById(a.jobId);
+  for (const row of data ?? []) {
+    const job = one(row.job, toJob);
     if (!job) continue;
-    const candidate = await getCandidateById(a.candidateId);
-    const applicant = a.applicantUserId ? await getProfileById(a.applicantUserId) : null;
-    out.push({ application: a, job, candidate, applicant });
+    out.push({
+      application: toApplication(row),
+      job,
+      candidate: one(row.candidate, toCandidate),
+      applicant: one(row.applicant, toProfile),
+    });
   }
   return out;
 }
@@ -635,54 +648,72 @@ export interface AdminPayoutEnriched {
 }
 
 export async function listAllPayoutsEnriched(): Promise<AdminPayoutEnriched[]> {
-  const out: AdminPayoutEnriched[] = [];
-  for (const p of [...db.payouts].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))) {
-    const candidate = await getCandidateById(p.candidateId);
-    const referrer = await getProfileById(p.referrerUserId);
-    const job = p.jobId ? await getJobById(p.jobId) : null;
-    out.push({ payout: p, candidate, referrer, job });
-  }
-  return out;
+  const sb = await db();
+  const { data, error } = await sb
+    .from("payouts")
+    .select("*, candidate:candidates(*), referrer:profiles(*), job:jobs(*)")
+    .order("created_at", { ascending: false });
+  if (error) fail("listAllPayoutsEnriched", error);
+  return (data ?? []).map((row) => ({
+    payout: toPayout(row),
+    candidate: one(row.candidate, toCandidate),
+    referrer: one(row.referrer, toProfile),
+    job: one(row.job, toJob),
+  }));
 }
 
 export async function listAllProfiles(): Promise<Profile[]> {
-  return [...db.profiles].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const sb = await db();
+  const { data, error } = await sb.from("profiles").select("*").order("created_at", { ascending: false });
+  if (error) fail("listAllProfiles", error);
+  return (data ?? []).map(toProfile);
 }
 
-// ─── candidate search + filter ────────────────────────────────────
+export async function listAdminAllowlist(): Promise<string[]> {
+  const sb = await db();
+  const { data, error } = await sb.from("admin_allowlist").select("email").order("email");
+  if (error) return [];
+  return (data ?? []).map((r) => r.email as string);
+}
+
+// ─── candidate search ────────────────────────────────────────────────
 
 export interface CandidateFilter {
-  search?: string; // matches first/last name, email, phone, current title
+  search?: string;
   status?: ReferralStatus | "all";
   source?: CandidateSource | "all";
   trade?: string | "all";
 }
 
 export async function searchCandidates(filter: CandidateFilter): Promise<Candidate[]> {
-  const q = (filter.search ?? "").trim().toLowerCase();
-  return db.candidates
-    .filter((c) => {
-      if (filter.status && filter.status !== "all" && c.status !== filter.status) return false;
-      if (filter.source && filter.source !== "all" && c.sourceType !== filter.source) return false;
-      if (filter.trade && filter.trade !== "all" && c.trade !== filter.trade) return false;
-      if (!q) return true;
-      const hay = [
-        c.firstName,
-        c.lastName,
-        c.email ?? "",
-        c.phone ?? "",
-        c.currentJobTitle ?? "",
-        c.locationCity ?? "",
-        c.locationState ?? "",
+  const sb = await db();
+  let q = sb.from("candidates").select("*").order("created_at", { ascending: false }).limit(1000);
+  if (filter.status && filter.status !== "all") q = q.eq("status", filter.status);
+  if (filter.source && filter.source !== "all") q = q.eq("source_type", filter.source);
+  if (filter.trade && filter.trade !== "all") q = q.eq("trade", filter.trade);
+  const term = (filter.search ?? "").replace(/[%,()*\\]/g, " ").trim();
+  if (term) {
+    const like = `%${term}%`;
+    q = q.or(
+      [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "current_job_title",
+        "location_city",
+        "location_state",
       ]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    })
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+        .map((col) => `${col}.ilike.${like}`)
+        .join(",")
+    );
+  }
+  const { data, error } = await q;
+  if (error) fail("searchCandidates", error);
+  return (data ?? []).map(toCandidate);
 }
 
-// ─── candidate full context (admin candidate detail) ──────────────
+// ─── candidate full context ──────────────────────────────────────────
 
 export interface CandidateFullContext {
   candidate: Candidate;
@@ -691,56 +722,52 @@ export interface CandidateFullContext {
   jobReferrals: { jobReferral: JobReferral; job: Job | null }[];
   applications: { application: JobApplication; job: Job | null }[];
   payouts: Payout[];
+  internalNotes: CandidateNote[];
   activity: ActivityLog[];
 }
 
-export async function getCandidateFullContext(
-  candidateId: string
-): Promise<CandidateFullContext | null> {
-  const candidate = await getCandidateById(candidateId);
-  if (!candidate) return null;
+export async function getCandidateFullContext(candidateId: string): Promise<CandidateFullContext | null> {
+  if (!isUuid(candidateId)) return null;
+  const sb = await db();
+  const { data: c, error } = await sb.from("candidates").select("*").eq("id", candidateId).maybeSingle();
+  if (error) fail("getCandidateFullContext", error);
+  if (!c) return null;
+  const candidate = toCandidate(c);
 
-  const primaryReferrer = candidate.primaryReferrerUserId
-    ? await getProfileById(candidate.primaryReferrerUserId)
-    : null;
+  const [primaryReferrer, refs, jrs, apps, pays, notes] = await Promise.all([
+    candidate.primaryReferrerUserId ? getProfileById(candidate.primaryReferrerUserId) : Promise.resolve(null),
+    sb.from("referrals").select("*, referrer:profiles(*)").eq("candidate_id", candidateId).order("created_at"),
+    sb.from("job_referrals").select("*, job:jobs(*)").eq("candidate_id", candidateId).order("created_at"),
+    sb.from("job_applications").select("*, job:jobs(*)").eq("candidate_id", candidateId).order("created_at"),
+    sb.from("payouts").select("*").eq("candidate_id", candidateId).order("created_at"),
+    sb.from("candidate_notes").select("*").eq("candidate_id", candidateId).order("created_at", { ascending: false }),
+  ]);
 
-  const refRows = db.referrals.filter((r) => r.candidateId === candidateId);
-  const referrals = await Promise.all(
-    refRows.map(async (r) => ({
-      referral: r,
-      referrer: await getProfileById(r.referrerUserId),
-    }))
-  );
+  const referrals = (refs.data ?? []).map((row) => ({
+    referral: toReferral(row),
+    referrer: one(row.referrer, toProfile),
+  }));
+  const jobReferrals = (jrs.data ?? []).map((row) => ({
+    jobReferral: toJobReferral(row),
+    job: one(row.job, toJob),
+  }));
+  const applications = (apps.data ?? []).map((row) => ({
+    application: toApplication(row),
+    job: one(row.job, toJob),
+  }));
+  const payouts = (pays.data ?? []).map(toPayout);
 
-  const jrRows = db.jobReferrals.filter((jr) => jr.candidateId === candidateId);
-  const jobReferrals = await Promise.all(
-    jrRows.map(async (jr) => ({
-      jobReferral: jr,
-      job: await getJobById(jr.jobId),
-    }))
-  );
-
-  const appRows = db.jobApplications.filter((a) => a.candidateId === candidateId);
-  const applications = await Promise.all(
-    appRows.map(async (a) => ({
-      application: a,
-      job: await getJobById(a.jobId),
-    }))
-  );
-
-  const payouts = db.payouts.filter((p) => p.candidateId === candidateId);
-
-  const activity = db.activityLogs
-    .filter(
-      (l) =>
-        (l.entityType === "candidate" && l.entityId === candidateId) ||
-        (l.entityType === "referral" &&
-          refRows.some((r) => r.id === l.entityId)) ||
-        (l.entityType === "job_application" &&
-          appRows.some((a) => a.id === l.entityId)) ||
-        (l.entityType === "payout" && payouts.some((p) => p.id === l.entityId))
-    )
-    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  const ids = [
+    candidateId,
+    ...referrals.map((r) => r.referral.id),
+    ...applications.map((a) => a.application.id),
+    ...payouts.map((p) => p.id),
+  ];
+  const { data: acts } = await sb
+    .from("activity_logs")
+    .select("*")
+    .in("entity_id", ids)
+    .order("created_at", { ascending: true });
 
   return {
     candidate,
@@ -749,162 +776,159 @@ export async function getCandidateFullContext(
     jobReferrals,
     applications,
     payouts,
-    activity,
+    internalNotes: (notes.data ?? []).map(toCandidateNote),
+    activity: (acts ?? []).map(toActivity),
   };
 }
-
-// ─── duplicate review queue ───────────────────────────────────────
 
 export async function listDuplicateReferralAttempts(): Promise<ReferralEnriched[]> {
   const all = await listAllReferralsEnriched();
   return all.filter(
-    (r) =>
-      r.referral.duplicateStatus === "pending_review" ||
-      r.referral.status === "duplicate_review"
+    (r) => r.referral.duplicateStatus === "pending_review" || r.referral.status === "duplicate_review"
   );
 }
 
-// ─── admin mutations ──────────────────────────────────────────────
+// ─── admin mutations ─────────────────────────────────────────────────
 
 export async function updateCandidateStatus(
   candidateId: string,
   status: ReferralStatus,
   actorId: string,
-  notes?: string
-): Promise<Candidate> {
-  const c = db.candidates.find((c) => c.id === candidateId);
-  if (!c) throw new Error("Candidate not found");
-  const previous = c.status;
-  c.status = status;
-  c.updatedAt = nowIso();
-  // Mirror onto the primary referral row so the partner sees it on their list
-  const primary = db.referrals.find((r) => r.candidateId === candidateId && r.isPrimary);
-  if (primary) {
-    primary.status = status;
-    primary.updatedAt = nowIso();
-  }
+  note?: string
+): Promise<void> {
+  const sb = await db();
+  const { data: before } = await sb.from("candidates").select("status").eq("id", candidateId).maybeSingle();
+  const { error } = await sb.from("candidates").update({ status }).eq("id", candidateId);
+  if (error) fail("updateCandidateStatus", error);
+
+  // Mirror onto the primary referral + job submissions so partners see it.
+  await sb.from("referrals").update({ status }).eq("candidate_id", candidateId).eq("is_primary", true);
+  await sb
+    .from("job_referrals")
+    .update({ status })
+    .eq("candidate_id", candidateId)
+    .neq("status", "duplicate_review");
+
   await logActivity({
     actorUserId: actorId,
     entityType: "candidate",
     entityId: candidateId,
     action: "status_changed",
-    metadata: { from: previous, to: status, notes: notes ?? null },
+    metadata: { from: before?.status ?? null, to: status },
   });
-  return c;
+  if (note && note.trim()) await appendCandidateNote(candidateId, actorId, `Status → ${STATUS_LABEL[status]}: ${note.trim()}`);
 }
 
-export async function appendCandidateNote(
-  candidateId: string,
-  actorId: string,
-  note: string
-): Promise<Candidate> {
-  const c = db.candidates.find((c) => c.id === candidateId);
-  if (!c) throw new Error("Candidate not found");
-  const stamped = `[${new Date().toLocaleString("en-US")}] ${note}`;
-  c.notes = c.notes ? `${c.notes}\n\n${stamped}` : stamped;
-  c.updatedAt = nowIso();
+export async function appendCandidateNote(candidateId: string, actorId: string, note: string): Promise<void> {
+  const sb = await db();
+  const { error } = await sb
+    .from("candidate_notes")
+    .insert({ candidate_id: candidateId, author_user_id: actorId, body: note.trim() });
+  if (error) fail("appendCandidateNote", error);
   await logActivity({
     actorUserId: actorId,
     entityType: "candidate",
     entityId: candidateId,
     action: "note_added",
-    metadata: { note },
   });
-  return c;
 }
 
 export async function reassignPrimaryReferrer(
   candidateId: string,
   newReferrerProfileId: string,
   actorId: string
-): Promise<Candidate> {
-  const c = db.candidates.find((c) => c.id === candidateId);
-  if (!c) throw new Error("Candidate not found");
-  const previousReferrerId = c.primaryReferrerUserId;
-  c.primaryReferrerUserId = newReferrerProfileId;
-  c.updatedAt = nowIso();
-  // Update referrals: old primary → not primary, new primary → primary
-  for (const r of db.referrals.filter((r) => r.candidateId === candidateId)) {
-    if (r.referrerUserId === newReferrerProfileId) {
-      r.isPrimary = true;
-      r.duplicateStatus = "overridden_primary";
-    } else {
-      r.isPrimary = false;
-    }
-    r.updatedAt = nowIso();
-  }
+): Promise<void> {
+  const sb = await db();
+  const { data: before } = await sb
+    .from("candidates")
+    .select("primary_referrer_user_id")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  // Clear the old primary first (one-primary-per-candidate unique index).
+  let res = await sb.from("referrals").update({ is_primary: false }).eq("candidate_id", candidateId);
+  if (res.error) fail("reassignPrimaryReferrer", res.error);
+  res = await sb
+    .from("referrals")
+    .update({ is_primary: true, duplicate_status: "overridden_primary" })
+    .eq("candidate_id", candidateId)
+    .eq("referrer_user_id", newReferrerProfileId);
+  if (res.error) fail("reassignPrimaryReferrer", res.error);
+  res = await sb
+    .from("candidates")
+    .update({ primary_referrer_user_id: newReferrerProfileId })
+    .eq("id", candidateId);
+  if (res.error) fail("reassignPrimaryReferrer", res.error);
+  await sb
+    .from("payouts")
+    .update({ referrer_user_id: newReferrerProfileId })
+    .eq("candidate_id", candidateId)
+    .in("status", ["pending", "approved"]);
+
   await logActivity({
     actorUserId: actorId,
     entityType: "candidate",
     entityId: candidateId,
     action: "primary_referrer_reassigned",
-    metadata: { from: previousReferrerId, to: newReferrerProfileId },
+    metadata: { from: before?.primary_referrer_user_id ?? null, to: newReferrerProfileId },
   });
-  return c;
 }
 
 export async function updateApplicationStatus(
   applicationId: string,
   status: ApplicationStatus,
   actorId: string
-): Promise<JobApplication> {
-  const a = db.jobApplications.find((a) => a.id === applicationId);
-  if (!a) throw new Error("Application not found");
-  const previous = a.status;
-  a.status = status;
-  a.updatedAt = nowIso();
+): Promise<void> {
+  const sb = await db();
+  const { data: before } = await sb.from("job_applications").select("status").eq("id", applicationId).maybeSingle();
+  const { error } = await sb.from("job_applications").update({ status }).eq("id", applicationId);
+  if (error) fail("updateApplicationStatus", error);
   await logActivity({
     actorUserId: actorId,
     entityType: "job_application",
     entityId: applicationId,
     action: "status_changed",
-    metadata: { from: previous, to: status },
+    metadata: { from: before?.status ?? null, to: status },
   });
-  return a;
 }
 
 export async function updatePayoutStatus(
   payoutId: string,
   status: PayoutStatus,
   actorId: string,
-  notes?: string
-): Promise<Payout> {
-  const p = db.payouts.find((p) => p.id === payoutId);
-  if (!p) throw new Error("Payout not found");
-  const previous = p.status;
-  p.status = status;
-  if (status === "approved" && !p.approvedAt) p.approvedAt = nowIso();
-  if (status === "paid" && !p.paidAt) p.paidAt = nowIso();
-  if (notes) p.notes = notes;
-  p.updatedAt = nowIso();
+  opts: { notes?: string; amountCents?: number | null } = {}
+): Promise<void> {
+  const sb = await db();
+  const { data: before } = await sb
+    .from("payouts")
+    .select("status, approved_at, paid_at, amount_cents")
+    .eq("id", payoutId)
+    .maybeSingle();
+  const patch: Record<string, unknown> = { status };
+  if (status === "approved" && !before?.approved_at) patch.approved_at = new Date().toISOString();
+  if (status === "paid" && !before?.paid_at) patch.paid_at = new Date().toISOString();
+  if (opts.notes && opts.notes.trim()) patch.notes = opts.notes.trim();
+  if (opts.amountCents != null && opts.amountCents >= 0) patch.amount_cents = opts.amountCents;
+  const { error } = await sb.from("payouts").update(patch).eq("id", payoutId);
+  if (error) fail("updatePayoutStatus", error);
   await logActivity({
     actorUserId: actorId,
     entityType: "payout",
     entityId: payoutId,
     action: "status_changed",
-    metadata: { from: previous, to: status, notes: notes ?? null },
+    metadata: {
+      from: before?.status ?? null,
+      to: status,
+      amount_cents: opts.amountCents ?? before?.amount_cents ?? null,
+    },
   });
-  return p;
 }
 
-export async function updateJobStatus(
-  jobId: string,
-  status: JobStatus,
-  actorId: string
-): Promise<Job> {
-  const j = db.jobs.find((j) => j.id === jobId);
-  if (!j) throw new Error("Job not found");
-  const previous = j.status;
-  j.status = status;
-  j.updatedAt = nowIso();
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "job",
-    entityId: jobId,
-    action: "status_changed",
-    metadata: { from: previous, to: status },
-  });
-  return j;
+export async function updateJobStatus(jobId: string, status: JobStatus, actorId: string): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.from("jobs").update({ status }).eq("id", jobId);
+  if (error) fail("updateJobStatus", error);
+  await logActivity({ actorUserId: actorId, entityType: "job", entityId: jobId, action: "status_changed", metadata: { to: status } });
 }
 
 export interface JobInput {
@@ -929,61 +953,49 @@ export interface JobInput {
   internalNotes?: string | null;
 }
 
-export async function createJob(input: JobInput, actorId: string): Promise<Job> {
-  const job: Job = {
-    id: generateId("j"),
-    title: input.title,
-    companyName: input.companyName ?? null,
-    isCompanyPublic: input.isCompanyPublic ?? false,
-    locationCity: input.locationCity ?? null,
-    locationState: input.locationState ?? null,
-    jobType: input.jobType ?? null,
-    trade: input.trade ?? null,
-    description: input.description ?? null,
-    requirements: input.requirements ?? null,
-    compensationMin: input.compensationMin ?? null,
-    compensationMax: input.compensationMax ?? null,
-    compensationDisplay: input.compensationDisplay ?? null,
-    startDate: input.startDate ?? null,
-    urgency: input.urgency ?? "normal",
-    status: input.status ?? "draft",
-    isPublic: input.isPublic ?? false,
-    referralPayoutAmount: input.referralPayoutAmount ?? null,
-    referralPayoutDisplay: input.referralPayoutDisplay ?? null,
-    internalNotes: input.internalNotes ?? null,
-    externalCrmId: null,
-    metadata: {},
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+function jobToRow(input: Partial<JobInput>): Record<string, unknown> {
+  const map: Record<keyof JobInput, string> = {
+    title: "title",
+    companyName: "company_name",
+    isCompanyPublic: "is_company_public",
+    locationCity: "location_city",
+    locationState: "location_state",
+    jobType: "job_type",
+    trade: "trade",
+    description: "description",
+    requirements: "requirements",
+    compensationMin: "compensation_min",
+    compensationMax: "compensation_max",
+    compensationDisplay: "compensation_display",
+    startDate: "start_date",
+    urgency: "urgency",
+    status: "status",
+    isPublic: "is_public",
+    referralPayoutAmount: "referral_payout_amount",
+    referralPayoutDisplay: "referral_payout_display",
+    internalNotes: "internal_notes",
   };
-  db.jobs.push(job);
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "job",
-    entityId: job.id,
-    action: "created",
-    metadata: { title: job.title },
-  });
-  return job;
+  const row: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(input)) {
+    const col = map[k as keyof JobInput];
+    if (col && v !== undefined) row[col] = v;
+  }
+  return row;
 }
 
-export async function updateJob(
-  jobId: string,
-  input: Partial<JobInput>,
-  actorId: string
-): Promise<Job> {
-  const j = db.jobs.find((j) => j.id === jobId);
-  if (!j) throw new Error("Job not found");
-  Object.assign(j, input);
-  j.updatedAt = nowIso();
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "job",
-    entityId: jobId,
-    action: "updated",
-    metadata: { fields: Object.keys(input) },
-  });
-  return j;
+export async function createJob(input: JobInput, actorId: string): Promise<Job> {
+  const sb = await db();
+  const { data, error } = await sb.from("jobs").insert(jobToRow(input)).select("*").single();
+  if (error) fail("createJob", error);
+  await logActivity({ actorUserId: actorId, entityType: "job", entityId: data.id, action: "created", metadata: { title: input.title } });
+  return toJob(data);
+}
+
+export async function updateJob(jobId: string, input: Partial<JobInput>, actorId: string): Promise<void> {
+  const sb = await db();
+  const { error } = await sb.from("jobs").update(jobToRow(input)).eq("id", jobId);
+  if (error) fail("updateJob", error);
+  await logActivity({ actorUserId: actorId, entityType: "job", entityId: jobId, action: "updated" });
 }
 
 export async function updateCompanyLeadStatus(
@@ -991,28 +1003,16 @@ export async function updateCompanyLeadStatus(
   status: CompanyLeadStatus,
   actorId: string,
   notes?: string
-): Promise<CompanyLead> {
-  const l = db.companyLeads.find((l) => l.id === leadId);
-  if (!l) throw new Error("Lead not found");
-  const previous = l.status;
-  l.status = status;
-  if (notes) l.notes = notes;
-  l.updatedAt = nowIso();
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "company_lead",
-    entityId: leadId,
-    action: "status_changed",
-    metadata: { from: previous, to: status, notes: notes ?? null },
-  });
-  return l;
+): Promise<void> {
+  const sb = await db();
+  const patch: Record<string, unknown> = { status };
+  if (notes !== undefined) patch.notes = notes.trim() || null;
+  const { error } = await sb.from("company_leads").update(patch).eq("id", leadId);
+  if (error) fail("updateCompanyLeadStatus", error);
+  await logActivity({ actorUserId: actorId, entityType: "company_lead", entityId: leadId, action: "status_changed", metadata: { to: status } });
 }
 
-export async function getCompanyLeadById(id: string): Promise<CompanyLead | null> {
-  return db.companyLeads.find((l) => l.id === id) ?? null;
-}
-
-// ─── admin overview aggregates ─────────────────────────────────────
+// ─── admin overview ──────────────────────────────────────────────────
 
 export interface AdminDashboardStats {
   candidates: number;
@@ -1032,51 +1032,75 @@ export interface AdminDashboardStats {
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const sinceWeek = (iso: string) => new Date(iso).getTime() >= weekAgo;
+  const sb = await db();
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const count = async (table: string, f?: (q: any) => any) => {
+    let q = sb.from(table).select("id", { count: "exact", head: true });
+    if (f) q = f(q);
+    const { count: n } = await q;
+    return n ?? 0;
+  };
 
-  const candidates = db.candidates;
-  const referrals = db.referrals;
-  const applications = db.jobApplications;
-  const leads = db.companyLeads;
-  const payouts = db.payouts;
-  const jobs = db.jobs;
+  const [
+    candidates,
+    candidatesAddedThisWeek,
+    referrals,
+    referralsThisWeek,
+    placements,
+    jobsOpen,
+    applications,
+    newApplicationsThisWeek,
+    companyLeadsNew,
+    duplicateReviewCount,
+    payoutRows,
+  ] = await Promise.all([
+    count("candidates"),
+    count("candidates", (q) => q.gte("created_at", weekAgo)),
+    count("referrals"),
+    count("referrals", (q) => q.gte("created_at", weekAgo)),
+    count("candidates", (q) => q.in("status", PLACED)),
+    count("jobs", (q) => q.eq("status", "open")),
+    count("job_applications"),
+    count("job_applications", (q) => q.gte("created_at", weekAgo)),
+    count("company_leads", (q) => q.eq("status", "new")),
+    count("referrals", (q) => q.eq("duplicate_status", "pending_review")),
+    sb.from("payouts").select("status, amount_cents"),
+  ]);
 
-  const placedStatuses: ReferralStatus[] = [
-    "placed",
-    "payout_pending",
-    "payout_approved",
-    "payout_paid",
-  ];
+  const pays = (payoutRows.data ?? []) as { status: PayoutStatus; amount_cents: number }[];
+  const sum = (s: PayoutStatus) => pays.filter((p) => p.status === s).reduce((a, p) => a + p.amount_cents, 0);
 
   return {
-    candidates: candidates.length,
-    candidatesAddedThisWeek: candidates.filter((c) => sinceWeek(c.createdAt)).length,
-    referrals: referrals.length,
-    referralsThisWeek: referrals.filter((r) => sinceWeek(r.createdAt)).length,
-    placements: candidates.filter((c) => placedStatuses.includes(c.status)).length,
-    jobsOpen: jobs.filter((j) => j.status === "open").length,
-    applications: applications.length,
-    newApplicationsThisWeek: applications.filter((a) => sinceWeek(a.createdAt)).length,
-    companyLeadsNew: leads.filter((l) => l.status === "new").length,
-    duplicateReviewCount: referrals.filter(
-      (r) => r.duplicateStatus === "pending_review" || r.status === "duplicate_review"
-    ).length,
-    payoutsPending: payouts.filter((p) => p.status === "pending").length,
-    payoutsPendingCents: payouts
-      .filter((p) => p.status === "pending")
-      .reduce((s, p) => s + p.amountCents, 0),
-    payoutsApprovedCents: payouts
-      .filter((p) => p.status === "approved")
-      .reduce((s, p) => s + p.amountCents, 0),
-    payoutsPaidCents: payouts
-      .filter((p) => p.status === "paid")
-      .reduce((s, p) => s + p.amountCents, 0),
+    candidates,
+    candidatesAddedThisWeek,
+    referrals,
+    referralsThisWeek,
+    placements,
+    jobsOpen,
+    applications,
+    newApplicationsThisWeek,
+    companyLeadsNew,
+    duplicateReviewCount,
+    payoutsPending: pays.filter((p) => p.status === "pending").length,
+    payoutsPendingCents: sum("pending"),
+    payoutsApprovedCents: sum("approved"),
+    payoutsPaidCents: sum("paid"),
   };
 }
 
 export async function listRecentActivity(limit = 20): Promise<ActivityLog[]> {
-  return [...db.activityLogs]
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-    .slice(0, limit);
+  const sb = await db();
+  const { data, error } = await sb
+    .from("activity_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) fail("listRecentActivity", error);
+  return (data ?? []).map(toActivity);
+}
+
+// ─── utils ───────────────────────────────────────────────────────────
+
+function isUuid(v: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 }

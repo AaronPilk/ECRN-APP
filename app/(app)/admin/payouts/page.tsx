@@ -4,14 +4,14 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PayoutStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listAllPayoutsEnriched } from "@/lib/data/repository";
 import { updatePayoutStatusAction } from "../actions";
 import type { PayoutStatus } from "@/types";
 import { Download } from "lucide-react";
 
 interface PageProps {
-  searchParams?: { status?: PayoutStatus | "all" };
+  searchParams: Promise<{ status?: PayoutStatus | "all" }>;
 }
 
 const FILTERS: { key: PayoutStatus | "all"; label: string }[] = [
@@ -23,7 +23,8 @@ const FILTERS: { key: PayoutStatus | "all"; label: string }[] = [
   { key: "disputed", label: "Disputed" },
 ];
 
-export default async function AdminPayoutsPage({ searchParams }: PageProps) {
+export default async function AdminPayoutsPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 
@@ -140,6 +141,18 @@ export default async function AdminPayoutsPage({ searchParams }: PageProps) {
                     <option value="denied">Denied</option>
                     <option value="disputed">Disputed</option>
                   </select>
+                  <div className="relative sm:w-32">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <Input
+                      name="amountDollars"
+                      type="number"
+                      min="0"
+                      step="50"
+                      defaultValue={payout.amountCents / 100}
+                      aria-label="Payout amount in dollars"
+                      className="h-9 text-sm pl-6"
+                    />
+                  </div>
                   <Input
                     name="notes"
                     placeholder="Optional note (e.g. payment method)"

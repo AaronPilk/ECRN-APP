@@ -2,14 +2,18 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
 import { InviteLink } from "@/components/profile/InviteLink";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { countInvitedBy } from "@/lib/data/repository";
+import { headers } from "next/headers";
 
 export default async function ProfilePage() {
   const profile = (await getCurrentProfile())!;
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.NODE_ENV === "production" ? "https://goecrn.com" : "http://localhost:3000");
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${proto}://${host}` : "https://goecrn.com");
   const inviteUrl = `${appUrl}/r/${profile.id}`;
+  const invitedCount = profile.role === "referral_partner" ? await countInvitedBy(profile.id) : 0;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
@@ -44,6 +48,11 @@ export default async function ProfilePage() {
                 Share your personal invite link. Anyone who signs up through it is connected back
                 to you.
               </p>
+              {invitedCount > 0 && (
+                <p className="text-sm font-medium text-emerald-700 mb-4">
+                  {invitedCount} {invitedCount === 1 ? "person has" : "people have"} joined through your link.
+                </p>
+              )}
               <InviteLink inviteUrl={inviteUrl} />
             </CardContent>
           </Card>
@@ -52,7 +61,7 @@ export default async function ProfilePage() {
 
       <AddToHomeScreenGuide persistent />
 
-      <form action="/api/logout" method="get">
+      <form action="/api/logout" method="post">
         <Button type="submit" variant="ghost" size="sm">
           Log out
         </Button>

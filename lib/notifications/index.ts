@@ -3,7 +3,6 @@ import type {
   NotificationEvent,
   Profile,
 } from "@/types";
-import { db, generateId, nowIso } from "@/lib/data/mock-store";
 import { sendEmail } from "./providers/email";
 import { sendSms } from "./providers/sms";
 import { logToConsole } from "./providers/console";
@@ -37,7 +36,7 @@ export async function dispatchNotification(
   input: NotificationInput
 ): Promise<NotificationEvent> {
   const event: NotificationEvent = {
-    id: generateId("ne"),
+    id: crypto.randomUUID(),
     userId: "id" in input.recipient && input.recipient.id ? input.recipient.id : null,
     eventType: input.eventType,
     channel: input.channel,
@@ -49,9 +48,9 @@ export async function dispatchNotification(
     },
     providerId: null,
     error: null,
-    createdAt: nowIso(),
+    createdAt: new Date().toISOString(),
   };
-  db.notificationEvents.push(event);
+  // TODO (notifications batch): persist to notification_events once a provider is live.
 
   try {
     let providerId: string | null = null;

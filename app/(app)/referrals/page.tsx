@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listReferralsByReferrerEnriched } from "@/lib/data/repository";
 import { Plus, Users } from "lucide-react";
 
 interface PageProps {
-  searchParams?: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }
 
 const FILTERS = [
@@ -17,7 +17,8 @@ const FILTERS = [
   { key: "placed", label: "Placed" },
 ] as const;
 
-export default async function ReferralsPage({ searchParams }: PageProps) {
+export default async function ReferralsPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   const items = await listReferralsByReferrerEnriched(profile.id);
 
@@ -112,7 +113,7 @@ export default async function ReferralsPage({ searchParams }: PageProps) {
                         <ReferralStatusBadge status={candidate.status} />
                         {!referral.isPrimary && (
                           <span className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">
-                            Duplicate attempt
+                            Under review
                           </span>
                         )}
                       </div>

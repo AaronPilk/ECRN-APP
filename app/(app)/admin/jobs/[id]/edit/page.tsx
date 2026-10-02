@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { JobForm } from "@/components/admin/JobForm";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { getJobById } from "@/lib/data/repository";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default async function EditJobPage({ params }: PageProps) {
+export default async function EditJobPage(props: PageProps) {
+  const params = await props.params;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

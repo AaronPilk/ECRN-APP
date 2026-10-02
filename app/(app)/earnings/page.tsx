@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PayoutStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listPayoutsByReferrerEnriched } from "@/lib/data/repository";
 import { DollarSign, Clock, CheckCircle2 } from "lucide-react";
 

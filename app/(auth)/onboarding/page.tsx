@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { FormMessage } from "@/components/ui/FormMessage";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { setRoleAction } from "../actions";
 
 const ROLE_OPTIONS = [
@@ -26,35 +25,33 @@ const ROLE_OPTIONS = [
   },
 ] as const;
 
-export default async function OnboardingPage() {
-  const maybeProfile = await getCurrentProfile();
-  if (!maybeProfile) redirect("/login");
-  const profile = maybeProfile!;
+interface PageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function OnboardingPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const profile = await getCurrentProfile();
+  if (!profile) redirect("/login?next=/onboarding");
+  if (profile.role === "admin") redirect("/admin");
 
   return (
     <div className="space-y-4 animate-slide-up">
       <div className="text-center mb-2">
-        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-ecrn-green">
-          Welcome to ECRN
+        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-emerald-700">
+          Welcome to ECRN{profile.firstName ? `, ${profile.firstName}` : ""}
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ecrn-ink">
-          What brings you here?
-        </h1>
-        <p className="mt-2 text-slate-500 text-[15px]">
-          Pick one — you can change this later.
-        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ecrn-ink">What brings you here?</h1>
+        <p className="mt-2 text-slate-500 text-[15px]">Pick one — you can change this later.</p>
       </div>
+
+      <FormMessage error={sp.error} />
 
       <div className="space-y-3">
         {ROLE_OPTIONS.map((opt) => (
           <form key={opt.role} action={setRoleAction}>
-            <input type="hidden" name="profileId" value={profile.id} />
             <input type="hidden" name="role" value={opt.role} />
-            <button
-              type="submit"
-              className="w-full text-left group"
-              aria-label={opt.title}
-            >
+            <button type="submit" className="w-full text-left group" aria-label={opt.title}>
               <Card className="p-5 hover:shadow-float hover:border-ecrn-black/40 transition-all">
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 shrink-0 rounded-2xl bg-ecrn-black text-white grid place-items-center text-lg font-semibold">
@@ -73,11 +70,10 @@ export default async function OnboardingPage() {
       </div>
 
       <p className="text-center text-xs text-slate-400 pt-2">
-        Logged in as <span className="font-medium text-slate-600">{profile.email}</span>{" "}
-        ·{" "}
-        <Link href="/api/logout" className="underline">
+        Logged in as <span className="font-medium text-slate-600">{profile.email}</span> ·{" "}
+        <a href="/api/logout" className="underline">
           not you?
-        </Link>
+        </a>
       </p>
     </div>
   );

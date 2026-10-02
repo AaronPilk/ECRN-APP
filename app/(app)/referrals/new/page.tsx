@@ -3,11 +3,12 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { FormMessage } from "@/components/ui/FormMessage";
 import { getJobById } from "@/lib/data/repository";
 import { submitReferralAction } from "../actions";
 
 interface PageProps {
-  searchParams?: { jobId?: string };
+  searchParams: Promise<{ jobId?: string; error?: string }>;
 }
 
 const TRADE_OPTIONS = [
@@ -19,7 +20,8 @@ const TRADE_OPTIONS = [
   "other",
 ];
 
-export default async function NewReferralPage({ searchParams }: PageProps) {
+export default async function NewReferralPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const jobId = searchParams?.jobId;
   const job = jobId ? await getJobById(jobId) : null;
 
@@ -64,6 +66,8 @@ export default async function NewReferralPage({ searchParams }: PageProps) {
           </div>
         </Card>
       )}
+
+      <FormMessage error={searchParams.error} />
 
       <Card>
         <CardContent className="py-6">

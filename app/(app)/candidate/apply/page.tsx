@@ -4,15 +4,17 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { FormMessage } from "@/components/ui/FormMessage";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { getJobById } from "@/lib/data/repository";
 import { applyAction } from "../actions";
 
 interface PageProps {
-  searchParams?: { jobId?: string };
+  searchParams: Promise<{ jobId?: string; error?: string }>;
 }
 
-export default async function ApplyPage({ searchParams }: PageProps) {
+export default async function ApplyPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   const jobId = searchParams?.jobId;
   if (!jobId) {
@@ -50,6 +52,8 @@ export default async function ApplyPage({ searchParams }: PageProps) {
           {[job.locationCity, job.locationState].filter(Boolean).join(", ")}
         </p>
       </div>
+
+      <FormMessage error={searchParams.error} />
 
       <Card>
         <CardContent className="py-6">

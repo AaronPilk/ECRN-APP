@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   getReferralPartnerDashboardStats,
   listPublicJobs,

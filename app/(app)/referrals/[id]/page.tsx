@@ -3,10 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   getReferralWithCandidate,
-  listActivityForEntity,
+  listReferralTimeline,
   listJobReferralsByCandidate,
   listPayoutsByReferrer,
   STATUS_LABEL,
@@ -22,11 +22,13 @@ import {
 import type { ReferralStatus } from "@/types";
 
 interface PageProps {
-  params: { id: string };
-  searchParams?: { welcome?: string; duplicate?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ welcome?: string; duplicate?: string }>;
 }
 
-export default async function ReferralDetailPage({ params, searchParams }: PageProps) {
+export default async function ReferralDetailPage(props: PageProps) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   const data = await getReferralWithCandidate(params.id);
   if (!data) notFound();
@@ -37,9 +39,11 @@ export default async function ReferralDetailPage({ params, searchParams }: PageP
     redirect("/referrals");
   }
 
-  const activity = await listActivityForEntity("referral", referral.id);
-  const jobReferrals = await listJobReferralsByCandidate(candidate.id);
-  const allPayouts = await listPayoutsByReferrer(profile.id);
+  const [activity, jobReferrals, allPayouts] = await Promise.all([
+    listReferralTimeline(referral, candidate.id),
+    listJobReferralsByCandidate(candidate.id),
+    listPayoutsByReferrer(profile.id),
+  ]);
   const payouts = allPayouts.filter((p) => p.candidateId === candidate.id);
 
   return (
@@ -52,8 +56,7 @@ export default async function ReferralDetailPage({ params, searchParams }: PageP
       )}
       {searchParams?.duplicate && (
         <Banner variant="amber">
-          This contact may already be in our network. Your submission is logged as a duplicate
-          attempt — the original referrer keeps ownership unless our team reassigns it.
+          This contact may already exist in the ECRN network. Our team will review.
         </Banner>
       )}
 
@@ -74,7 +77,7 @@ export default async function ReferralDetailPage({ params, searchParams }: PageP
                 <ReferralStatusBadge status={candidate.status} />
                 {!referral.isPrimary && (
                   <span className="text-[10px] uppercase tracking-wide text-amber-700 font-medium px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
-                    Duplicate attempt
+                    Under review
                   </span>
                 )}
               </div>
@@ -140,14 +143,9 @@ export default async function ReferralDetailPage({ params, searchParams }: PageP
           )}
 
           <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row gap-2">
-            <Link href={`/referrals/new?candidateId=${candidate.id}`}>
-              <Button size="sm" variant="primary">
-                Refer to a job
-              </Button>
-            </Link>
             <Link href="/jobs">
-              <Button size="sm" variant="secondary">
-                Browse open jobs
+              <Button size="sm" variant="primary">
+                Refer them to an open job
               </Button>
             </Link>
           </div>

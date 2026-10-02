@@ -3,14 +3,14 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listAllJobs } from "@/lib/data/repository";
 import { Plus, Download } from "lucide-react";
 import { updateJobStatusAction } from "../actions";
 import type { JobStatus } from "@/types";
 
 interface PageProps {
-  searchParams?: { status?: JobStatus | "all"; saved?: string };
+  searchParams: Promise<{ status?: JobStatus | "all"; saved?: string }>;
 }
 
 const STATUS_FILTERS: { key: JobStatus | "all"; label: string }[] = [
@@ -30,7 +30,8 @@ const STATUS_VARIANT: Record<JobStatus, "neutral" | "blue" | "green" | "amber" |
   archived: "neutral",
 };
 
-export default async function AdminJobsPage({ searchParams }: PageProps) {
+export default async function AdminJobsPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

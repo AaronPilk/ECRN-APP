@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listAllProfiles } from "@/lib/data/repository";
 import type { UserRole } from "@/types";
 import { Download } from "lucide-react";
 
 interface PageProps {
-  searchParams?: { role?: UserRole | "all" };
+  searchParams: Promise<{ role?: UserRole | "all" }>;
 }
 
 const FILTERS: { key: UserRole | "all"; label: string }[] = [
@@ -27,7 +27,8 @@ const ROLE_VARIANT: Record<UserRole, "neutral" | "blue" | "green" | "dark" | "am
   company_contact: "amber",
 };
 
-export default async function AdminUsersPage({ searchParams }: PageProps) {
+export default async function AdminUsersPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listCompanyLeads } from "@/lib/data/repository";
 import type { CompanyLeadStatus } from "@/types";
 import { Download } from "lucide-react";
 
 interface PageProps {
-  searchParams?: { status?: CompanyLeadStatus | "all" };
+  searchParams: Promise<{ status?: CompanyLeadStatus | "all" }>;
 }
 
 const FILTERS: { key: CompanyLeadStatus | "all"; label: string }[] = [
@@ -32,7 +32,8 @@ const STATUS_VARIANT: Record<CompanyLeadStatus, "neutral" | "blue" | "green" | "
   archived: "neutral",
 };
 
-export default async function AdminCompaniesPage({ searchParams }: PageProps) {
+export default async function AdminCompaniesPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

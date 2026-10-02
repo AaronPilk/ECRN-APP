@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ApplicationStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   getApplicationById,
   getJobById,
@@ -11,11 +11,13 @@ import {
 } from "@/lib/data/repository";
 
 interface PageProps {
-  params: { id: string };
-  searchParams?: { welcome?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }
 
-export default async function ApplicationDetailPage({ params, searchParams }: PageProps) {
+export default async function ApplicationDetailPage(props: PageProps) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   const application = await getApplicationById(params.id);
   if (!application) notFound();

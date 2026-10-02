@@ -1,18 +1,18 @@
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/mock";
-import { getAdminEmails } from "@/lib/auth/admin-emails";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { listAdminAllowlist } from "@/lib/data/repository";
 import { isBullhornConfigured } from "@/lib/integrations/bullhorn";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/env";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default async function AdminSettingsPage() {
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 
-  const adminEmails = getAdminEmails();
-  const supabase = isSupabaseConfigured();
+  const adminEmails = await listAdminAllowlist();
+  const supabase = Boolean(SUPABASE_URL);
   const bullhorn = isBullhornConfigured();
   const sendgrid = Boolean(process.env.SENDGRID_API_KEY);
   const resend = Boolean(process.env.RESEND_API_KEY);
@@ -38,11 +38,9 @@ export default async function AdminSettingsPage() {
             Admin allowlist
           </h2>
           <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-            These emails are auto-promoted to <code>admin</code> on signup. Configured via{" "}
-            <code className="text-xs px-1.5 py-0.5 bg-slate-100 rounded">
-              NEXT_PUBLIC_ADMIN_EMAILS
-            </code>{" "}
-            (comma-separated).
+            These emails become <code>admin</code> automatically when they sign up. Stored in the{" "}
+            <code className="text-xs px-1.5 py-0.5 bg-slate-100 rounded">admin_allowlist</code> table
+            in Supabase — add a row there to make someone an admin.
           </p>
           <div className="space-y-1.5">
             {adminEmails.map((email) => (
@@ -67,12 +65,12 @@ export default async function AdminSettingsPage() {
           <IntegrationRow
             name="Supabase"
             active={supabase}
-            description="Postgres + Auth + Storage + RLS. The schema is ready in supabase/migrations/. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable."
+            description="Postgres + Auth + Row Level Security. Schema lives in supabase/migrations/."
           />
           {!supabase && (
             <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-2 leading-relaxed">
-              Currently running on the in-memory mock store. Data is reset every time the dev
-              server restarts. Wire up Supabase to make it persistent.
+              Supabase isn't configured. Set NEXT_PUBLIC_SUPABASE_URL and
+              NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
             </p>
           )}
         </CardContent>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { JobForm } from "@/components/admin/JobForm";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 
 export default async function NewJobPage() {
   const profile = (await getCurrentProfile())!;

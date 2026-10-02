@@ -5,43 +5,40 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Logo } from "@/components/ui/Logo";
-import { createCompanyLead, logActivity } from "@/lib/data/repository";
+import { FormMessage } from "@/components/ui/FormMessage";
+import { createCompanyLead } from "@/lib/data/repository";
 
 async function submitHiringNeed(formData: FormData) {
   "use server";
-  const lead = await createCompanyLead({
-    companyName: String(formData.get("companyName") ?? ""),
-    contactName: String(formData.get("contactName") ?? ""),
-    email: String(formData.get("email") ?? ""),
-    phone: (formData.get("phone") as string) || null,
-    location: (formData.get("location") as string) || null,
-    roleNeeded: (formData.get("roleNeeded") as string) || null,
-    numberOfCandidates: formData.get("numberOfCandidates")
-      ? Number(formData.get("numberOfCandidates"))
-      : null,
-    startDate: null,
-    compensationRange: (formData.get("compensationRange") as string) || null,
-    jobDescription: (formData.get("jobDescription") as string) || null,
-    urgency: "normal",
-    notes: (formData.get("notes") as string) || null,
-    assignedToUserId: null,
-    externalCrmId: null,
-  });
-  await logActivity({
-    actorUserId: null,
-    entityType: "company_lead",
-    entityId: lead.id,
-    action: "created",
-    metadata: { source: "public_form" },
-  });
+  const get = (k: string) => String(formData.get(k) ?? "").trim();
+  if (!get("companyName") || !get("contactName") || !/^\S+@\S+\.\S+$/.test(get("email"))) {
+    redirect(`/hire?error=${encodeURIComponent("Company, contact name, and a valid email are required.")}`);
+  }
+  try {
+    await createCompanyLead({
+      companyName: get("companyName"),
+      contactName: get("contactName"),
+      email: get("email"),
+      phone: get("phone") || null,
+      location: get("location") || null,
+      roleNeeded: get("roleNeeded") || null,
+      numberOfCandidates: get("numberOfCandidates") ? Number(get("numberOfCandidates")) : null,
+      compensationRange: get("compensationRange") || null,
+      jobDescription: get("jobDescription") || null,
+      notes: get("notes") || null,
+    });
+  } catch {
+    redirect(`/hire?error=${encodeURIComponent("Something went wrong saving that. Please try again.")}`);
+  }
   redirect("/hire/thanks");
 }
 
 interface PageProps {
-  searchParams?: { welcome?: string };
+  searchParams: Promise<{ welcome?: string; error?: string }>;
 }
 
-export default function HirePage({ searchParams }: PageProps) {
+export default async function HirePage(props: PageProps) {
+  const searchParams = await props.searchParams;
   return (
     <div className="min-h-screen bg-ecrn-mist">
       <header className="px-5 sm:px-8 py-5 flex items-center justify-between">
@@ -57,6 +54,7 @@ export default function HirePage({ searchParams }: PageProps) {
       </header>
 
       <main className="max-w-2xl mx-auto px-5 sm:px-8 py-8">
+        <FormMessage error={searchParams.error} className="mb-4" />
         {searchParams?.welcome && (
           <p className="mb-4 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-xl p-3">
             Welcome! Your account is created. Submit your first hiring need below.

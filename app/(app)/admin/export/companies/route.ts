@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listCompanyLeads } from "@/lib/data/repository";
 import { toCsv, csvResponse } from "@/lib/utils/csv";
 

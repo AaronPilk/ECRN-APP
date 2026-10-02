@@ -5,20 +5,21 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   getCandidateFullContext,
   STATUS_LABEL,
 } from "@/lib/data/repository";
 import {
   appendCandidateNoteAction,
+  reassignPrimaryReferrerAction,
   updateCandidateStatusAction,
 } from "../../actions";
 import type { ReferralStatus } from "@/types";
 import { Mail, Phone, MapPin, Linkedin, Briefcase, ExternalLink } from "lucide-react";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const STATUS_OPTIONS: ReferralStatus[] = [
@@ -37,14 +38,23 @@ const STATUS_OPTIONS: ReferralStatus[] = [
   "inactive",
 ];
 
-export default async function AdminCandidateDetail({ params }: PageProps) {
+export default async function AdminCandidateDetail(props: PageProps) {
+  const params = await props.params;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 
   const ctx = await getCandidateFullContext(params.id);
   if (!ctx) notFound();
-  const { candidate, primaryReferrer, referrals, jobReferrals, applications, payouts, activity } =
-    ctx;
+  const {
+    candidate,
+    primaryReferrer,
+    referrals,
+    jobReferrals,
+    applications,
+    payouts,
+    internalNotes,
+    activity,
+  } = ctx;
 
   const duplicateAttempts = referrals.filter((r) => !r.referral.isPrimary);
 
@@ -201,10 +211,16 @@ export default async function AdminCandidateDetail({ params }: PageProps) {
                     <div className="text-xs text-slate-500">
                       Attempted {new Date(referral.createdAt).toLocaleDateString("en-US")}{" "}
                       · reason:{" "}
-                      {(referral.metadata as { duplicateReason?: string })
-                        ?.duplicateReason ?? "—"}
+                      {String(referral.metadata.duplicate_reason ?? "—").replace("_", " + ")}
                     </div>
                   </div>
+                  <form action={reassignPrimaryReferrerAction} className="shrink-0">
+                    <input type="hidden" name="candidateId" value={candidate.id} />
+                    <input type="hidden" name="referrerProfileId" value={referral.referrerUserId} />
+                    <Button type="submit" size="sm" variant="secondary">
+                      Make primary
+                    </Button>
+                  </form>
                 </div>
               ))}
             </div>
@@ -286,12 +302,27 @@ export default async function AdminCandidateDetail({ params }: PageProps) {
       <Card>
         <CardContent className="py-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-            Internal notes
+            Internal notes (Delta only)
           </h2>
           {candidate.notes && (
-            <div className="mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 text-sm text-slate-700 whitespace-pre-line leading-relaxed">
-              {candidate.notes}
+            <div className="mb-4 p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60">
+              <div className="text-[11px] uppercase tracking-wide text-amber-800 font-medium">
+                From the referrer
+              </div>
+              <p className="mt-1 text-sm text-slate-700 whitespace-pre-line leading-relaxed">{candidate.notes}</p>
             </div>
+          )}
+          {internalNotes.length > 0 && (
+            <ul className="mb-4 space-y-2">
+              {internalNotes.map((n) => (
+                <li key={n.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                  <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{n.body}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    {new Date(n.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </p>
+                </li>
+              ))}
+            </ul>
           )}
           <form action={appendCandidateNoteAction} className="space-y-2">
             <input type="hidden" name="candidateId" value={candidate.id} />

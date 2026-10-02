@@ -1,72 +1,78 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { createReferral } from "@/lib/data/repository";
 
 const ReferralSchema = z.object({
-  firstName: z.string().min(1, "First name required"),
-  lastName: z.string().min(1, "Last name required"),
-  email: z.string().email("Enter a valid email").optional().or(z.literal("")),
-  phone: z.string().optional(),
-  locationCity: z.string().optional(),
-  locationState: z.string().optional(),
-  currentJobTitle: z.string().optional(),
-  trade: z.string().optional(),
-  yearsExperience: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((v) => (v === "" || v === undefined ? undefined : Number(v))),
-  linkedinUrl: z.string().optional(),
-  notes: z.string().optional(),
-  jobId: z.string().optional(),
+  firstName: z.string().trim().min(1, "First name required"),
+  lastName: z.string().trim().min(1, "Last name required"),
+  email: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
+  phone: z.string().trim().optional(),
+  locationCity: z.string().trim().optional(),
+  locationState: z.string().trim().optional(),
+  currentJobTitle: z.string().trim().optional(),
+  trade: z.string().trim().optional(),
+  yearsExperience: z.string().trim().optional(),
+  linkedinUrl: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+  jobId: z.string().trim().optional(),
 });
+
+function fail(message: string, jobId?: string): never {
+  const qs = new URLSearchParams({ error: message, ...(jobId ? { jobId } : {}) });
+  redirect(`/referrals/new?${qs.toString()}`);
+}
 
 export async function submitReferralAction(formData: FormData): Promise<void> {
   const profile = await getCurrentProfile();
-  if (!profile) throw new Error("Not authenticated");
+  if (!profile) redirect("/login");
 
+  const get = (k: string) => (formData.get(k) as string | null) ?? "";
   const parsed = ReferralSchema.safeParse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    email: formData.get("email") ?? "",
-    phone: formData.get("phone") ?? "",
-    locationCity: formData.get("locationCity") ?? "",
-    locationState: formData.get("locationState") ?? "",
-    currentJobTitle: formData.get("currentJobTitle") ?? "",
-    trade: formData.get("trade") ?? "",
-    yearsExperience: formData.get("yearsExperience") ?? "",
-    linkedinUrl: formData.get("linkedinUrl") ?? "",
-    notes: formData.get("notes") ?? "",
-    jobId: formData.get("jobId") ?? "",
+    firstName: get("firstName"),
+    lastName: get("lastName"),
+    email: get("email"),
+    phone: get("phone"),
+    locationCity: get("locationCity"),
+    locationState: get("locationState"),
+    currentJobTitle: get("currentJobTitle"),
+    trade: get("trade"),
+    yearsExperience: get("yearsExperience"),
+    linkedinUrl: get("linkedinUrl"),
+    notes: get("notes"),
+    jobId: get("jobId"),
   });
+  if (!parsed.success) fail(parsed.error.errors[0]?.message ?? "Invalid input", get("jobId"));
 
-  if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message ?? "Invalid input");
+  const d = parsed.data;
+  if (!d.email && !d.phone) fail("Add an email or phone number so Delta can reach them", d.jobId);
+
+  let result;
+  try {
+    result = await createReferral(
+      {
+        firstName: d.firstName,
+        lastName: d.lastName,
+        email: d.email || null,
+        phone: d.phone || null,
+        locationCity: d.locationCity || null,
+        locationState: d.locationState || null,
+        currentJobTitle: d.currentJobTitle || null,
+        trade: d.trade || null,
+        yearsExperience: d.yearsExperience ? Number(d.yearsExperience) : null,
+        linkedinUrl: d.linkedinUrl || null,
+        notes: d.notes || null,
+      },
+      { jobId: d.jobId || null }
+    );
+  } catch (e) {
+    fail(e instanceof Error ? e.message : "Couldn't save that referral", d.jobId);
   }
 
-  const data = parsed.data;
-  const result = await createReferral(
-    {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email || null,
-      phone: data.phone || null,
-      locationCity: data.locationCity || null,
-      locationState: data.locationState || null,
-      currentJobTitle: data.currentJobTitle || null,
-      trade: data.trade || null,
-      yearsExperience: typeof data.yearsExperience === "number" ? data.yearsExperience : null,
-      linkedinUrl: data.linkedinUrl || null,
-      notes: data.notes || null,
-    },
-    profile.id,
-    { jobId: data.jobId || null }
-  );
-
-  if (result.duplicateOf) {
-    redirect(`/referrals/${result.referral.id}?duplicate=1`);
-  }
-  redirect(`/referrals/${result.referral.id}?welcome=1`);
+  revalidatePath("/referrals");
+  revalidatePath("/dashboard");
+  redirect(`/referrals/${result.referralId}?${result.isDuplicate ? "duplicate=1" : "welcome=1"}`);
 }

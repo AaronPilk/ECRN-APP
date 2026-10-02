@@ -24,6 +24,12 @@ Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
 
+# Cloudflare / OpenNext build output + local secrets
+.open-next/
+.wrangler/
+.dev.vars
+cloudflare-env.d.ts
+
 # sed backups
 *.bak
 

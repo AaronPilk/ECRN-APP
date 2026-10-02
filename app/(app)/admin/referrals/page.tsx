@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { listAllReferralsEnriched } from "@/lib/data/repository";
 import { Download } from "lucide-react";
 
 interface PageProps {
-  searchParams?: { filter?: string };
+  searchParams: Promise<{ filter?: string }>;
 }
 
 const FILTERS = [
@@ -19,7 +19,8 @@ const FILTERS = [
   { key: "placed", label: "Placed" },
 ];
 
-export default async function AdminReferralsPage({ searchParams }: PageProps) {
+export default async function AdminReferralsPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

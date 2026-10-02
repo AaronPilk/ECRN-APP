@@ -1,108 +1,53 @@
 -- ─────────────────────────────────────────────────────────────────────
--- ECRN — initial schema
--- Generated as part of MVP Batch 1.
+-- ECRN — core schema (Supabase)
 --
--- Conventions:
---   - All primary keys are uuid, defaulted via gen_random_uuid()
---   - Every table has created_at / updated_at TIMESTAMPTZ
---   - Soft deletes are not used in V1; archive via status enums instead
---   - Foreign keys to auth.users use ON DELETE CASCADE for owner rows
+-- profiles.id == auth.users.id. A profile row is created automatically
+-- by the on_auth_user_created trigger (see 0003_functions.sql) whenever
+-- someone signs up, so the app never inserts profiles directly.
 -- ─────────────────────────────────────────────────────────────────────
 
-create extension if not exists "pgcrypto";
+create extension if not exists pgcrypto with schema extensions;
 
--- ═══════════════════════════════════════════════════════════════════
--- Enums
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ Enums ═══════════════════════════════════════════════════════════
 
-create type user_role as enum (
-  'admin',
-  'referral_partner',
-  'candidate',
-  'company_contact'
+create type public.user_role as enum ('admin', 'referral_partner', 'candidate', 'company_contact');
+
+create type public.candidate_source as enum (
+  'referred', 'direct_application', 'admin_import', 'company_submission'
 );
 
-create type candidate_source as enum (
-  'referred',
-  'direct_application',
-  'admin_import',
-  'company_submission'
+create type public.referral_status as enum (
+  'submitted', 'duplicate_review', 'new', 'contacted', 'qualified', 'not_qualified',
+  'submitted_to_job', 'interviewing', 'offer_stage', 'placed',
+  'payout_pending', 'payout_approved', 'payout_paid', 'rejected', 'inactive'
 );
 
-create type referral_status as enum (
-  'submitted',
-  'duplicate_review',
-  'new',
-  'contacted',
-  'qualified',
-  'not_qualified',
-  'submitted_to_job',
-  'interviewing',
-  'offer_stage',
-  'placed',
-  'payout_pending',
-  'payout_approved',
-  'payout_paid',
-  'rejected',
-  'inactive'
+create type public.job_status as enum ('draft', 'open', 'paused', 'filled', 'archived');
+create type public.job_urgency as enum ('low', 'normal', 'high', 'critical');
+
+create type public.application_status as enum (
+  'submitted', 'reviewing', 'interviewing', 'offer', 'hired', 'rejected', 'withdrawn'
 );
 
-create type job_status as enum ('draft', 'open', 'paused', 'filled', 'archived');
-
-create type job_urgency as enum ('low', 'normal', 'high', 'critical');
-
-create type application_status as enum (
-  'submitted',
-  'reviewing',
-  'interviewing',
-  'offer',
-  'hired',
-  'rejected',
-  'withdrawn'
+create type public.company_lead_status as enum (
+  'new', 'contacted', 'qualified', 'engaged', 'won', 'lost', 'archived'
 );
 
-create type company_lead_status as enum (
-  'new',
-  'contacted',
-  'qualified',
-  'engaged',
-  'won',
-  'lost',
-  'archived'
+create type public.payout_status as enum ('pending', 'approved', 'paid', 'denied', 'disputed');
+
+create type public.duplicate_status as enum (
+  'unique', 'pending_review', 'confirmed_duplicate', 'overridden_primary'
 );
 
-create type payout_status as enum (
-  'pending',
-  'approved',
-  'paid',
-  'denied',
-  'disputed'
-);
+create type public.notification_channel as enum ('email', 'sms', 'push', 'inapp');
+create type public.notification_status as enum ('queued', 'sent', 'delivered', 'failed', 'opt_out');
 
-create type duplicate_status as enum (
-  'unique',
-  'pending_review',
-  'confirmed_duplicate',
-  'overridden_primary'
-);
+-- ═══ updated_at helper ═══════════════════════════════════════════════
 
-create type notification_channel as enum ('email', 'sms', 'push', 'inapp');
-
-create type notification_status as enum (
-  'queued',
-  'sent',
-  'delivered',
-  'failed',
-  'opt_out'
-);
-
--- ═══════════════════════════════════════════════════════════════════
--- Helper: updated_at trigger
--- ═══════════════════════════════════════════════════════════════════
-
-create or replace function set_updated_at()
+create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -110,14 +55,20 @@ begin
 end;
 $$;
 
--- ═══════════════════════════════════════════════════════════════════
--- profiles — extends auth.users with app-level fields
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ Admin allowlist ═════════════════════════════════════════════════
+-- Any signup whose email is in this table becomes an admin automatically.
 
-create table profiles (
-  id uuid primary key default gen_random_uuid(),
-  auth_user_id uuid unique references auth.users(id) on delete cascade,
-  role user_role not null default 'referral_partner',
+create table public.admin_allowlist (
+  email text primary key,
+  created_at timestamptz not null default now()
+);
+
+-- ═══ profiles ════════════════════════════════════════════════════════
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  role public.user_role not null default 'referral_partner',
+  onboarded boolean not null default false,
   first_name text,
   last_name text,
   email text not null,
@@ -126,23 +77,23 @@ create table profiles (
   location_state text,
   linkedin_url text,
   company_name text,
-  external_crm_id text,                       -- for future Bullhorn sync
+  invited_by uuid references public.profiles(id) on delete set null,
+  external_crm_id text,
   is_active boolean not null default true,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index profiles_role_idx on profiles(role);
-create index profiles_email_idx on profiles(lower(email));
-create trigger profiles_updated_at before update on profiles
-  for each row execute function set_updated_at();
+create index profiles_role_idx on public.profiles(role);
+create index profiles_email_idx on public.profiles(lower(email));
+create index profiles_invited_by_idx on public.profiles(invited_by);
+create trigger profiles_updated_at before update on public.profiles
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- candidates — the people in Delta's network
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ candidates ══════════════════════════════════════════════════════
 
-create table candidates (
+create table public.candidates (
   id uuid primary key default gen_random_uuid(),
   first_name text not null,
   last_name text not null,
@@ -151,83 +102,89 @@ create table candidates (
   location_city text,
   location_state text,
   current_job_title text,
-  trade text,                                  -- e.g. 'electrical', 'mechanical'
+  trade text,
   years_experience int,
   linkedin_url text,
   resume_url text,
   notes text,
-  source_type candidate_source not null default 'referred',
-  primary_referrer_user_id uuid references profiles(id) on delete set null,
-  duplicate_of_candidate_id uuid references candidates(id) on delete set null,
-  status referral_status not null default 'submitted',
+  source_type public.candidate_source not null default 'referred',
+  primary_referrer_user_id uuid references public.profiles(id) on delete set null,
+  duplicate_of_candidate_id uuid references public.candidates(id) on delete set null,
+  assigned_recruiter_id uuid references public.profiles(id) on delete set null,
+  status public.referral_status not null default 'new',
   external_crm_id text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index candidates_email_idx on candidates(lower(email));
-create index candidates_phone_idx on candidates(phone);
-create index candidates_referrer_idx on candidates(primary_referrer_user_id);
-create index candidates_status_idx on candidates(status);
-create index candidates_trade_idx on candidates(trade);
-create index candidates_linkedin_idx on candidates(lower(linkedin_url));
-create trigger candidates_updated_at before update on candidates
-  for each row execute function set_updated_at();
+create index candidates_email_idx on public.candidates(lower(email));
+create index candidates_phone_idx on public.candidates(phone);
+create index candidates_linkedin_idx on public.candidates(lower(linkedin_url));
+create index candidates_referrer_idx on public.candidates(primary_referrer_user_id);
+create index candidates_dupe_idx on public.candidates(duplicate_of_candidate_id);
+create index candidates_recruiter_idx on public.candidates(assigned_recruiter_id);
+create index candidates_status_idx on public.candidates(status);
+create trigger candidates_updated_at before update on public.candidates
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- referrals — every attempt to refer a candidate (1 candidate → N attempts)
--- The first attempt becomes the "primary" referral and sets
--- candidates.primary_referrer_user_id. Subsequent attempts at the same
--- candidate (matched on email/phone/linkedin) are stored here as
--- duplicate_status = 'pending_review' or 'confirmed_duplicate'.
--- ═══════════════════════════════════════════════════════════════════
-
-create table referrals (
+-- Internal (admin-only) notes on a candidate. Kept out of `candidates` so
+-- referral partners can never read Delta's internal commentary.
+create table public.candidate_notes (
   id uuid primary key default gen_random_uuid(),
-  candidate_id uuid not null references candidates(id) on delete cascade,
-  referrer_user_id uuid not null references profiles(id) on delete cascade,
-  referral_source text,                        -- 'manual', 'invite_link', 'csv', etc.
-  status referral_status not null default 'submitted',
+  candidate_id uuid not null references public.candidates(id) on delete cascade,
+  author_user_id uuid references public.profiles(id) on delete set null,
+  body text not null,
+  created_at timestamptz not null default now()
+);
+
+create index candidate_notes_candidate_idx on public.candidate_notes(candidate_id);
+create index candidate_notes_author_idx on public.candidate_notes(author_user_id);
+
+-- ═══ referrals ═══════════════════════════════════════════════════════
+
+create table public.referrals (
+  id uuid primary key default gen_random_uuid(),
+  candidate_id uuid not null references public.candidates(id) on delete cascade,
+  referrer_user_id uuid not null references public.profiles(id) on delete cascade,
+  referral_source text,
+  status public.referral_status not null default 'new',
   is_primary boolean not null default true,
-  duplicate_status duplicate_status not null default 'unique',
+  duplicate_status public.duplicate_status not null default 'unique',
   notes text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index referrals_candidate_idx on referrals(candidate_id);
-create index referrals_referrer_idx on referrals(referrer_user_id);
-create index referrals_status_idx on referrals(status);
+create index referrals_candidate_idx on public.referrals(candidate_id);
+create index referrals_referrer_idx on public.referrals(referrer_user_id);
 create unique index referrals_one_primary_per_candidate
-  on referrals(candidate_id) where is_primary = true;
-create trigger referrals_updated_at before update on referrals
-  for each row execute function set_updated_at();
+  on public.referrals(candidate_id) where is_primary = true;
+create trigger referrals_updated_at before update on public.referrals
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- jobs — open roles Delta is recruiting for
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ jobs ════════════════════════════════════════════════════════════
 
-create table jobs (
+create table public.jobs (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   company_name text,
   is_company_public boolean not null default false,
   location_city text,
   location_state text,
-  job_type text,                               -- full-time, contract, etc.
-  trade text,                                  -- electrical, mechanical, etc.
+  job_type text,
+  trade text,
   description text,
   requirements text,
   compensation_min int,
   compensation_max int,
-  compensation_display text,                   -- "$80–110K + benefits"
+  compensation_display text,
   start_date date,
-  urgency job_urgency not null default 'normal',
-  status job_status not null default 'draft',
+  urgency public.job_urgency not null default 'normal',
+  status public.job_status not null default 'draft',
   is_public boolean not null default false,
-  referral_payout_amount int,
+  referral_payout_amount int,          -- cents
   referral_payout_display text,
   internal_notes text,
   external_crm_id text,
@@ -236,44 +193,38 @@ create table jobs (
   updated_at timestamptz not null default now()
 );
 
-create index jobs_status_idx on jobs(status);
-create index jobs_is_public_idx on jobs(is_public);
-create index jobs_trade_idx on jobs(trade);
-create trigger jobs_updated_at before update on jobs
-  for each row execute function set_updated_at();
+create index jobs_status_idx on public.jobs(status, is_public);
+create trigger jobs_updated_at before update on public.jobs
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- job_referrals — a candidate referred TO a specific job
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ job_referrals ═══════════════════════════════════════════════════
 
-create table job_referrals (
+create table public.job_referrals (
   id uuid primary key default gen_random_uuid(),
-  job_id uuid not null references jobs(id) on delete cascade,
-  candidate_id uuid not null references candidates(id) on delete cascade,
-  referrer_user_id uuid not null references profiles(id) on delete cascade,
-  status referral_status not null default 'submitted_to_job',
+  job_id uuid not null references public.jobs(id) on delete cascade,
+  candidate_id uuid not null references public.candidates(id) on delete cascade,
+  referrer_user_id uuid not null references public.profiles(id) on delete cascade,
+  status public.referral_status not null default 'submitted_to_job',
   notes text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index job_referrals_job_idx on job_referrals(job_id);
-create index job_referrals_candidate_idx on job_referrals(candidate_id);
-create index job_referrals_referrer_idx on job_referrals(referrer_user_id);
-create trigger job_referrals_updated_at before update on job_referrals
-  for each row execute function set_updated_at();
+create index job_referrals_job_idx on public.job_referrals(job_id);
+create index job_referrals_candidate_idx on public.job_referrals(candidate_id);
+create index job_referrals_referrer_idx on public.job_referrals(referrer_user_id);
+create trigger job_referrals_updated_at before update on public.job_referrals
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- job_applications — candidate applied directly to a job
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ job_applications ════════════════════════════════════════════════
 
-create table job_applications (
+create table public.job_applications (
   id uuid primary key default gen_random_uuid(),
-  job_id uuid not null references jobs(id) on delete cascade,
-  candidate_id uuid not null references candidates(id) on delete cascade,
-  applicant_user_id uuid references profiles(id) on delete set null,
-  status application_status not null default 'submitted',
+  job_id uuid not null references public.jobs(id) on delete cascade,
+  candidate_id uuid not null references public.candidates(id) on delete cascade,
+  applicant_user_id uuid references public.profiles(id) on delete set null,
+  status public.application_status not null default 'submitted',
   resume_url text,
   linkedin_url text,
   notes text,
@@ -282,18 +233,15 @@ create table job_applications (
   updated_at timestamptz not null default now()
 );
 
-create index job_applications_job_idx on job_applications(job_id);
-create index job_applications_candidate_idx on job_applications(candidate_id);
-create index job_applications_status_idx on job_applications(status);
-create trigger job_applications_updated_at before update on job_applications
-  for each row execute function set_updated_at();
+create index job_applications_job_idx on public.job_applications(job_id);
+create index job_applications_candidate_idx on public.job_applications(candidate_id);
+create index job_applications_applicant_idx on public.job_applications(applicant_user_id);
+create trigger job_applications_updated_at before update on public.job_applications
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- company_leads — hiring requests submitted by companies
--- (companies do NOT have logins in V1; the form just writes here)
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ company_leads ═══════════════════════════════════════════════════
 
-create table company_leads (
+create table public.company_leads (
   id uuid primary key default gen_random_uuid(),
   company_name text not null,
   contact_name text not null,
@@ -305,31 +253,30 @@ create table company_leads (
   start_date date,
   compensation_range text,
   job_description text,
-  urgency job_urgency not null default 'normal',
-  status company_lead_status not null default 'new',
+  urgency public.job_urgency not null default 'normal',
+  status public.company_lead_status not null default 'new',
   notes text,
-  assigned_to_user_id uuid references profiles(id) on delete set null,
+  assigned_to_user_id uuid references public.profiles(id) on delete set null,
   external_crm_id text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index company_leads_status_idx on company_leads(status);
-create trigger company_leads_updated_at before update on company_leads
-  for each row execute function set_updated_at();
+create index company_leads_status_idx on public.company_leads(status);
+create index company_leads_assigned_idx on public.company_leads(assigned_to_user_id);
+create trigger company_leads_updated_at before update on public.company_leads
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- payouts — referral payout tracking (NO real money movement in V1)
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ payouts (tracking only — no money moves) ════════════════════════
 
-create table payouts (
+create table public.payouts (
   id uuid primary key default gen_random_uuid(),
-  candidate_id uuid not null references candidates(id) on delete cascade,
-  referrer_user_id uuid not null references profiles(id) on delete cascade,
-  job_id uuid references jobs(id) on delete set null,
+  candidate_id uuid not null references public.candidates(id) on delete cascade,
+  referrer_user_id uuid not null references public.profiles(id) on delete cascade,
+  job_id uuid references public.jobs(id) on delete set null,
   amount_cents int not null default 0,
-  status payout_status not null default 'pending',
+  status public.payout_status not null default 'pending',
   placement_date date,
   approved_at timestamptz,
   paid_at timestamptz,
@@ -339,63 +286,55 @@ create table payouts (
   updated_at timestamptz not null default now()
 );
 
-create index payouts_referrer_idx on payouts(referrer_user_id);
-create index payouts_candidate_idx on payouts(candidate_id);
-create index payouts_status_idx on payouts(status);
-create trigger payouts_updated_at before update on payouts
-  for each row execute function set_updated_at();
+create index payouts_referrer_idx on public.payouts(referrer_user_id);
+create index payouts_candidate_idx on public.payouts(candidate_id);
+create index payouts_job_idx on public.payouts(job_id);
+create trigger payouts_updated_at before update on public.payouts
+  for each row execute function public.set_updated_at();
 
--- ═══════════════════════════════════════════════════════════════════
--- activity_logs — audit trail for every important action
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ activity_logs ═══════════════════════════════════════════════════
 
-create table activity_logs (
+create table public.activity_logs (
   id uuid primary key default gen_random_uuid(),
-  actor_user_id uuid references profiles(id) on delete set null,
-  entity_type text not null,                   -- 'candidate', 'referral', 'job', etc.
+  actor_user_id uuid references public.profiles(id) on delete set null,
+  entity_type text not null,
   entity_id uuid,
-  action text not null,                        -- 'created', 'status_changed', etc.
+  action text not null,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
-create index activity_logs_actor_idx on activity_logs(actor_user_id);
-create index activity_logs_entity_idx on activity_logs(entity_type, entity_id);
-create index activity_logs_created_idx on activity_logs(created_at desc);
+create index activity_logs_actor_idx on public.activity_logs(actor_user_id);
+create index activity_logs_entity_idx on public.activity_logs(entity_type, entity_id);
+create index activity_logs_created_idx on public.activity_logs(created_at desc);
 
--- ═══════════════════════════════════════════════════════════════════
--- notification_events — every outbound notification, queued or sent
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ notification_events ═════════════════════════════════════════════
 
-create table notification_events (
+create table public.notification_events (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references profiles(id) on delete set null,
-  event_type text not null,                    -- 'referral_status_change', etc.
-  channel notification_channel not null,
-  status notification_status not null default 'queued',
+  user_id uuid references public.profiles(id) on delete set null,
+  event_type text not null,
+  channel public.notification_channel not null,
+  status public.notification_status not null default 'queued',
   payload jsonb not null default '{}'::jsonb,
-  provider_id text,                            -- external message id from SendGrid/Twilio
+  provider_id text,
   error text,
   created_at timestamptz not null default now()
 );
 
-create index notification_events_user_idx on notification_events(user_id);
-create index notification_events_status_idx on notification_events(status);
-create index notification_events_created_idx on notification_events(created_at desc);
+create index notification_events_user_idx on public.notification_events(user_id);
 
--- ═══════════════════════════════════════════════════════════════════
--- integrations — external service configuration (Bullhorn, etc.)
--- ═══════════════════════════════════════════════════════════════════
+-- ═══ integrations ════════════════════════════════════════════════════
 
-create table integrations (
+create table public.integrations (
   id uuid primary key default gen_random_uuid(),
-  provider text not null unique,               -- 'bullhorn', 'sendgrid', 'twilio'
-  status text not null default 'inactive',     -- 'active', 'inactive', 'error'
+  provider text not null unique,
+  status text not null default 'inactive',
   config jsonb not null default '{}'::jsonb,
   last_synced_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create trigger integrations_updated_at before update on integrations
-  for each row execute function set_updated_at();
+create trigger integrations_updated_at before update on public.integrations
+  for each row execute function public.set_updated_at();

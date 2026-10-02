@@ -5,6 +5,7 @@ import { Logo } from "@/components/ui/Logo";
 import { getNavForRole } from "./nav-config";
 import { RoleSwitcher } from "@/components/dev/RoleSwitcher";
 import type { Profile } from "@/types";
+import { DEMO_MODE } from "@/lib/supabase/env";
 
 interface AppShellProps {
   profile: Profile;
@@ -19,12 +20,11 @@ interface AppShellProps {
  * The page content is rendered into the middle column with safe-area
  * padding for iOS home-bar.
  *
- * RoleSwitcher only renders while ECRN is on mock data (V1) — it auto-
- * hides once NEXT_PUBLIC_SUPABASE_URL is set.
+ * RoleSwitcher only renders when NEXT_PUBLIC_DEMO_MODE=true.
  */
 export function AppShell({ profile, children }: AppShellProps) {
   const items = getNavForRole(profile.role);
-  const isMockMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isMockMode = DEMO_MODE;
 
   return (
     <div className="min-h-screen flex bg-ecrn-mist">

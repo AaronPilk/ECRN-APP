@@ -1,35 +1,27 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import "server-only";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, assertSupabaseEnv } from "./env";
 
 /**
- * Server-side Supabase client (Next.js App Router).
- *
- * NOT WIRED UP IN V1 — see lib/supabase/client.ts for context. Use
- * `lib/data/repository.ts` for all data access today.
+ * Server-side Supabase client bound to the signed-in user's session cookie.
+ * Every query runs as that user, so Row Level Security applies.
  */
-export function getSupabaseServerClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) return null;
-
-  const cookieStore = cookies();
-  return createServerClient(url, anon, {
+export async function createSupabaseServerClient() {
+  assertSupabaseEnv();
+  const cookieStore = await cookies();
+  return createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll();
       },
-      set(name: string, value: string, options: CookieOptions) {
+      setAll(cookiesToSet) {
         try {
-          cookieStore.set({ name, value, ...options });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
         } catch {
-          // Server Component context — silently ignore
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value: "", ...options });
-        } catch {
-          // Server Component context — silently ignore
+          // Called from a Server Component — middleware refreshes the session.
         }
       },
     },

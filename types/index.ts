@@ -71,8 +71,12 @@ export type NotificationStatus = "queued" | "sent" | "delivered" | "failed" | "o
 
 export interface Profile {
   id: string;
+  /** Same as id — profiles.id is the Supabase auth user id. */
   authUserId: string | null;
   role: UserRole;
+  /** True once the user has picked their role during onboarding. */
+  onboarded: boolean;
+  invitedBy: string | null;
   firstName: string | null;
   lastName: string | null;
   email: string;
@@ -110,6 +114,15 @@ export interface Candidate {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Admin-only internal note on a candidate. */
+export interface CandidateNote {
+  id: string;
+  candidateId: string;
+  authorUserId: string | null;
+  body: string;
+  createdAt: string;
 }
 
 export interface Referral {

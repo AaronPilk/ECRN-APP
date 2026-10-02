@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { getCompanyLeadById, listActivityForEntity } from "@/lib/data/repository";
 import { updateCompanyLeadStatusAction } from "../../actions";
 import type { CompanyLeadStatus } from "@/types";
@@ -21,10 +21,11 @@ const STATUS_OPTIONS: { key: CompanyLeadStatus; label: string }[] = [
 ];
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default async function AdminCompanyDetail({ params }: PageProps) {
+export default async function AdminCompanyDetail(props: PageProps) {
+  const params = await props.params;
   const profile = (await getCurrentProfile())!;
   if (profile.role !== "admin") redirect("/dashboard");
 

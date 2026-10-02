@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentProfile } from "@/lib/auth/mock";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   appendCandidateNote,
   createJob,
@@ -126,6 +126,7 @@ const PayoutStatusSchema = z.object({
   payoutId: z.string().min(1),
   status: z.string().min(1),
   notes: z.string().optional(),
+  amountDollars: z.string().optional(),
 });
 
 export async function updatePayoutStatusAction(formData: FormData): Promise<void> {
@@ -134,13 +135,13 @@ export async function updatePayoutStatusAction(formData: FormData): Promise<void
     payoutId: formData.get("payoutId"),
     status: formData.get("status"),
     notes: formData.get("notes") ?? "",
+    amountDollars: formData.get("amountDollars") ?? "",
   });
-  await updatePayoutStatus(
-    parsed.payoutId,
-    parsed.status as PayoutStatus,
-    admin.id,
-    parsed.notes
-  );
+  const dollars = parsed.amountDollars ? Number(parsed.amountDollars.replace(/[$,]/g, "")) : NaN;
+  await updatePayoutStatus(parsed.payoutId, parsed.status as PayoutStatus, admin.id, {
+    notes: parsed.notes,
+    amountCents: Number.isFinite(dollars) ? Math.round(dollars * 100) : null,
+  });
   revalidatePath("/admin/payouts");
   revalidatePath("/admin");
 }
@@ -194,6 +195,8 @@ function toNumberOrNull(v: string | undefined): number | null {
 export async function saveJobAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const parsed = JobInputSchema.parse(Object.fromEntries(formData.entries()));
+  const payoutDollars = toNumberOrNull(parsed.referralPayoutAmount?.replace(/[$,]/g, ""));
+  const payoutCents = payoutDollars != null ? Math.round(payoutDollars * 100) : null;
 
   const data = {
     title: parsed.title,
@@ -211,8 +214,11 @@ export async function saveJobAction(formData: FormData): Promise<void> {
     urgency: (parsed.urgency || "normal") as JobUrgency,
     status: (parsed.status || "draft") as JobStatus,
     isPublic: parsed.isPublic === "on",
-    referralPayoutAmount: toNumberOrNull(parsed.referralPayoutAmount),
-    referralPayoutDisplay: parsed.referralPayoutDisplay || null,
+    // Form collects dollars; DB stores cents.
+    referralPayoutAmount: payoutCents,
+    referralPayoutDisplay:
+      parsed.referralPayoutDisplay ||
+      (payoutCents != null ? `$${(payoutCents / 100).toLocaleString("en-US")}` : null),
     internalNotes: parsed.internalNotes || null,
   };
 

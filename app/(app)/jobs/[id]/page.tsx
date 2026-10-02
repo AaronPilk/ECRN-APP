@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/Button";
 import { getJobById } from "@/lib/data/repository";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default async function JobDetailPage({ params }: PageProps) {
+export default async function JobDetailPage(props: PageProps) {
+  const params = await props.params;
   const maybeJob = await getJobById(params.id);
   if (!maybeJob) notFound();
   const job = maybeJob;

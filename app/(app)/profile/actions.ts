@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { deleteMyAccount, registerDeviceToken } from "@/lib/data/repository";
 
 /** Called by the app after the user allows notifications. */
@@ -31,6 +32,10 @@ export async function deleteAccountAction(formData: FormData): Promise<void> {
     redirect("/profile/delete?error=" + encodeURIComponent('Type DELETE to confirm.'));
   }
   try {
+    // Remove resume files first (Storage API; the DB function can't touch storage).
+    const sb = await createSupabaseServerClient();
+    const { data: files } = await sb.storage.from("resumes").list(profile.id, { limit: 100 });
+    if (files?.length) await sb.storage.from("resumes").remove(files.map((f) => `${profile.id}/${f.name}`));
     await deleteMyAccount();
   } catch (e) {
     redirect("/profile/delete?error=" + encodeURIComponent(e instanceof Error ? e.message : "Couldn't delete account"));

@@ -50,33 +50,19 @@ export function Logo({
   }
 
   const isLight = variant === "light";
-  const textColor = isLight ? "#FFFFFF" : "#0A100C";
-  const green = "#16C172";
+  const textColor = isLight ? "#FFFFFF" : "#101A14";
 
   return (
-    <div className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden
-      >
-        {/* Outer triangle outline */}
-        <path
-          d="M16 4 L29 27 L3 27 Z"
-          stroke={green}
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Inner solid triangle */}
-        <path d="M16 12 L24 26 L8 26 Z" fill="#FFFFFF" />
+    <div className={cn("inline-flex items-center gap-2", className)}>
+      <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        {/* Two-facet mountain mark */}
+        <path d="M13 1 L25 21 L13 21 Z" fill="#0FA15D" />
+        <path d="M13 1 L13 21 L1 21 Z" fill="#36DC86" />
+        <path d="M13 9 L18 18 L8 18 Z" fill={isLight ? "#0A100C" : "#F7F8F5"} />
       </svg>
       <div className="flex flex-col leading-tight">
         <span
-          className="text-[17px] font-bold tracking-[0.12em]"
+          className="font-display text-[19px] font-medium tracking-[0.22em]"
           style={{ color: textColor }}
         >
           ECRN

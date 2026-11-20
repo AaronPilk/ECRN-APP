@@ -12,6 +12,7 @@ export type CandidateSource =
   | "referred"
   | "direct_application"
   | "admin_import"
+  | "self_signup"
   | "company_submission";
 
 export type ReferralStatus =
@@ -69,6 +70,9 @@ export type NotificationStatus = "queued" | "sent" | "delivered" | "failed" | "o
 // Domain entities
 // ─────────────────────────────────────────────────────────────────────
 
+export type OnboardingIntent = "job" | "open" | "refer" | "both";
+export type CareerStatus = "actively_looking" | "open_to_offers" | "not_looking";
+
 export interface Profile {
   id: string;
   /** Same as id — profiles.id is the Supabase auth user id. */
@@ -87,6 +91,20 @@ export interface Profile {
   companyName: string | null;
   externalCrmId: string | null;
   isActive: boolean;
+  /** Onboarding answers (0006) */
+  intent: OnboardingIntent | null;
+  careerStatus: CareerStatus | null;
+  discipline: string | null;
+  yearsExperience: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
+  relocation: "yes" | "maybe" | "no" | null;
+  moveMotivators: string[];
+  currentEmployer: string | null;
+  resumePath: string | null;
+  resumeUploadedAt: string | null;
+  resumeBuilder: Record<string, unknown>;
+  onboardingCompletedAt: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -101,11 +119,18 @@ export interface Candidate {
   locationCity: string | null;
   locationState: string | null;
   currentJobTitle: string | null;
+  currentCompany: string | null;
   trade: string | null;
   yearsExperience: number | null;
   linkedinUrl: string | null;
   resumeUrl: string | null;
+  resumePath: string | null;
   notes: string | null;
+  userId: string | null;
+  careerStatus: CareerStatus | null;
+  relocation: string | null;
+  moveMotivators: string[];
+  isConfidential: boolean;
   sourceType: CandidateSource;
   primaryReferrerUserId: string | null;
   duplicateOfCandidateId: string | null;
@@ -159,6 +184,8 @@ export interface Job {
   isPublic: boolean;
   referralPayoutAmount: number | null;
   referralPayoutDisplay: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
   internalNotes: string | null;
   externalCrmId: string | null;
   metadata: Record<string, unknown>;

@@ -45,8 +45,8 @@ export function RoleSwitcher({ currentRole, currentEmail }: RoleSwitcherProps) {
   const currentLabel = currentMeta?.label ?? currentRole.replace(/_/g, " ");
 
   return (
-    <div className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-50 pointer-events-none">
-      <div className="pointer-events-auto flex flex-col items-end gap-2">
+    <div className="fixed top-[calc(env(safe-area-inset-top)+70px)] right-[22px] lg:top-auto lg:bottom-6 lg:right-6 z-50 pointer-events-none">
+      <div className="pointer-events-auto flex flex-col-reverse lg:flex-col items-end gap-2">
         {/* Expanded panel */}
         {open && (
           <div className="w-72 bg-ecrn-black text-white rounded-2xl shadow-float border border-white/10 overflow-hidden animate-slide-up">
@@ -118,10 +118,10 @@ export function RoleSwitcher({ currentRole, currentEmail }: RoleSwitcherProps) {
         {/* Trigger pill */}
         <button
           onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-ecrn-black text-white shadow-float border border-white/10 hover:bg-ecrn-ink transition-colors"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 lg:px-4 lg:py-2.5 rounded-full bg-ecrn-black/85 text-white shadow-float border border-white/10 hover:bg-ecrn-ink transition-colors"
         >
           <span className="w-2 h-2 rounded-full bg-ecrn-green animate-pulse" />
-          <span className="text-xs font-semibold">View as: {currentLabel}</span>
+          <span className="text-[11px] font-semibold"><span className="lg:hidden">Demo</span><span className="hidden lg:inline">View as: {currentLabel}</span></span>
           <ChevronUp
             className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`}
           />

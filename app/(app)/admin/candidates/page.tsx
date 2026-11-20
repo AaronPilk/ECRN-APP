@@ -34,6 +34,7 @@ const STATUS_FILTERS: { key: ReferralStatus | "all"; label: string }[] = [
 const SOURCE_FILTERS: { key: CandidateSource | "all"; label: string }[] = [
   { key: "all", label: "All sources" },
   { key: "referred", label: "Referred" },
+  { key: "self_signup", label: "Joined app" },
   { key: "direct_application", label: "Direct apply" },
   { key: "company_submission", label: "Company sub" },
   { key: "admin_import", label: "Admin import" },
@@ -158,6 +159,11 @@ export default async function AdminCandidatesPage(props: PageProps) {
                       >
                         {c.firstName} {c.lastName}
                       </Link>
+                      {c.careerStatus === "open_to_offers" && (
+                        <span className="ml-2 inline-block rounded-full bg-delta-surface text-cobalt text-[10px] font-semibold px-2 py-0.5 align-middle">
+                          Open to move · confidential
+                        </span>
+                      )}
                       <div className="text-xs text-slate-500">
                         {c.email ?? c.phone ?? "—"}
                       </div>
@@ -177,7 +183,9 @@ export default async function AdminCandidatesPage(props: PageProps) {
                           referrer.email
                         : c.sourceType === "direct_application"
                           ? "Direct"
-                          : "—"}
+                          : c.sourceType === "self_signup"
+                            ? "Joined app"
+                            : "—"}
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell text-slate-500 text-xs">
                       {c.createdAt.slice(0, 10)}

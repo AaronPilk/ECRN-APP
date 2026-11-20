@@ -8,12 +8,13 @@ import { createReferral } from "@/lib/data/repository";
 
 const ReferralSchema = z.object({
   firstName: z.string().trim().min(1, "First name required"),
-  lastName: z.string().trim().min(1, "Last name required"),
+  lastName: z.string().trim().optional(),
   email: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
   phone: z.string().trim().optional(),
   locationCity: z.string().trim().optional(),
   locationState: z.string().trim().optional(),
   currentJobTitle: z.string().trim().optional(),
+  currentCompany: z.string().trim().optional(),
   trade: z.string().trim().optional(),
   yearsExperience: z.string().trim().optional(),
   linkedinUrl: z.string().trim().optional(),
@@ -55,25 +56,28 @@ export async function importContactsAction(contacts: ImportedContact[]): Promise
     const last = String(c?.lastName ?? "").trim().slice(0, 100);
     const email = String(c?.email ?? "").trim().slice(0, 200);
     const phone = String(c?.phone ?? "").trim().slice(0, 50);
-    if (!first || (!email && !phone)) {
+    // Minimum: a name and a reachable phone number.
+    if (!first || phone.replace(/\D/g, "").length < 10) {
       summary.skipped++;
       continue;
     }
     try {
       const r = await createReferral({
         firstName: first,
-        lastName: last || "—",
+        lastName: last,
         email: email || null,
-        phone: phone || null,
+        phone,
         currentJobTitle: String(c?.currentJobTitle ?? "").trim().slice(0, 200) || null,
+        currentCompany: String(c?.company ?? "").trim().slice(0, 200) || null,
         locationCity: String(c?.locationCity ?? "").trim().slice(0, 100) || null,
         locationState: String(c?.locationState ?? "").trim().slice(0, 50) || null,
-        notes: c?.company ? `Imported from contacts · ${String(c.company).slice(0, 200)}` : "Imported from contacts",
+        notes: "Imported from phone contacts",
+        source: "contacts",
       });
       if (r.isDuplicate) summary.underReview++;
       else summary.created++;
     } catch (e) {
-      summary.errors.push(`${first} ${last}: ${e instanceof Error ? e.message : "failed"}`);
+      summary.errors.push(`${first} ${last}`.trim() + `: ${e instanceof Error ? e.message : "failed"}`);
     }
   }
 
@@ -100,6 +104,7 @@ export async function submitReferralAction(formData: FormData): Promise<void> {
     locationCity: get("locationCity"),
     locationState: get("locationState"),
     currentJobTitle: get("currentJobTitle"),
+    currentCompany: get("currentCompany"),
     trade: get("trade"),
     yearsExperience: get("yearsExperience"),
     linkedinUrl: get("linkedinUrl"),
@@ -109,19 +114,20 @@ export async function submitReferralAction(formData: FormData): Promise<void> {
   if (!parsed.success) fail(parsed.error.errors[0]?.message ?? "Invalid input", get("jobId"));
 
   const d = parsed.data;
-  if (!d.email && !d.phone) fail("Add an email or phone number so Delta can reach them", d.jobId);
+  if ((d.phone ?? "").replace(/\D/g, "").length < 10) fail("Add a phone number so Delta can reach them", d.jobId);
 
   let result;
   try {
     result = await createReferral(
       {
         firstName: d.firstName,
-        lastName: d.lastName,
+        lastName: d.lastName || "",
         email: d.email || null,
         phone: d.phone || null,
         locationCity: d.locationCity || null,
         locationState: d.locationState || null,
         currentJobTitle: d.currentJobTitle || null,
+        currentCompany: d.currentCompany || null,
         trade: d.trade || null,
         yearsExperience: d.yearsExperience ? Number(d.yearsExperience) : null,
         linkedinUrl: d.linkedinUrl || null,

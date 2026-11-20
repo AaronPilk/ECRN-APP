@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/Card";
+import { BookUser, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Page, PageTitle, EmptyState } from "@/components/ui/Page";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { listReferralsByReferrerEnriched } from "@/lib/data/repository";
-import { BookUser, Plus, Users } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 interface PageProps {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; imported?: string; review?: string }>;
 }
 
 const FILTERS = [
@@ -17,68 +18,58 @@ const FILTERS = [
   { key: "placed", label: "Placed" },
 ] as const;
 
+const AVATAR_TINTS = ["bg-[#E6ECE7]", "bg-[#EEE9DF]", "bg-[#E3EAF3]", "bg-[#ECE6EE]", "bg-[#E2F1E7]"];
+
 export default async function ReferralsPage(props: PageProps) {
-  const searchParams = await props.searchParams;
+  const sp = await props.searchParams;
   const profile = (await getCurrentProfile())!;
   const items = await listReferralsByReferrerEnriched(profile.id);
-
-  const filterKey = (searchParams?.status as (typeof FILTERS)[number]["key"]) ?? "all";
+  const filterKey = (sp?.status as (typeof FILTERS)[number]["key"]) ?? "all";
 
   const filtered = items.filter(({ candidate }) => {
     const s = candidate.status;
-    if (filterKey === "all") return true;
-    if (filterKey === "active")
-      return !["rejected", "inactive", "not_qualified"].includes(s);
+    if (filterKey === "active") return !["rejected", "inactive", "not_qualified"].includes(s);
     if (filterKey === "in_process")
       return ["contacted", "qualified", "submitted_to_job", "interviewing", "offer_stage"].includes(s);
-    if (filterKey === "placed")
-      return ["placed", "payout_pending", "payout_approved", "payout_paid"].includes(s);
+    if (filterKey === "placed") return ["placed", "payout_pending", "payout_approved", "payout_paid"].includes(s);
     return true;
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
-            My referrals
-          </h1>
-          <p className="mt-1 text-slate-500">
-            {items.length} {items.length === 1 ? "referral" : "referrals"} in your network.
-          </p>
+    <Page>
+      <PageTitle eyebrow={profile.role === "candidate" ? "Your network" : "Referral partner"} title="My referrals" />
+
+      {sp.imported && (
+        <div className="rounded-[14px] bg-ecrn-action-surface text-ecrn-green-text text-[14px] px-4 py-3">
+          {sp.imported} contact{sp.imported === "1" ? "" : "s"} sent to Delta
+          {sp.review && Number(sp.review) > 0 ? ` · ${sp.review} already in the network, under review` : ""}.
         </div>
-        <div className="flex gap-2 shrink-0">
-          <Link href="/referrals/import">
-            <Button size="sm" variant="secondary">
-              <BookUser className="w-4 h-4" />
-              <span className="hidden sm:inline">From contacts</span>
-              <span className="sm:hidden">Contacts</span>
-            </Button>
-          </Link>
-          <Link href="/referrals/new">
-            <Button size="sm" variant="primary">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add referral</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </Link>
-        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2.5">
+        <Link href="/referrals/new">
+          <Button fullWidth>
+            <Plus className="w-4 h-4" /> Add referral
+          </Button>
+        </Link>
+        <Link href="/referrals/import">
+          <Button variant="soft" fullWidth>
+            <BookUser className="w-4 h-4" /> From contacts
+          </Button>
+        </Link>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-1">
+      <div className="grid grid-cols-4 gap-1 p-1 rounded-[14px] bg-[#E9EDE8]">
         {FILTERS.map((f) => {
           const active = filterKey === f.key;
-          const href = f.key === "all" ? "/referrals" : `/referrals?status=${f.key}`;
           return (
             <Link
               key={f.key}
-              href={href}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                active
-                  ? "bg-ecrn-black text-white border-ecrn-black"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-              }`}
+              href={f.key === "all" ? "/referrals" : `/referrals?status=${f.key}`}
+              className={cn(
+                "text-center py-2 rounded-[11px] text-[13.5px] font-medium transition-colors",
+                active ? "bg-ecrn-green-text text-white" : "text-ecrn-secondary"
+              )}
             >
               {f.label}
             </Link>
@@ -86,79 +77,62 @@ export default async function ReferralsPage(props: PageProps) {
         })}
       </div>
 
-      {filtered.length === 0 ? (
-        <Card className="p-10 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 grid place-items-center mb-4">
-            <Users className="w-6 h-6 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-ecrn-ink">
-            {items.length === 0 ? "No referrals yet" : "No referrals match this filter"}
-          </h3>
-          <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-            {items.length === 0
-              ? "Add the people you know in the construction industry. We&apos;ll track them through to placement."
-              : "Try a different filter to see more of your network."}
-          </p>
-          {items.length === 0 && (
-            <Link href="/referrals/new" className="inline-block mt-5">
-              <Button variant="dark" size="md">
-                <Plus className="w-4 h-4" /> Add your first referral
-              </Button>
-            </Link>
-          )}
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(({ referral, candidate }) => (
-            <Link key={referral.id} href={`/referrals/${referral.id}`}>
-              <Card className="hover:shadow-float hover:border-ecrn-green/40 transition-all">
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-[15px] font-semibold text-ecrn-ink">
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-display text-[18px] font-semibold text-ecrn-ink">Your network</h2>
+          <span className="t-eyebrow">
+            {items.length} {items.length === 1 ? "person" : "people"}
+          </span>
+        </div>
+
+        {filtered.length === 0 ? (
+          <EmptyState
+            title={items.length === 0 ? "No referrals yet" : "Nobody in this filter"}
+            body={
+              items.length === 0
+                ? "Add people you know in construction. We'll track them through to placement."
+                : "Try another filter."
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-ecrn-line">
+            {filtered.map(({ referral, candidate }, i) => {
+              const initials = `${candidate.firstName?.[0] ?? ""}${candidate.lastName?.[0] ?? ""}`.toUpperCase();
+              return (
+                <li key={referral.id}>
+                  <Link href={`/referrals/${referral.id}`} className="flex items-center gap-3 py-3">
+                    <span
+                      className={cn(
+                        "w-10 h-10 shrink-0 rounded-full grid place-items-center font-mono text-[12px] text-ecrn-secondary",
+                        AVATAR_TINTS[i % AVATAR_TINTS.length]
+                      )}
+                    >
+                      {initials || "?"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-[16px] font-semibold text-ecrn-ink truncate">
                           {candidate.firstName} {candidate.lastName}
                         </h3>
-                        <ReferralStatusBadge status={candidate.status} />
-                        {!referral.isPrimary && (
-                          <span className="text-[10px] uppercase tracking-wide text-amber-700 font-medium">
-                            Under review
-                          </span>
+                        {referral.isPrimary ? (
+                          <ReferralStatusBadge status={candidate.status} />
+                        ) : (
+                          <span className="text-[11.5px] font-medium text-amber-700">Under review</span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-slate-500 truncate">
-                        {candidate.currentJobTitle ?? "—"}
-                        {candidate.locationCity && (
-                          <>
-                            {" · "}
-                            {candidate.locationCity}
-                            {candidate.locationState && `, ${candidate.locationState}`}
-                          </>
-                        )}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Referred {formatRelative(referral.createdAt)}
+                      <p className="text-[12.5px] text-ecrn-secondary truncate">
+                        {[candidate.currentJobTitle, candidate.currentCompany, candidate.locationCity].filter(Boolean).join(" · ") ||
+                          candidate.phone ||
+                          "—"}
                       </p>
                     </div>
-                    <div className="text-slate-300 text-lg shrink-0">›</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </Page>
   );
-}
-
-function formatRelative(iso: string): string {
-  const then = new Date(iso).getTime();
-  const now = Date.now();
-  const days = Math.floor((now - then) / (1000 * 60 * 60 * 24));
-  if (days === 0) return "today";
-  if (days === 1) return "yesterday";
-  if (days < 7) return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)} ${Math.floor(days / 7) === 1 ? "week" : "weeks"} ago`;
-  return `${Math.floor(days / 30)} ${Math.floor(days / 30) === 1 ? "month" : "months"} ago`;
 }

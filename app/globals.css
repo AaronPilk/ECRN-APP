@@ -15,7 +15,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    background: #fafafa;
+    background: #f7f8f5;
   }
 
   /* iOS safe area helpers */
@@ -35,6 +35,42 @@
   textarea,
   select {
     font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+
+@layer components {
+  /* Rev 03 type scale */
+  .t-page {
+    @apply font-display text-[40px] leading-[43px] font-semibold tracking-[-0.035em] text-ecrn-ink;
+  }
+  .t-role {
+    @apply font-display text-[34px] leading-[36px] font-semibold tracking-[-0.03em];
+  }
+  .t-section {
+    @apply font-display text-[22px] leading-[24px] font-semibold tracking-[-0.02em] text-ecrn-ink;
+  }
+  .t-eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-ecrn-secondary;
+  }
+  .t-meta {
+    @apply text-[13px] leading-[18px] font-medium text-ecrn-secondary;
+  }
+  .t-money {
+    @apply font-display tabular-nums tracking-[-0.03em];
+  }
+  /* Grouped iOS-style list surface */
+  .group-surface {
+    @apply bg-white rounded-[16px] border border-ecrn-line overflow-hidden;
+  }
+  .group-row {
+    @apply flex items-center justify-between gap-3 px-4 min-h-[52px] border-b border-ecrn-line last:border-b-0;
+  }
+  /* Earnings pass: dark conduit art + cobalt footer */
+  .earnings-pass {
+    @apply relative overflow-hidden rounded-[22px] bg-black text-white shadow-pass;
+  }
+  .reward-panel {
+    background: linear-gradient(104deg, #063889, #0655ce);
   }
 }
 

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
-import { Logo } from "@/components/ui/Logo";
+import Link from "next/link";
+import { DeltaLockup } from "@/components/ui/DeltaLockup";
 import { getNavForRole } from "./nav-config";
 import { RoleSwitcher } from "@/components/dev/RoleSwitcher";
 import type { Profile } from "@/types";
@@ -22,12 +23,18 @@ interface AppShellProps {
  *
  * RoleSwitcher only renders when NEXT_PUBLIC_DEMO_MODE=true.
  */
+function initials(p: Profile): string {
+  const s = `${p.firstName?.[0] ?? ""}${p.lastName?.[0] ?? ""}`.trim();
+  return (s || p.email[0]).toUpperCase();
+}
+
 export function AppShell({ profile, children }: AppShellProps) {
-  const items = getNavForRole(profile.role);
-  const isMockMode = DEMO_MODE;
+  const items = getNavForRole(profile.role, profile.intent === "both");
+  // Only the shared demo accounts see the demo role switcher.
+  const isMockMode = DEMO_MODE && profile.email.endsWith("@demo.goecrn.com");
 
   return (
-    <div className="min-h-screen flex bg-ecrn-mist">
+    <div className="min-h-screen flex bg-ecrn-paper">
       <Sidebar
         items={items}
         user={{
@@ -40,12 +47,16 @@ export function AppShell({ profile, children }: AppShellProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-30 glass border-b border-slate-200/60 pt-safe">
-          <div className="h-14 px-4 flex items-center justify-between">
-            <Logo />
-            <div className="w-9 h-9 rounded-full bg-ecrn-black text-white flex items-center justify-center text-sm font-semibold">
-              {(profile.firstName?.[0] ?? profile.email[0]).toUpperCase()}
-            </div>
+        <header className="lg:hidden sticky top-0 z-30 bg-ecrn-paper/90 backdrop-blur-xl pt-safe">
+          <div className="h-[60px] mx-[22px] flex items-center justify-between border-b border-ecrn-line">
+            <DeltaLockup />
+            <Link
+              href={profile.role === "candidate" ? "/candidate/profile" : profile.role === "admin" ? "/admin/settings" : "/profile"}
+              aria-label="Your profile"
+              className="w-9 h-9 shrink-0 rounded-full bg-ecrn-carbon text-white flex items-center justify-center text-[12px] font-semibold tracking-wide"
+            >
+              {initials(profile)}
+            </Link>
           </div>
         </header>
 

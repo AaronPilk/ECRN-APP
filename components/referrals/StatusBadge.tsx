@@ -54,7 +54,22 @@ const PAYOUT_VARIANT: Record<PayoutStatus, Variant> = {
 };
 
 export function ReferralStatusBadge({ status }: { status: ReferralStatus }) {
-  return <Badge variant={REFERRAL_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>;
+  // Rev 03: "New" is a quiet dot label; progress stages get the Delta-blue pill with a dot.
+  if (status === "new" || status === "submitted") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11.5px] text-ecrn-secondary">
+        <span className="w-1 h-1 rounded-full bg-ecrn-secondary" />
+        {STATUS_LABEL[status]}
+      </span>
+    );
+  }
+  const v = REFERRAL_VARIANT[status];
+  return (
+    <Badge variant={v}>
+      {v === "blue" && <span className="w-1 h-1 rounded-full bg-cobalt" />}
+      {STATUS_LABEL[status]}
+    </Badge>
+  );
 }
 
 export function ApplicationStatusBadge({ status }: { status: ApplicationStatus }) {

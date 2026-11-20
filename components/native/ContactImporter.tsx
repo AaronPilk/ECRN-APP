@@ -4,30 +4,37 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Contacts } from "@capacitor-community/contacts";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
+import { BookUser, Check, ChevronLeft, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
 import { isNativeApp } from "@/lib/native/platform";
-import {
-  importContactsAction,
-  type ImportedContact,
-  type ImportSummary,
-} from "@/app/(app)/referrals/actions";
-import { BookUser, Check, Search, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
+import { importContactsAction, type ImportedContact, type ImportSummary } from "@/app/(app)/referrals/actions";
 
 interface Row extends ImportedContact {
   key: string;
   display: string;
 }
 
-type Stage = "intro" | "denied" | "unsupported" | "pick" | "done";
+type Stage = "intro" | "denied" | "unsupported" | "pick" | "review" | "done";
+
+const digits = (v?: string | null) => (v ?? "").replace(/\D/g, "");
+const hasPhone = (r: Row) => digits(r.phone).length >= 10;
+const hasName = (r: Row) => Boolean(r.firstName?.trim());
+const isReady = (r: Row) => hasName(r) && hasPhone(r);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function webContactsSupported(): boolean {
   return typeof navigator !== "undefined" && "contacts" in navigator && "ContactsManager" in window;
 }
 
-export function ContactImporter() {
+/** Prefer a mobile number — that's what recruiters text. */
+function bestPhone(phones?: { number?: string | null; type?: string; label?: string | null }[]): string | null {
+  if (!phones?.length) return null;
+  const mobile = phones.find((p) => /mobile|cell|iphone/i.test(`${p.type ?? ""} ${p.label ?? ""}`) && p.number);
+  return (mobile ?? phones.find((p) => p.number))?.number ?? null;
+}
+
+export function ContactImporter({ welcome }: { welcome?: boolean }) {
   const [stage, setStage] = useState<Stage>("intro");
   const [rows, setRows] = useState<Row[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -51,17 +58,17 @@ export function ContactImporter() {
       for (const c of contacts) {
         const first = (c.name?.given ?? "").trim();
         const last = (c.name?.family ?? "").trim();
-        const display = (c.name?.display ?? `${first} ${last}`).trim();
+        const display = (c.name?.display ?? `${first} ${last}`).trim() || c.organization?.company?.trim() || "";
         const email = c.emails?.find((e) => e.address)?.address ?? null;
-        const phone = c.phones?.find((p) => p.number)?.number ?? null;
+        const phone = bestPhone(c.phones as any);
         if (!display || (!email && !phone)) continue;
         const addr = c.postalAddresses?.find((a) => a.city || a.region);
         const [fallbackFirst, ...rest] = display.split(" ");
         mapped.push({
           key: c.contactId,
           display,
-          firstName: first || fallbackFirst,
-          lastName: last || rest.join(" "),
+          firstName: first || (c.name?.display ? fallbackFirst : ""),
+          lastName: last || (c.name?.display ? rest.join(" ") : ""),
           email,
           phone,
           currentJobTitle: c.organization?.jobTitle ?? null,
@@ -90,17 +97,18 @@ export function ContactImporter() {
           const [first, ...rest] = display.split(" ");
           return {
             key: `w${i}`,
-            display,
+            display: display || String(c.tel?.[0] ?? c.email?.[0] ?? ""),
             firstName: first ?? "",
             lastName: rest.join(" "),
             email: c.email?.[0] ?? null,
             phone: c.tel?.[0] ?? null,
           };
         })
-        .filter((r) => r.display && (r.email || r.phone));
+        .filter((r) => r.display);
       setRows(mapped);
       setSelected(new Set(mapped.map((r) => r.key)));
-      setStage("pick");
+      // The web picker already is the selection step.
+      setStage(mapped.length ? "review" : "intro");
     } catch {
       setStage("intro");
     } finally {
@@ -122,6 +130,9 @@ export function ContactImporter() {
     );
   }, [rows, query]);
 
+  const chosen = rows.filter((r) => selected.has(r.key));
+  const notReady = chosen.filter((r) => !isReady(r));
+
   function toggle(key: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -132,145 +143,242 @@ export function ContactImporter() {
     if (isNativeApp()) void Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
   }
 
+  function edit(key: string, patch: Partial<Row>) {
+    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
   function submit() {
-    const chosen = rows.filter((r) => selected.has(r.key));
-    if (!chosen.length) return;
+    if (!chosen.length || notReady.length) return;
     startTransition(async () => {
-      const result = await importContactsAction(
-        chosen.map(({ key: _k, display: _d, ...c }) => c)
-      );
+      const result = await importContactsAction(chosen.map(({ key: _k, display: _d, ...c }) => c));
       setSummary(result);
       setStage("done");
     });
   }
 
+  // ── Done ──────────────────────────────────────────────────────────
   if (stage === "done" && summary) {
     return (
-      <Card className="p-7 text-center">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-ecrn-green/15 text-emerald-700 grid place-items-center">
+      <div className="group-surface p-7 text-center">
+        <div className="w-14 h-14 mx-auto rounded-full bg-ecrn-action-surface text-ecrn-green-text grid place-items-center">
           <Check className="w-7 h-7" />
         </div>
-        <h2 className="mt-4 text-xl font-bold text-ecrn-ink">
-          {summary.created} new referral{summary.created === 1 ? "" : "s"} added
+        <h2 className="mt-4 font-display text-[24px] font-semibold text-ecrn-ink">
+          {summary.created} referral{summary.created === 1 ? "" : "s"} sent to Delta
         </h2>
-        <div className="mt-3 space-y-1 text-sm text-slate-600">
-          {summary.underReview > 0 && (
-            <p>
-              {summary.underReview} may already be in the ECRN network — our team will review.
-            </p>
-          )}
-          {summary.skipped > 0 && <p>{summary.skipped} skipped (missing a name, email, or phone).</p>}
+        <div className="mt-3 space-y-1 text-[14px] text-ecrn-secondary">
+          {summary.underReview > 0 && <p>{summary.underReview} may already be in the network. Delta will review.</p>}
+          {summary.skipped > 0 && <p>{summary.skipped} skipped (missing a name or phone).</p>}
           {summary.errors.length > 0 && <p className="text-red-700">{summary.errors.length} couldn&apos;t be saved.</p>}
         </div>
-        <Link href="/referrals" className="inline-block mt-6">
-          <Button variant="dark">See my referrals</Button>
-        </Link>
-      </Card>
+        <div className="mt-6 grid gap-2">
+          <Link href="/referrals">
+            <Button fullWidth>See my referrals</Button>
+          </Link>
+          <button type="button" className="py-2 text-[14px] font-medium text-ecrn-green-text" onClick={() => { setSelected(new Set()); setStage("pick"); }}>
+            Refer more people
+          </button>
+        </div>
+      </div>
     );
   }
 
+  // ── Review: fill in what's missing before anything is sent ────────
+  if (stage === "review") {
+    return (
+      <div className="space-y-4 pb-28">
+        <button type="button" onClick={() => setStage(rows.length > chosen.length || isNativeApp() ? "pick" : "intro")} className="inline-flex items-center gap-1 text-[14px] font-medium text-ecrn-green-text -ml-1">
+          <ChevronLeft className="w-4 h-4" /> Back to contacts
+        </button>
+        <div>
+          <h1 className="t-page !text-[32px] !leading-[35px]">Check the details</h1>
+          <p className="mt-2 text-[14.5px] text-ecrn-secondary">
+            Name and phone are required. Email and job title help Delta move faster.
+          </p>
+        </div>
+
+        {notReady.length > 0 && (
+          <div className="flex gap-2 rounded-[14px] bg-amber-50 px-4 py-3 text-[13.5px] text-amber-900">
+            <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
+            {notReady.length} {notReady.length === 1 ? "person needs" : "people need"} a name or phone number.
+          </div>
+        )}
+
+        <ul className="space-y-3">
+          {chosen.map((r) => {
+            const nameMissing = !hasName(r);
+            const phoneMissing = !hasPhone(r);
+            return (
+              <li key={r.key} className={cn("group-surface", (nameMissing || phoneMissing) && "border-amber-400")}>
+                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                  <span className="font-display text-[17px] font-semibold text-ecrn-ink truncate">{r.display}</span>
+                  <button type="button" onClick={() => toggle(r.key)} className="text-[13px] text-ecrn-secondary shrink-0">
+                    Remove
+                  </button>
+                </div>
+                <ReviewField label="First name" value={r.firstName} missing={nameMissing} required onChange={(v) => edit(r.key, { firstName: v })} />
+                <ReviewField label="Last name" value={r.lastName} onChange={(v) => edit(r.key, { lastName: v })} />
+                <ReviewField label="Phone" type="tel" value={r.phone ?? ""} missing={phoneMissing} required onChange={(v) => edit(r.key, { phone: v })} />
+                <ReviewField label="Email" type="email" value={r.email ?? ""} soft={!r.email} onChange={(v) => edit(r.key, { email: v })} />
+                <ReviewField label="Job title" value={r.currentJobTitle ?? ""} soft={!r.currentJobTitle} onChange={(v) => edit(r.key, { currentJobTitle: v })} />
+                <ReviewField label="Company" value={r.company ?? ""} onChange={(v) => edit(r.key, { company: v })} />
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+          <div className="max-w-3xl mx-auto px-[22px] py-3">
+            <Button fullWidth size="lg" disabled={!chosen.length || notReady.length > 0 || pending} loading={pending} onClick={submit}>
+              {notReady.length > 0
+                ? "Add the missing info"
+                : `Send ${chosen.length} ${chosen.length === 1 ? "referral" : "referrals"} to Delta`}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Pick ──────────────────────────────────────────────────────────
   if (stage === "pick") {
     return (
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
+      <div className="space-y-3 pb-28">
+        <h1 className="t-page !text-[32px] !leading-[35px]">Who do you know?</h1>
+        <div className="flex items-center gap-2 h-[48px] px-3.5 rounded-[14px] bg-white border border-ecrn-line">
+          <Search className="w-4 h-4 text-ecrn-secondary" />
+          <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${rows.length} contacts`}
-            className="pl-10"
+            className="flex-1 bg-transparent outline-none text-[16px]"
           />
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500">{selected.size} selected</span>
-          <button
-            type="button"
-            className="font-medium text-ecrn-ink"
-            onClick={() =>
-              setSelected((prev) => {
-                const next = new Set(prev);
-                const allOn = visible.every((r) => next.has(r.key));
-                visible.forEach((r) => (allOn ? next.delete(r.key) : next.add(r.key)));
-                return next;
-              })
-            }
-          >
-            {visible.length && visible.every((r) => selected.has(r.key)) ? "Clear" : "Select all"}
-          </button>
+        <div className="flex items-center justify-between text-[13.5px]">
+          <span className="text-ecrn-secondary">{selected.size} selected</span>
+          {query && visible.length > 0 && (
+            <button
+              type="button"
+              className="font-medium text-ecrn-green-text"
+              onClick={() =>
+                setSelected((prev) => {
+                  const next = new Set(prev);
+                  const allOn = visible.every((r) => next.has(r.key));
+                  visible.forEach((r) => (allOn ? next.delete(r.key) : next.add(r.key)));
+                  return next;
+                })
+              }
+            >
+              {visible.every((r) => selected.has(r.key)) ? "Clear these" : "Select these"}
+            </button>
+          )}
         </div>
 
-        <Card className="divide-y divide-slate-100 overflow-hidden">
-          {visible.length === 0 && <p className="p-5 text-sm text-slate-500">No contacts match.</p>}
+        <div className="group-surface divide-y divide-ecrn-line">
+          {visible.length === 0 && <p className="p-5 text-[14px] text-ecrn-secondary">No contacts match.</p>}
           {visible.map((r) => {
             const on = selected.has(r.key);
             return (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => toggle(r.key)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-slate-50"
-              >
-                <span
-                  className={`w-6 h-6 shrink-0 rounded-full border-2 grid place-items-center ${
-                    on ? "bg-ecrn-green border-ecrn-green text-ecrn-black" : "border-slate-300"
-                  }`}
-                >
+              <button key={r.key} type="button" onClick={() => toggle(r.key)} className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-ecrn-paper">
+                <span className={cn("w-6 h-6 shrink-0 rounded-full border-2 grid place-items-center", on ? "bg-ecrn-green border-ecrn-green text-ecrn-action-ink" : "border-ecrn-line")}>
                   {on && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-[15px] font-medium text-ecrn-ink truncate">{r.display}</span>
-                  <span className="block text-xs text-slate-500 truncate">
-                    {[r.currentJobTitle, r.company].filter(Boolean).join(" · ") || r.email || r.phone}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15.5px] font-medium text-ecrn-ink truncate">{r.display}</span>
+                  <span className="block text-[12.5px] text-ecrn-secondary truncate">
+                    {[r.currentJobTitle, r.company].filter(Boolean).join(" · ") || r.phone || r.email}
                   </span>
                 </span>
+                {!hasPhone(r) && <span className="text-[11px] text-amber-700 shrink-0">No phone</span>}
               </button>
             );
           })}
-        </Card>
+        </div>
 
-        <div className="sticky bottom-24 lg:bottom-4 pt-2">
-          <Button variant="dark" size="lg" fullWidth disabled={!selected.size || pending} loading={pending} onClick={submit}>
-            Refer {selected.size || ""} {selected.size === 1 ? "person" : "people"}
-          </Button>
+        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+          <div className="max-w-3xl mx-auto px-[22px] py-3">
+            <Button fullWidth size="lg" disabled={!selected.size} onClick={() => setStage("review")}>
+              Review {selected.size || ""} {selected.size === 1 ? "person" : "people"}
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ── Intro ─────────────────────────────────────────────────────────
   return (
-    <Card className="p-7">
-      <div className="w-12 h-12 rounded-2xl bg-ecrn-black text-white grid place-items-center">
-        <BookUser className="w-6 h-6" />
+    <div className="space-y-5">
+      <div>
+        {welcome && <p className="t-eyebrow mb-2">You&apos;re in</p>}
+        <h1 className="t-page">{welcome ? "Start with your contacts" : "Refer from contacts"}</h1>
+        <p className="mt-2 text-[15px] text-ecrn-secondary leading-relaxed">
+          Pick the electricians, PMs, estimators, and supers you know. If Delta places one, you can earn $1,000–$10,000.
+        </p>
       </div>
-      <h2 className="mt-4 text-xl font-bold text-ecrn-ink">Refer from your contacts</h2>
-      <p className="mt-2 text-[15px] text-slate-600 leading-relaxed">
-        Pick the electricians, PMs, estimators, and supers you know. Each one becomes a referral
-        that&apos;s yours — if Delta places them, you can earn $1,000–$10,000.
-      </p>
-      <div className="mt-4 flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-        <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
-        Only the contacts you select are sent to ECRN. Nothing is uploaded until you tap Refer.
+      <div className="flex items-start gap-2.5 rounded-[14px] bg-delta-surface px-4 py-3 text-[13.5px] text-navy">
+        <ShieldCheck className="w-4 h-4 shrink-0 text-cobalt mt-0.5" />
+        Only the people you select are sent. Nothing leaves your phone until you tap Send.
       </div>
 
       {stage === "denied" && (
-        <p className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200/70 text-sm text-amber-900">
-          ECRN doesn&apos;t have access to your contacts. Turn it on in your phone&apos;s Settings → ECRN →
-          Contacts, then try again.
+        <p className="rounded-[14px] bg-amber-50 px-4 py-3 text-[14px] text-amber-900">
+          ECRN doesn&apos;t have access to your contacts. Turn it on in Settings → ECRN → Contacts, then try again.
         </p>
       )}
       {stage === "unsupported" && (
-        <p className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700">
-          Contact import works in the ECRN iPhone and Android app. On the web you can{" "}
-          <Link href="/referrals/new" className="font-medium underline">
+        <p className="rounded-[14px] bg-white border border-ecrn-line px-4 py-3 text-[14px] text-ecrn-secondary">
+          Contact import works in the ECRN iPhone and Android app. Here you can{" "}
+          <Link href="/referrals/new" className="font-medium text-ecrn-green-text">
             add a referral by hand
           </Link>
           .
         </p>
       )}
 
-      <Button variant="dark" size="lg" fullWidth className="mt-6" onClick={start} loading={loading}>
-        Choose contacts
+      <Button size="lg" fullWidth onClick={start} loading={loading}>
+        <BookUser className="w-5 h-5" /> Choose contacts
       </Button>
-    </Card>
+      {welcome && (
+        <Link href="/dashboard" className="block text-center text-[14px] font-medium text-ecrn-secondary py-1">
+          I&apos;ll do this later
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function ReviewField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  missing,
+  required,
+  soft,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  missing?: boolean;
+  required?: boolean;
+  soft?: boolean;
+}) {
+  return (
+    <label className={cn("group-row min-h-[48px]", missing && "bg-amber-50/70")}>
+      <span className={cn("text-[14px] shrink-0", missing ? "text-amber-800 font-medium" : "text-ecrn-secondary")}>
+        {label}
+        {required && " *"}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
+        placeholder={missing ? "Required" : soft ? "Add if you know it" : ""}
+        className="min-w-0 flex-1 text-right bg-transparent outline-none text-[15.5px] text-ecrn-ink placeholder:text-ecrn-secondary/60"
+      />
+    </label>
   );
 }

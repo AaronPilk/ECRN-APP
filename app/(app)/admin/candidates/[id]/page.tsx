@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
+import { CareerSignals } from "@/components/admin/CareerSignals";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -146,6 +147,8 @@ export default async function AdminCandidateDetail(props: PageProps) {
                     primaryReferrer.email
                   : candidate.sourceType === "direct_application"
                     ? "Direct application"
+                    : candidate.sourceType === "self_signup"
+                      ? "Joined ECRN themselves"
                     : "Unassigned"
               }
               href={primaryReferrer ? `/admin/users#${primaryReferrer.id}` : undefined}
@@ -153,6 +156,8 @@ export default async function AdminCandidateDetail(props: PageProps) {
           </div>
         </CardContent>
       </Card>
+
+      <CareerSignals candidateId={candidate.id} />
 
       {/* Status changer */}
       <Card>

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Page, PageTitle } from "@/components/ui/Page";
+import { ResumeCard } from "@/components/profile/ResumeCard";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
 import { InviteLink } from "@/components/profile/InviteLink";
 import { getCurrentProfile } from "@/lib/auth/session";
@@ -17,11 +18,26 @@ export default async function ProfilePage() {
   const inviteUrl = `${appUrl}/r/${profile.id}`;
   const invitedCount = profile.role === "referral_partner" ? await countInvitedBy(profile.id) : 0;
 
+  const isSeeker = profile.role === "candidate";
+  const canInvite = profile.role === "referral_partner" || profile.intent === "both";
+  const STATUS: Record<string, string> = {
+    actively_looking: "Actively looking",
+    open_to_offers: "Open to a move (private)",
+    not_looking: "Not looking",
+  };
+
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
-        Your profile
-      </h1>
+    <Page>
+      <PageTitle eyebrow="Account" title="Profile" />
+
+      {isSeeker && (
+        <ResumeCard
+          userId={profile.id}
+          resumePath={profile.resumePath}
+          uploadedAt={profile.resumeUploadedAt}
+          hasBuilt={Boolean(profile.resumeBuilder.generated)}
+        />
+      )}
 
       <Card>
         <CardContent className="py-5 space-y-3">
@@ -37,13 +53,19 @@ export default async function ProfilePage() {
               [profile.locationCity, profile.locationState].filter(Boolean).join(", ") || "—"
             }
           />
-          <Row label="Role" value={profile.role.replace(/_/g, " ")} />
+          {isSeeker && profile.discipline && <Row label="What you do" value={profile.discipline} />}
+          {isSeeker && profile.yearsExperience && <Row label="Experience" value={`${profile.yearsExperience} years`} />}
+          {isSeeker && profile.careerStatus && <Row label="Status" value={STATUS[profile.careerStatus] ?? profile.careerStatus} />}
+          {isSeeker && profile.relocation && (
+            <Row label="Relocation" value={{ yes: "Open to relocating", maybe: "For the right role", no: "Not relocating" }[profile.relocation]} />
+          )}
+          {!isSeeker && <Row label="Role" value={profile.role.replace(/_/g, " ")} />}
         </CardContent>
       </Card>
 
-      {profile.role === "referral_partner" && (
+      {canInvite && (
         <div id="invite">
-          <h2 className="text-base font-semibold text-ecrn-ink mb-3">Invite others to ECRN</h2>
+          <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-3">Invite others to ECRN</h2>
           <Card>
             <CardContent className="py-5">
               <p className="text-sm text-slate-600 leading-relaxed mb-4">
@@ -66,8 +88,8 @@ export default async function ProfilePage() {
       <AddToHomeScreenGuide persistent />
 
       <div>
-        <h2 className="text-base font-semibold text-ecrn-ink mb-3">Account</h2>
-        <Card className="divide-y divide-slate-100 overflow-hidden">
+        <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-3">Account</h2>
+        <Card className="divide-y divide-ecrn-line overflow-hidden">
           <LinkRow href="/support" label="Help & support" />
           <LinkRow href="/privacy" label="Privacy policy" />
           <LinkRow href="/terms" label="Terms of use" />
@@ -81,7 +103,7 @@ export default async function ProfilePage() {
           )}
         </Card>
       </div>
-    </div>
+    </Page>
   );
 }
 

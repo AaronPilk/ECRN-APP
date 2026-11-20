@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  LayoutDashboard,
+  LayoutGrid as LayoutDashboard,
   Users,
   Briefcase,
-  DollarSign,
+  Wallet as DollarSign,
   User,
   FileText,
   Building2,
   Settings,
-  ClipboardList,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "./nav-config";
@@ -23,7 +23,7 @@ import type { IconName } from "./nav-config";
  */
 export const iconMap: Record<IconName, LucideIcon> = {
   dashboard: LayoutDashboard,
-  referrals: ClipboardList,
+  referrals: Users,
   jobs: Briefcase,
   earnings: DollarSign,
   profile: User,
@@ -32,4 +32,5 @@ export const iconMap: Record<IconName, LucideIcon> = {
   companies: Building2,
   users: User,
   settings: Settings,
+  sync: RefreshCw,
 };

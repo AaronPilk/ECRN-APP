@@ -42,7 +42,10 @@ const SignupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().trim().min(1, "First name required"),
   lastName: z.string().trim().min(1, "Last name required"),
-  phone: z.string().trim().optional(),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a valid phone number"),
   invitedBy: z.string().trim().optional(),
 });
 
@@ -52,7 +55,7 @@ export async function signupAction(formData: FormData): Promise<void> {
     password: formData.get("password"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
-    phone: formData.get("phone") || undefined,
+    phone: formData.get("phone") ?? "",
     invitedBy: formData.get("invitedBy") || undefined,
   });
   const ref = String(formData.get("invitedBy") ?? "");

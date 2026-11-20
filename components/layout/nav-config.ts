@@ -22,7 +22,8 @@ export type IconName =
   | "candidates"
   | "companies"
   | "users"
-  | "settings";
+  | "settings"
+  | "sync";
 
 export interface NavItem {
   label: string;
@@ -53,15 +54,25 @@ export const adminNav: NavItem[] = [
   { label: "Companies", href: "/admin/companies", icon: "companies" },
   { label: "Payouts", href: "/admin/payouts", icon: "earnings" },
   { label: "Users", href: "/admin/users", icon: "users" },
+  { label: "Bullhorn sync", href: "/admin/sync", icon: "sync" },
   { label: "Settings", href: "/admin/settings", icon: "settings" },
 ];
 
-export function getNavForRole(role: UserRole): NavItem[] {
+/** Job seekers who also refer ("both") get a Referrals tab. */
+export const candidateReferrerNav: NavItem[] = [
+  { label: "Dashboard", href: "/candidate", icon: "dashboard" },
+  { label: "Jobs", href: "/candidate/jobs", icon: "jobs" },
+  { label: "Referrals", href: "/referrals", icon: "referrals" },
+  { label: "Applications", href: "/candidate/applications", icon: "applications" },
+  { label: "Profile", href: "/candidate/profile", icon: "profile" },
+];
+
+export function getNavForRole(role: UserRole, alsoRefers = false): NavItem[] {
   switch (role) {
     case "admin":
       return adminNav;
     case "candidate":
-      return candidateNav;
+      return alsoRefers ? candidateReferrerNav : candidateNav;
     case "referral_partner":
     case "company_contact":
     default:

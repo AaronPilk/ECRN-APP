@@ -161,11 +161,14 @@ export interface CreateReferralInput {
   locationCity?: string | null;
   locationState?: string | null;
   currentJobTitle?: string | null;
+  currentCompany?: string | null;
   trade?: string | null;
   yearsExperience?: number | null;
   linkedinUrl?: string | null;
   resumeUrl?: string | null;
   notes?: string | null;
+  /** manual | contacts | job_link */
+  source?: string | null;
 }
 
 export interface CreateReferralResult {
@@ -192,6 +195,8 @@ export async function createReferral(
     location_city: input.locationCity ?? "",
     location_state: input.locationState ?? "",
     current_job_title: input.currentJobTitle ?? "",
+    current_company: input.currentCompany ?? "",
+    source: input.source ?? "",
     trade: input.trade ?? "",
     years_experience: input.yearsExperience != null ? String(input.yearsExperience) : "",
     linkedin_url: input.linkedinUrl ?? "",

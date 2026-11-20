@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Page, BackLink } from "@/components/ui/Page";
 import { Button } from "@/components/ui/Button";
 import { ReferralStatusBadge } from "@/components/referrals/StatusBadge";
 import { getCurrentProfile } from "@/lib/auth/session";
@@ -11,14 +11,7 @@ import {
   listPayoutsByReferrer,
   STATUS_LABEL,
 } from "@/lib/data/repository";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  Linkedin,
-  StickyNote,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { ReferralStatus } from "@/types";
 
 interface PageProps {
@@ -46,227 +39,126 @@ export default async function ReferralDetailPage(props: PageProps) {
   ]);
   const payouts = allPayouts.filter((p) => p.candidateId === candidate.id);
 
+  const yrs = candidate.yearsExperience != null ? `${candidate.yearsExperience} years of experience` : null;
+  const rows: [string, string | null][] = [
+    ["Email", candidate.email],
+    ["Phone", candidate.phone],
+    ["Company", candidate.currentCompany],
+    ["Location", [candidate.locationCity, candidate.locationState].filter(Boolean).join(", ") || null],
+    ["Trade", candidate.trade?.replace(/_/g, " ") ?? null],
+  ];
+
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      {/* Banner messages */}
+    <Page>
       {searchParams?.welcome && !searchParams?.duplicate && (
-        <Banner variant="success">
-          Referral submitted. We&apos;ll update you as the candidate moves through the pipeline.
-        </Banner>
+        <Banner variant="success">Referral sent to Delta. We&apos;ll update you as they move through the pipeline.</Banner>
       )}
       {searchParams?.duplicate && (
-        <Banner variant="amber">
-          This contact may already exist in the ECRN network. Our team will review.
-        </Banner>
+        <Banner variant="amber">This person may already be in the ECRN network. Delta&apos;s team will review it.</Banner>
       )}
 
-      {/* Back link */}
-      <Link href="/referrals" className="text-sm text-slate-500 hover:text-ecrn-ink">
-        ← My referrals
-      </Link>
+      <div>
+        <BackLink href="/referrals" label="My referrals" />
+        <h1 className="t-page mt-3">
+          {candidate.firstName} {candidate.lastName}
+        </h1>
+        <p className="mt-1.5 text-[14.5px] text-ecrn-secondary">
+          {[candidate.currentJobTitle, yrs].filter(Boolean).join(" · ") || "Referred contact"}
+          {!referral.isPrimary && <span className="ml-2 text-amber-700 font-medium">Under review</span>}
+        </p>
+      </div>
 
-      {/* Header card */}
-      <Card className="overflow-hidden">
-        <CardContent className="py-6">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold tracking-tight text-ecrn-ink">
-                  {candidate.firstName} {candidate.lastName}
-                </h1>
-                <ReferralStatusBadge status={candidate.status} />
-                {!referral.isPrimary && (
-                  <span className="text-[10px] uppercase tracking-wide text-amber-700 font-medium px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200">
-                    Under review
-                  </span>
-                )}
+      <section>
+        <h2 className="t-section !text-[20px] mb-1">Contact details</h2>
+        <dl className="divide-y divide-ecrn-line border-b border-ecrn-line">
+          {rows
+            .filter(([, v]) => v)
+            .map(([k, v]) => (
+              <div key={k} className="flex gap-4 py-3 text-[14.5px]">
+                <dt className="w-[84px] shrink-0 text-ecrn-secondary">{k}</dt>
+                <dd className="text-ecrn-ink min-w-0 break-words ">{v}</dd>
               </div>
-              {candidate.currentJobTitle && (
-                <p className="mt-1 text-slate-600">
-                  {candidate.currentJobTitle}
-                  {candidate.yearsExperience !== null &&
-                    ` · ${candidate.yearsExperience} yrs experience`}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick facts */}
-          <div className="mt-5 grid sm:grid-cols-2 gap-3">
-            {candidate.email && (
-              <Fact icon={<Mail className="w-4 h-4" />} label="Email" value={candidate.email} />
-            )}
-            {candidate.phone && (
-              <Fact icon={<Phone className="w-4 h-4" />} label="Phone" value={candidate.phone} />
-            )}
-            {(candidate.locationCity || candidate.locationState) && (
-              <Fact
-                icon={<MapPin className="w-4 h-4" />}
-                label="Location"
-                value={[candidate.locationCity, candidate.locationState].filter(Boolean).join(", ")}
-              />
-            )}
-            {candidate.trade && (
-              <Fact
-                icon={<Briefcase className="w-4 h-4" />}
-                label="Trade"
-                value={candidate.trade.replace(/_/g, " ")}
-              />
-            )}
-            {candidate.linkedinUrl && (
-              <a
-                href={candidate.linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sm:col-span-2"
-              >
-                <Fact
-                  icon={<Linkedin className="w-4 h-4" />}
-                  label="LinkedIn"
-                  value={candidate.linkedinUrl.replace(/^https?:\/\/(www\.)?/, "")}
-                  isLink
-                />
-              </a>
-            )}
-          </div>
-
-          {referral.notes && (
-            <div className="mt-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 font-medium">
-                <StickyNote className="w-3.5 h-3.5" />
-                Your notes
-              </div>
-              <p className="mt-1.5 text-sm text-slate-700 whitespace-pre-line leading-relaxed">
-                {referral.notes}
-              </p>
+            ))}
+          {candidate.linkedinUrl && (
+            <div className="flex gap-4 py-3 text-[14.5px]">
+              <dt className="w-[84px] shrink-0 text-ecrn-secondary">LinkedIn</dt>
+              <dd className="min-w-0 truncate">
+                <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-ecrn-green-text">
+                  {candidate.linkedinUrl.replace(/^https?:\/\/(www\.)?/, "")}
+                </a>
+              </dd>
             </div>
           )}
+        </dl>
+        <Link href="/jobs" className="block mt-4">
+          <Button fullWidth>
+            Refer to an open job <ArrowUpRight className="w-4 h-4" />
+          </Button>
+        </Link>
+      </section>
 
-          <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row gap-2">
-            <Link href="/jobs">
-              <Button size="sm" variant="primary">
-                Refer them to an open job
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      {referral.notes && (
+        <section>
+          <h2 className="font-display text-[17px] font-semibold text-ecrn-ink">Your notes</h2>
+          <p className="mt-1 text-[14.5px] text-ecrn-secondary whitespace-pre-line">{referral.notes}</p>
+        </section>
+      )}
 
-      {/* Pipeline */}
       <PipelineCard status={candidate.status} />
 
-      {/* Payouts tied to this candidate */}
       {payouts.length > 0 && (
-        <Card>
-          <CardContent className="py-5">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              Payouts on this referral
-            </h2>
-            <div className="space-y-2">
-              {payouts.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/60"
-                >
-                  <div>
-                    <div className="text-sm font-semibold text-ecrn-ink">
-                      ${(p.amountCents / 100).toLocaleString("en-US")}
-                    </div>
-                    {p.notes && (
-                      <div className="text-xs text-slate-500 mt-0.5">{p.notes}</div>
-                    )}
-                  </div>
-                  <span className="text-xs font-medium text-slate-600 uppercase tracking-wide">
-                    {p.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <section>
+          <h2 className="t-section !text-[20px] mb-1">Payouts</h2>
+          <ul className="divide-y divide-ecrn-line border-b border-ecrn-line">
+            {payouts.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-3">
+                <span className="t-money text-[17px] font-semibold text-cobalt">
+                  ${(p.amountCents / 100).toLocaleString("en-US")}
+                </span>
+                <span className="text-[12.5px] font-medium text-ecrn-secondary capitalize">{p.status}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      {/* Job referrals */}
       {jobReferrals.length > 0 && (
-        <Card>
-          <CardContent className="py-5">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              Jobs you&apos;ve referred them to
-            </h2>
-            <div className="space-y-2">
-              {jobReferrals.map((jr) => (
-                <Link key={jr.id} href={`/jobs/${jr.jobId}`}>
-                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 transition-colors">
-                    <div className="text-sm font-medium text-ecrn-ink">View role →</div>
-                    <ReferralStatusBadge status={jr.status} />
-                  </div>
+        <section>
+          <h2 className="t-section !text-[20px] mb-1">Referred to</h2>
+          <ul className="divide-y divide-ecrn-line border-b border-ecrn-line">
+            {jobReferrals.map((jr) => (
+              <li key={jr.id}>
+                <Link href={`/jobs/${jr.jobId}`} className="flex items-center justify-between py-3 text-[14.5px]">
+                  <span className="text-ecrn-green-text font-medium">View role</span>
+                  <ReferralStatusBadge status={jr.status} />
                 </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      {/* Activity timeline */}
-      <Card>
-        <CardContent className="py-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-            Activity
-          </h2>
-          <ol className="relative border-l border-slate-200 ml-2 space-y-4 pl-5">
-            {activity.length === 0 ? (
-              <li className="text-sm text-slate-500">No activity logged yet.</li>
-            ) : (
-              activity.map((a) => (
-                <li key={a.id} className="relative">
-                  <span className="absolute -left-[1.45rem] top-1.5 w-2.5 h-2.5 rounded-full bg-ecrn-green ring-4 ring-white" />
-                  <div className="text-sm font-medium text-ecrn-ink">
-                    {humanizeAction(a.action)}
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5">{formatDate(a.createdAt)}</div>
-                </li>
-              ))
-            )}
+      <section className="border-t border-ecrn-line pt-5">
+        <h2 className="t-section !text-[20px]">Activity</h2>
+        {activity.length === 0 ? (
+          <p className="mt-2 text-[14.5px] text-ecrn-secondary">No activity logged yet.</p>
+        ) : (
+          <ol className="mt-3 relative border-l border-ecrn-line ml-1.5 space-y-4 pl-5">
+            {activity.map((a) => (
+              <li key={a.id} className="relative">
+                <span className="absolute -left-[1.5rem] top-1.5 w-2.5 h-2.5 rounded-full bg-ecrn-green ring-4 ring-ecrn-paper" />
+                <div className="text-[14.5px] font-medium text-ecrn-ink">{humanizeAction(a.action)}</div>
+                <div className="t-meta">{formatDate(a.createdAt)}</div>
+              </li>
+            ))}
           </ol>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </section>
+    </Page>
   );
 }
 
 // ─── helpers / sub-components ────────────────────────────────────────
-
-function Fact({
-  icon,
-  label,
-  value,
-  isLink,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  isLink?: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-      <div className="w-7 h-7 shrink-0 rounded-lg bg-white border border-slate-200 grid place-items-center text-slate-500">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[11px] uppercase tracking-wide text-slate-500 font-medium">
-          {label}
-        </div>
-        <div
-          className={`text-sm font-medium truncate ${
-            isLink ? "text-ecrn-green hover:underline" : "text-ecrn-ink"
-          }`}
-        >
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const PIPELINE_STEPS: { key: ReferralStatus; label: string }[] = [
   { key: "new", label: "New" },
@@ -280,55 +172,30 @@ const PIPELINE_STEPS: { key: ReferralStatus; label: string }[] = [
 
 function PipelineCard({ status }: { status: ReferralStatus }) {
   const idx = PIPELINE_STEPS.findIndex((s) => s.key === status);
+  const placedish = ["payout_pending", "payout_approved", "payout_paid"].includes(status);
+  const current = placedish ? PIPELINE_STEPS.length - 1 : idx;
   const negative = ["rejected", "not_qualified", "inactive"].includes(status);
   return (
-    <Card>
-      <CardContent className="py-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">
-          Pipeline
-        </h2>
-        {negative ? (
-          <div className="text-sm text-slate-600">
-            Current status: <ReferralStatusBadge status={status} />
-          </div>
-        ) : (
-          <ol className="grid grid-cols-7 gap-1">
-            {PIPELINE_STEPS.map((s, i) => {
-              const done = idx >= i && idx !== -1;
-              const current = idx === i;
-              return (
-                <li key={s.key} className="text-center">
-                  <div
-                    className={`mx-auto w-6 h-6 rounded-full grid place-items-center text-[10px] font-bold ${
-                      current
-                        ? "bg-ecrn-green text-ecrn-black ring-4 ring-ecrn-green/20"
-                        : done
-                          ? "bg-ecrn-green text-ecrn-black"
-                          : "bg-slate-200 text-slate-500"
-                    }`}
-                  >
-                    {i + 1}
-                  </div>
-                  <div
-                    className={`mt-1.5 text-[10px] uppercase tracking-wide font-medium ${
-                      done ? "text-ecrn-ink" : "text-slate-400"
-                    }`}
-                  >
-                    {s.label}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+    <section className="border-t border-ecrn-line pt-5">
+      <div className="flex items-center justify-between">
+        <h2 className="t-section !text-[20px]">Pipeline</h2>
+        {!negative && current >= 0 && (
+          <span className="t-eyebrow">
+            Stage {current + 1} of {PIPELINE_STEPS.length}
+          </span>
         )}
-        {!negative && (
-          <p className="mt-4 text-xs text-slate-500">
-            Current stage:{" "}
-            <span className="text-ecrn-ink font-medium">{STATUS_LABEL[status]}</span>
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      {!negative && (
+        <div className="mt-3 grid grid-cols-7 gap-1.5" aria-hidden>
+          {PIPELINE_STEPS.map((s, i) => (
+            <span key={s.key} className={`h-1 rounded-full ${i <= current ? "bg-ecrn-green-text" : "bg-ecrn-line"}`} />
+          ))}
+        </div>
+      )}
+      <p className="mt-3 text-[13.5px] text-ecrn-secondary">
+        Current stage <span className="ml-1 font-semibold text-ecrn-ink">{STATUS_LABEL[status]}</span>
+      </p>
+    </section>
   );
 }
 
@@ -340,12 +207,8 @@ function Banner({
   variant: "success" | "amber";
 }) {
   const styles =
-    variant === "success"
-      ? "bg-emerald-50 border-emerald-200/60 text-emerald-900"
-      : "bg-amber-50 border-amber-200/60 text-amber-900";
-  return (
-    <div className={`p-3.5 rounded-xl text-sm border leading-relaxed ${styles}`}>{children}</div>
-  );
+    variant === "success" ? "bg-ecrn-action-surface text-ecrn-green-text" : "bg-amber-50 text-amber-900";
+  return <div className={`px-4 py-3 rounded-[14px] text-[14px] leading-relaxed ${styles}`}>{children}</div>;
 }
 
 function humanizeAction(action: string): string {

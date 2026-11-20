@@ -4,6 +4,12 @@
 <dict>
 	<key>NSContactsUsageDescription</key>
 	<string>ECRN lets you pick people from your contacts to refer for construction jobs. Only the contacts you select are sent to Delta Construction Partners.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ECRN uses your location to show the open jobs closest to you. It isn't tracked in the background.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo of your resume to add it to your ECRN profile.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo of your resume to add it to your ECRN profile.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to unlock ECRN and keep your referrals and earnings private.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

@@ -1,13 +1,16 @@
-import Link from "next/link";
 import { ContactImporter } from "@/components/native/ContactImporter";
+import { Page, BackLink } from "@/components/ui/Page";
 
-export default function ImportContactsPage() {
+interface PageProps {
+  searchParams: Promise<{ welcome?: string }>;
+}
+
+export default async function ImportContactsPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      <Link href="/referrals" className="text-sm text-slate-500 hover:text-ecrn-ink">
-        ← My referrals
-      </Link>
-      <ContactImporter />
-    </div>
+    <Page>
+      {!sp.welcome && <BackLink href="/referrals" label="My referrals" />}
+      <ContactImporter welcome={Boolean(sp.welcome)} />
+    </Page>
   );
 }

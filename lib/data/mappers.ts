@@ -114,9 +114,12 @@ export function toReferral(r: Row): Referral {
 }
 
 /**
- * A partner who submitted a duplicate can't read the original candidate
- * record (RLS). Rebuild what *they* typed from the referral snapshot so
- * their list still shows the person — without leaking the original.
+ * A member can't always read the candidate record behind their referral
+ * (RLS): never for a duplicate of someone else's contact, and no longer once
+ * the person joins ECRN themselves (0009), because the record then holds that
+ * member's own private answers. Rebuild what the referrer typed from the
+ * snapshot saved on the referral (`metadata.submitted`) so their screens
+ * still show the person, with the referral's own status and nothing else.
  */
 export function candidateFromReferralSnapshot(r: Referral): Candidate {
   const s = obj(r.metadata.submitted) as Record<string, string | undefined>;
@@ -156,11 +159,19 @@ export function candidateFromReferralSnapshot(r: Referral): Candidate {
   };
 }
 
+/**
+ * `jobs` is world-readable (public job board), so the real client name and
+ * recruiter notes live in the admin-only `job_private` table (0009). Admin
+ * queries embed it as `private:job_private(client_company, internal_notes)`;
+ * Row Level Security returns null there for everyone else, who then only get
+ * the public columns (`company_name` is null unless `is_company_public`).
+ */
 export function toJob(r: Row): Job {
+  const priv = one(r.private, (p) => p);
   return {
     id: r.id,
     title: r.title,
-    companyName: r.company_name ?? null,
+    companyName: priv?.client_company ?? r.company_name ?? null,
     isCompanyPublic: Boolean(r.is_company_public),
     locationCity: r.location_city ?? null,
     locationState: r.location_state ?? null,
@@ -180,7 +191,7 @@ export function toJob(r: Row): Job {
     locationLat: r.location_lat ?? null,
     locationLng: r.location_lng ?? null,
     accountManagerId: r.account_manager_id ?? null,
-    internalNotes: r.internal_notes ?? null,
+    internalNotes: priv?.internal_notes ?? r.internal_notes ?? null,
     externalCrmId: r.external_crm_id ?? null,
     metadata: obj(r.metadata),
     createdAt: r.created_at,

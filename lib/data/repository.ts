@@ -106,6 +106,17 @@ export async function countInvitedBy(profileId: string): Promise<number> {
 // Jobs
 // ─────────────────────────────────────────────────────────────────────
 
+/**
+ * A job plus its admin-only side row (the real client name and recruiter
+ * notes, see 0009). Row Level Security returns `private: null` to everyone
+ * who is not an admin, so the same select is safe on shared reads; `toJob`
+ * folds it into `companyName` / `internalNotes`.
+ */
+const JOB_SELECT = "*, private:job_private(client_company, internal_notes)";
+/** The same, as an embed on a table that points at a job. */
+const JOB_EMBED = `job:jobs(${JOB_SELECT})`;
+
+/** The member job board: public columns only, the same for every viewer. */
 export async function listPublicJobs(): Promise<Job[]> {
   const sb = await db();
   const { data, error } = await sb
@@ -118,17 +129,22 @@ export async function listPublicJobs(): Promise<Job[]> {
   return (data ?? []).map(toJob);
 }
 
+/**
+ * One job. Admins also get the confidential client name and internal notes
+ * (in `companyName` / `internalNotes`); member screens must still check
+ * `isCompanyPublic` before showing a client name.
+ */
 export async function getJobById(id: string): Promise<Job | null> {
   if (!isUuid(id)) return null;
   const sb = await db();
-  const { data, error } = await sb.from("jobs").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await sb.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle();
   if (error) fail("getJobById", error);
   return data ? toJob(data) : null;
 }
 
 export async function listAllJobs(): Promise<Job[]> {
   const sb = await db();
-  const { data, error } = await sb.from("jobs").select("*").order("created_at", { ascending: false });
+  const { data, error } = await sb.from("jobs").select(JOB_SELECT).order("created_at", { ascending: false });
   if (error) fail("listAllJobs", error);
   return (data ?? []).map(toJob);
 }
@@ -402,11 +418,53 @@ export async function listPayoutsByReferrerEnriched(referrerUserId: string): Pro
     .eq("referrer_user_id", referrerUserId)
     .order("created_at", { ascending: false });
   if (error) fail("listPayoutsByReferrerEnriched", error);
-  return (data ?? []).map((row) => ({
+  const rows: PayoutEnriched[] = (data ?? []).map((row) => ({
     payout: toPayout(row),
     candidate: one(row.candidate, toCandidate),
     job: one(row.job, toJob),
   }));
+
+  // Once the person joins ECRN their record is private (0009). Keep the name
+  // on the payout by falling back to what this member originally submitted.
+  const hidden = rows.filter((r) => !r.candidate).map((r) => r.payout.candidateId);
+  if (hidden.length) {
+    const snapshots = await listReferralSnapshotCandidates(referrerUserId, hidden);
+    for (const r of rows) {
+      if (!r.candidate) r.candidate = snapshots.get(r.payout.candidateId) ?? null;
+    }
+  }
+  return rows;
+}
+
+/**
+ * For candidate records a referrer can no longer read: the person as that
+ * referrer submitted them (referral snapshot + the referral's own status),
+ * keyed by candidate id. Best effort: a missing name must never break a page.
+ */
+async function listReferralSnapshotCandidates(
+  referrerUserId: string,
+  candidateIds: string[]
+): Promise<Map<string, Candidate>> {
+  const out = new Map<string, Candidate>();
+  const ids = [...new Set(candidateIds.filter(Boolean))];
+  if (!ids.length) return out;
+  const sb = await db();
+  const { data, error } = await sb
+    .from("referrals")
+    .select("*")
+    .eq("referrer_user_id", referrerUserId)
+    .in("candidate_id", ids)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true });
+  if (error) {
+    console.error("[ECRN] listReferralSnapshotCandidates failed:", error.message);
+    return out;
+  }
+  for (const row of data ?? []) {
+    const referral = toReferral(row);
+    if (!out.has(referral.candidateId)) out.set(referral.candidateId, candidateFromReferralSnapshot(referral));
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -500,13 +558,19 @@ export async function listActivityForEntity(entityType: string, entityId: string
   return (data ?? []).map(toActivity);
 }
 
-/** Timeline for a partner's referral: their actions + Delta's status changes. */
+/**
+ * Timeline for a member's referral: their own actions + Delta's status
+ * changes. Works whether or not the member can still read the candidate
+ * record: RLS (0009) keeps showing the referrer the `status_changed` entries
+ * for a person they referred, and nothing else about that person.
+ */
 export async function listReferralTimeline(referral: Referral, candidateId: string): Promise<ActivityLog[]> {
+  const ids = [...new Set([referral.id, candidateId || referral.candidateId].filter(Boolean))];
   const sb = await db();
   const { data, error } = await sb
     .from("activity_logs")
     .select("*")
-    .in("entity_id", [referral.id, candidateId])
+    .in("entity_id", ids)
     .order("created_at", { ascending: true });
   if (error) fail("listReferralTimeline", error);
   return (data ?? []).map(toActivity);
@@ -536,7 +600,10 @@ export async function getReferralPartnerDashboardStats(profileId: string): Promi
     listPayoutsByReferrer(profileId),
     listPublicJobs(),
   ]);
-  const statuses = referrals.map((r) => r.candidate.status);
+  // The live candidate status while the member can read the record, else the
+  // referral's own status (duplicates, and people who have since joined ECRN:
+  // `updateCandidateStatus` keeps the primary referral in step).
+  const statuses = referrals.map((r) => r.candidate?.status ?? r.referral.status);
 
   return {
     totalReferrals: referrals.length,
@@ -628,7 +695,7 @@ export async function listAllApplicationsEnriched(): Promise<ApplicationEnriched
   const sb = await db();
   const { data, error } = await sb
     .from("job_applications")
-    .select("*, job:jobs(*), candidate:candidates(*), applicant:profiles(*)")
+    .select(`*, ${JOB_EMBED}, candidate:candidates(*), applicant:profiles(*)`)
     .order("created_at", { ascending: false });
   if (error) fail("listAllApplicationsEnriched", error);
   const out: ApplicationEnriched[] = [];
@@ -656,7 +723,7 @@ export async function listAllPayoutsEnriched(): Promise<AdminPayoutEnriched[]> {
   const sb = await db();
   const { data, error } = await sb
     .from("payouts")
-    .select("*, candidate:candidates(*), referrer:profiles(*), job:jobs(*)")
+    .select(`*, candidate:candidates(*), referrer:profiles(*), ${JOB_EMBED}`)
     .order("created_at", { ascending: false });
   if (error) fail("listAllPayoutsEnriched", error);
   return (data ?? []).map((row) => ({
@@ -742,8 +809,8 @@ export async function getCandidateFullContext(candidateId: string): Promise<Cand
   const [primaryReferrer, refs, jrs, apps, pays, notes] = await Promise.all([
     candidate.primaryReferrerUserId ? getProfileById(candidate.primaryReferrerUserId) : Promise.resolve(null),
     sb.from("referrals").select("*, referrer:profiles(*)").eq("candidate_id", candidateId).order("created_at"),
-    sb.from("job_referrals").select("*, job:jobs(*)").eq("candidate_id", candidateId).order("created_at"),
-    sb.from("job_applications").select("*, job:jobs(*)").eq("candidate_id", candidateId).order("created_at"),
+    sb.from("job_referrals").select(`*, ${JOB_EMBED}`).eq("candidate_id", candidateId).order("created_at"),
+    sb.from("job_applications").select(`*, ${JOB_EMBED}`).eq("candidate_id", candidateId).order("created_at"),
     sb.from("payouts").select("*").eq("candidate_id", candidateId).order("created_at"),
     sb.from("candidate_notes").select("*").eq("candidate_id", candidateId).order("created_at", { ascending: false }),
   ]);
@@ -806,8 +873,11 @@ export async function updateCandidateStatus(
   const { error } = await sb.from("candidates").update({ status }).eq("id", candidateId);
   if (error) fail("updateCandidateStatus", error);
 
-  // Mirror onto the primary referral + job submissions so partners see it.
-  await sb.from("referrals").update({ status }).eq("candidate_id", candidateId).eq("is_primary", true);
+  // Mirror onto the primary referral + job submissions so members see it.
+  // This is the only status a referrer can read once the person has joined
+  // ECRN (0009 hides the candidate record from them), so it must not be lost.
+  const mirror = await sb.from("referrals").update({ status }).eq("candidate_id", candidateId).eq("is_primary", true);
+  if (mirror.error) console.error("[ECRN] updateCandidateStatus: referral mirror failed:", mirror.error.message);
   await sb
     .from("job_referrals")
     .update({ status })
@@ -846,16 +916,21 @@ export async function reassignPrimaryReferrer(
   const sb = await db();
   const { data: before } = await sb
     .from("candidates")
-    .select("primary_referrer_user_id")
+    .select("primary_referrer_user_id, status")
     .eq("id", candidateId)
     .maybeSingle();
 
   // Clear the old primary first (one-primary-per-candidate unique index).
   let res = await sb.from("referrals").update({ is_primary: false }).eq("candidate_id", candidateId);
   if (res.error) fail("reassignPrimaryReferrer", res.error);
+  // The new primary referral takes over the candidate's current status (it was
+  // sitting in "duplicate_review"); from here `updateCandidateStatus` keeps it
+  // in step, which is all the referrer sees once the person joins ECRN.
+  const promote: Record<string, unknown> = { is_primary: true, duplicate_status: "overridden_primary" };
+  if (before?.status) promote.status = before.status;
   res = await sb
     .from("referrals")
-    .update({ is_primary: true, duplicate_status: "overridden_primary" })
+    .update(promote)
     .eq("candidate_id", candidateId)
     .eq("referrer_user_id", newReferrerProfileId);
   if (res.error) fail("reassignPrimaryReferrer", res.error);
@@ -958,8 +1033,14 @@ export interface JobInput {
   internalNotes?: string | null;
 }
 
+/**
+ * Columns for the public `jobs` row. `company_name` is written here as before:
+ * a database trigger (0009) copies it to `job_private` and blanks the public
+ * copy unless the job is marked "company public". Internal notes never touch
+ * this table: they go straight to `job_private` (see `saveJobPrivate`).
+ */
 function jobToRow(input: Partial<JobInput>): Record<string, unknown> {
-  const map: Record<keyof JobInput, string> = {
+  const map: Record<Exclude<keyof JobInput, "internalNotes">, string> = {
     title: "title",
     companyName: "company_name",
     isCompanyPublic: "is_company_public",
@@ -978,28 +1059,70 @@ function jobToRow(input: Partial<JobInput>): Record<string, unknown> {
     isPublic: "is_public",
     referralPayoutAmount: "referral_payout_amount",
     referralPayoutDisplay: "referral_payout_display",
-    internalNotes: "internal_notes",
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(input)) {
-    const col = map[k as keyof JobInput];
+    const col = (map as Record<string, string | undefined>)[k];
     if (col && v !== undefined) row[col] = v;
   }
+  // Same clean-up as the private copy, so the two never drift apart.
+  if (input.companyName !== undefined) row.company_name = blankToNull(input.companyName);
   return row;
+}
+
+function blankToNull(v: string | null | undefined): string | null {
+  return v && v.trim() ? v.trim() : null;
+}
+
+/**
+ * The admin-only half of a job: the real client name and recruiter notes.
+ * Only the fields present on `input` are written, and a blank value clears
+ * the stored one (the trigger on `jobs` can add or replace, never clear).
+ */
+function jobPrivateRow(input: Partial<JobInput>): Record<string, string | null> {
+  const row: Record<string, string | null> = {};
+  if (input.companyName !== undefined) row.client_company = blankToNull(input.companyName);
+  if (input.internalNotes !== undefined) row.internal_notes = blankToNull(input.internalNotes);
+  return row;
+}
+
+async function saveJobPrivate(jobId: string, row: Record<string, string | null>, context: string): Promise<void> {
+  const sb = await db();
+  const { error } = await sb
+    .from("job_private")
+    .upsert({ job_id: jobId, ...row, updated_at: new Date().toISOString() }, { onConflict: "job_id" });
+  if (error) fail(context, error);
 }
 
 export async function createJob(input: JobInput, actorId: string): Promise<Job> {
   const sb = await db();
-  const { data, error } = await sb.from("jobs").insert(jobToRow(input)).select("*").single();
+  const { data, error } = await sb.from("jobs").insert(jobToRow(input)).select("id").single();
   if (error) fail("createJob", error);
-  await logActivity({ actorUserId: actorId, entityType: "job", entityId: data.id, action: "created", metadata: { title: input.title } });
-  return toJob(data);
+  const jobId = data.id as string;
+
+  // The job row has to exist first (job_private points at it).
+  const priv = jobPrivateRow(input);
+  if (Object.values(priv).some((v) => v !== null)) await saveJobPrivate(jobId, priv, "createJob");
+
+  await logActivity({ actorUserId: actorId, entityType: "job", entityId: jobId, action: "created", metadata: { title: input.title } });
+  const job = await getJobById(jobId);
+  if (!job) fail("createJob", { message: "the new job could not be read back" });
+  return job;
 }
 
 export async function updateJob(jobId: string, input: Partial<JobInput>, actorId: string): Promise<void> {
   const sb = await db();
-  const { error } = await sb.from("jobs").update(jobToRow(input)).eq("id", jobId);
-  if (error) fail("updateJob", error);
+
+  // Private fields first: when a company-public job has its name cleared, the
+  // trigger on `jobs` would otherwise copy the old stored name back out.
+  const priv = jobPrivateRow(input);
+  if (Object.keys(priv).length) await saveJobPrivate(jobId, priv, "updateJob");
+
+  const row = jobToRow(input);
+  if (Object.keys(row).length) {
+    const { error } = await sb.from("jobs").update(row).eq("id", jobId);
+    if (error) fail("updateJob", error);
+  }
   await logActivity({ actorUserId: actorId, entityType: "job", entityId: jobId, action: "updated" });
 }
 

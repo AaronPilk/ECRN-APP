@@ -1,55 +1,68 @@
-import { NextResponse } from "next/server";
-import { getCurrentProfile } from "@/lib/auth/session";
-import { listAllPayoutsEnriched } from "@/lib/data/repository";
-import { toCsv, csvResponse } from "@/lib/utils/csv";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/admin/members";
+import { csvDownload, denyUnlessAdmin, embedded, exportFailed, fullName } from "../_shared";
 
+const SELECT =
+  "*, candidate:candidates(id, first_name, last_name), " +
+  "referrer:profiles!payouts_referrer_user_id_fkey(id, first_name, last_name, email), job:jobs(id, title)";
+
+const COLUMNS = [
+  "payout_id",
+  "amount_cents",
+  "amount_dollars",
+  "status",
+  "candidate_id",
+  "candidate_name",
+  "referrer_id",
+  "referrer_name",
+  "referrer_email",
+  "job_id",
+  "job_title",
+  "placement_date",
+  "approved_at",
+  "paid_at",
+  "notes",
+  "created_at",
+];
+
+/** Every referral payout with the person placed, the referrer and the job. */
 export async function GET(): Promise<Response> {
-  const profile = await getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const denied = await denyUnlessAdmin();
+  if (denied) return denied;
+
+  try {
+    const sb = await createSupabaseServerClient();
+    const payouts = await fetchAllRows((from, to) =>
+      sb.from("payouts").select(SELECT, { count: "exact" }).order("created_at", { ascending: false }).order("id").range(from, to)
+    );
+
+    const rows = payouts.map((p) => {
+      const candidate = embedded(p.candidate);
+      const referrer = embedded(p.referrer);
+      const job = embedded(p.job);
+      const cents = typeof p.amount_cents === "number" ? p.amount_cents : 0;
+      return {
+        payout_id: p.id,
+        amount_cents: cents,
+        amount_dollars: (cents / 100).toFixed(2),
+        status: p.status,
+        candidate_id: p.candidate_id,
+        candidate_name: fullName(candidate),
+        referrer_id: p.referrer_user_id,
+        referrer_name: fullName(referrer),
+        referrer_email: referrer?.email ?? null,
+        job_id: p.job_id,
+        job_title: job?.title ?? null,
+        placement_date: p.placement_date,
+        approved_at: p.approved_at,
+        paid_at: p.paid_at,
+        notes: p.notes,
+        created_at: p.created_at,
+      };
+    });
+
+    return csvDownload("payouts", COLUMNS, rows);
+  } catch (e) {
+    return exportFailed("payouts", e);
   }
-
-  const rows = (await listAllPayoutsEnriched()).map(
-    ({ payout, candidate, referrer, job }) => ({
-      payout_id: payout.id,
-      amount_cents: payout.amountCents,
-      amount_dollars: (payout.amountCents / 100).toFixed(2),
-      status: payout.status,
-      candidate_id: candidate?.id ?? null,
-      candidate_name: candidate ? `${candidate.firstName} ${candidate.lastName}` : null,
-      referrer_id: referrer?.id ?? null,
-      referrer_name: referrer
-        ? `${referrer.firstName ?? ""} ${referrer.lastName ?? ""}`.trim()
-        : null,
-      referrer_email: referrer?.email ?? null,
-      job_id: job?.id ?? null,
-      job_title: job?.title ?? null,
-      placement_date: payout.placementDate,
-      approved_at: payout.approvedAt,
-      paid_at: payout.paidAt,
-      notes: payout.notes,
-      created_at: payout.createdAt,
-    })
-  );
-
-  const csv = toCsv(rows, [
-    "payout_id",
-    "amount_cents",
-    "amount_dollars",
-    "status",
-    "candidate_id",
-    "candidate_name",
-    "referrer_id",
-    "referrer_name",
-    "referrer_email",
-    "job_id",
-    "job_title",
-    "placement_date",
-    "approved_at",
-    "paid_at",
-    "notes",
-    "created_at",
-  ]);
-
-  return csvResponse(`ecrn-payouts-${new Date().toISOString().slice(0, 10)}.csv`, csv);
 }

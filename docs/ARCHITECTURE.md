@@ -1,6 +1,6 @@
 # ECRN architecture & product decisions
 
-_Last updated Nov 20, 2026._
+_Last updated Nov 20, 2026 (admin side, team routing, Next.js 16)._
 
 ## One source of truth: the website
 
@@ -18,19 +18,49 @@ _Last updated Nov 20, 2026._
 | Staffing Referrals | Receives ECRN events and feeds **Bullhorn** (Delta's CRM; recruiters work there) |
 | Sense (sensehq.com) | Texts and emails, driven from Bullhorn / Staffing Referrals. ECRN doesn't send outreach itself |
 
-## Bullhorn sync
+## Admin side (owners only)
 
-- Database triggers write every important event to `integration_outbox`:
-  - candidate created or updated
-  - referral created
-  - job referral
-  - application created or status changed
-  - hiring request (company lead)
-  - member onboarded
-- `lib/integrations/staffing-referrals.ts` maps each event to Bullhorn-style fields (Candidate, Lead, JobSubmission). It POSTs to `STAFFING_REFERRALS_WEBHOOK_URL`, signed with HMAC (`STAFFING_REFERRALS_SECRET`, header `X-ECRN-Signature`).
-- Until those env vars exist, events simply queue.
-- Admin → **Bullhorn sync** shows the queue and the exact payloads.
-- Next step: get Staffing Referrals' spec and confirm field names. Inbound status updates from Bullhorn come after that.
+Anyone on the owners list (`admin_allowlist`, managed in Admin → Settings) becomes an admin when they sign up with that email. Recruiters and account managers do **not** log in to ECRN; they work in Bullhorn.
+
+| Screen | What it is for |
+|---|---|
+| Dashboard | Every number in one place: growth, who the members are, team leaderboards, pipeline, jobs, payouts, sync health |
+| Routing | The queue of people with no owner or no recruiter, with one-click assignment and "Auto-route everyone" |
+| Activity | The full audit trail |
+| Members / Candidates | Everyone with an account; everyone in the recruiting pipeline |
+| Team | Account managers and recruiters, each with a personal sign-up link, code and QR code |
+| Jobs / Applications / Referrals / Payouts / Companies | The pipeline, with owners and recruiters on every row |
+| Integrations | Staffing Referrals and Bullhorn: outbox, inbox, mirror, simulator, field mapping |
+| Settings | Owners list, demo data, launch checklist |
+
+### Attribution: which recruiter brought each person in
+
+- Every team member (`staff`) has an `invite_code`. Their link is `ecrn.com/r/CODE`; the code can also be typed on the sign-up screen or added later in Profile.
+- `profiles.recruited_by_staff_id` + `signup_source`: `recruiter` (their code), `member_invite` (invited by a member, whose recruiter gets the network credit) or `organic`.
+
+### Routing: who owns each person and application
+
+Database triggers decide, in this order (see `0008` and `0013`):
+
+1. The **account manager who owns the job** (`jobs.account_manager_id`) gets its applications and job referrals.
+2. Otherwise the **recruiter credited with the sign-up** (theirs, or their referrer's), with that recruiter's account manager.
+3. Otherwise an account manager whose **territory** covers the person's state.
+4. Otherwise the person waits in Admin → Routing.
+
+A manual or Bullhorn assignment is never overwritten. The owner and recruiter travel with every event sent to Staffing Referrals / Bullhorn.
+
+## Staffing Referrals / Bullhorn
+
+- **Outbound:** triggers queue every event in `integration_outbox`; `lib/integrations/staffing-referrals.ts` sends them once `STAFFING_REFERRALS_WEBHOOK_URL` is set.
+- **Inbound:** `POST /api/integrations/staffing-referrals` (signed) applies team, job, candidate, submission and placement updates and keeps a raw copy in `crm_records`.
+- **Simulator:** Admin → Integrations lets an owner run a sample Bullhorn event through the same code before anything is connected.
+- Hand-off document for whoever provides API access: `docs/BULLHORN_INTEGRATION.md`.
+
+## Privacy rules built into the database
+
+- `jobs` is the public job board, so confidential client names and internal notes live in admin-only `job_private` (`0009`).
+- A referrer can read the candidate record they created only until that person joins ECRN. After that they see what they submitted plus the status, never the person's private answers.
+- Demo data is tagged, is never sent to Bullhorn, and is removed from Admin → Settings.
 
 ## One member experience
 

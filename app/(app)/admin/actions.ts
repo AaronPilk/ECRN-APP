@@ -7,6 +7,7 @@ import { getCurrentProfile } from "@/lib/auth/session";
 import {
   appendCandidateNote,
   createJob,
+  logActivity,
   reassignPrimaryReferrer,
   updateApplicationStatus,
   updateCandidateStatus,
@@ -15,6 +16,14 @@ import {
   updateJobStatus,
   updatePayoutStatus,
 } from "@/lib/data/repository";
+import {
+  getJobOwnership,
+  setJobExternalCrmId,
+  setJobOwnership,
+  setJobPrivate,
+  type JobOwnershipChange,
+} from "@/lib/admin/jobs";
+import { listStaff } from "@/lib/admin/staff";
 import type {
   ApplicationStatus,
   CompanyLeadStatus,
@@ -184,6 +193,9 @@ const JobInputSchema = z.object({
   referralPayoutAmount: z.string().optional(),
   referralPayoutDisplay: z.string().optional(),
   internalNotes: z.string().optional(),
+  // Ownership (0008). Recruiters arrive as repeated "recruiterIds" fields.
+  accountManagerId: z.string().optional(),
+  externalCrmId: z.string().optional(),
 });
 
 function toNumberOrNull(v: string | undefined): number | null {
@@ -192,11 +204,50 @@ function toNumberOrNull(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Record a change of job owner so it shows in the activity feed ("assigned to
+ * Dana Reyes"). A recruiter-only change is covered by the job's "updated" entry.
+ */
+async function logJobOwnership(
+  jobId: string,
+  actorId: string,
+  change: JobOwnershipChange,
+  accountManagerId: string | null,
+  recruiterIds: string[]
+): Promise<void> {
+  if (!change.ownerChanged) return;
+  await logActivity({
+    actorUserId: actorId,
+    entityType: "job",
+    entityId: jobId,
+    action: "assigned",
+    metadata: {
+      account_manager_id: accountManagerId,
+      previous_account_manager_id: change.previous.accountManagerId,
+      recruiter_ids: recruiterIds,
+    },
+  });
+}
+
 export async function saveJobAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const parsed = JobInputSchema.parse(Object.fromEntries(formData.entries()));
   const payoutDollars = toNumberOrNull(parsed.referralPayoutAmount?.replace(/[$,]/g, ""));
   const payoutCents = payoutDollars != null ? Math.round(payoutDollars * 100) : null;
+
+  // Ownership: only ids that belong to the team are accepted.
+  const staffById = new Map((await listStaff()).map((s) => [s.id, s]));
+  const accountManagerId =
+    parsed.accountManagerId && staffById.has(parsed.accountManagerId) ? parsed.accountManagerId : null;
+  const recruiterIds = [
+    ...new Set(
+      formData
+        .getAll("recruiterIds")
+        .map((v) => String(v))
+        .filter((id) => staffById.has(id))
+    ),
+  ];
+  const externalCrmId = (parsed.externalCrmId ?? "").trim().slice(0, 64) || null;
 
   const data = {
     title: parsed.title,
@@ -224,14 +275,61 @@ export async function saveJobAction(formData: FormData): Promise<void> {
 
   let jobId = parsed.jobId;
   if (jobId) {
+    // The real client name and notes live in job_private. Write them first so a
+    // cleared field stays cleared (the trigger on jobs only ever adds values).
+    await setJobPrivate(jobId, { clientCompany: data.companyName, internalNotes: data.internalNotes });
     await updateJob(jobId, data, admin.id);
   } else {
     const created = await createJob(data, admin.id);
     jobId = created.id;
   }
+
+  // The job itself is saved; a problem with ownership should not lose that.
+  let ownershipError: string | null = null;
+  try {
+    const change = await setJobOwnership(jobId, accountManagerId, recruiterIds);
+    await setJobExternalCrmId(jobId, externalCrmId);
+    await logJobOwnership(jobId, admin.id, change, accountManagerId, recruiterIds);
+  } catch (e) {
+    console.error("[ECRN] saveJobAction ownership failed:", e instanceof Error ? e.message : e);
+    ownershipError = "The job was saved, but its owner, recruiters or Bullhorn ID could not be saved. Please try again.";
+  }
+
   revalidatePath("/admin/jobs");
+  revalidatePath("/admin/routing");
   revalidatePath("/jobs");
+  if (ownershipError) {
+    redirect(`/admin/jobs/${jobId}/edit?error=${encodeURIComponent(ownershipError)}`);
+  }
   redirect(`/admin/jobs?saved=${jobId}`);
+}
+
+const JobOwnerSchema = z.object({
+  jobId: z.string().uuid(),
+  accountManagerId: z.string().uuid(),
+});
+
+/** Quick assign from the jobs list: give a job an owner without opening the form. */
+export async function setJobOwnerAction(formData: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const parsed = JobOwnerSchema.safeParse({
+    jobId: formData.get("jobId"),
+    accountManagerId: formData.get("accountManagerId"),
+  });
+  // Nothing picked: leave the job as it is.
+  if (!parsed.success) return;
+  const { jobId, accountManagerId } = parsed.data;
+
+  const staff = await listStaff();
+  if (!staff.some((s) => s.id === accountManagerId)) return;
+
+  // Keep the recruiters already working the job; only the owner changes.
+  const { recruiterIds } = await getJobOwnership(jobId);
+  const change = await setJobOwnership(jobId, accountManagerId, recruiterIds);
+  await logJobOwnership(jobId, admin.id, change, accountManagerId, recruiterIds);
+
+  revalidatePath("/admin/jobs");
+  revalidatePath("/admin/routing");
 }
 
 // ─── Company lead mutations ─────────────────────────────────────────

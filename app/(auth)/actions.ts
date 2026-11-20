@@ -35,6 +35,20 @@ function safeNext(next: FormDataEntryValue | null): string | null {
   return v.startsWith("/") && !v.startsWith("//") ? v : null;
 }
 
+/** Where the sign-up came from: the iOS or Android app (their web views add "ECRNApp"), or the website. */
+function platformFromUserAgent(ua: string | null): "ios" | "android" | "web" {
+  const s = ua ?? "";
+  if (!s.includes("ECRNApp")) return "web";
+  if (/Android/i.test(s)) return "android";
+  // iPads can report a desktop "Macintosh" user agent inside the app.
+  return /iPhone|iPad|iPod|iOS|Macintosh/.test(s) ? "ios" : "android";
+}
+
+/** Recruiter codes are 3–24 letters/digits, matched case-insensitively. */
+function normalizeInviteCode(v: FormDataEntryValue | null): string {
+  return (typeof v === "string" ? v : "").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 24);
+}
+
 // ─── Sign up ─────────────────────────────────────────────────────────
 
 const SignupSchema = z.object({
@@ -59,13 +73,30 @@ export async function signupAction(formData: FormData): Promise<void> {
     invitedBy: formData.get("invitedBy") || undefined,
   });
   const ref = String(formData.get("invitedBy") ?? "");
+  const inviteCode = normalizeInviteCode(formData.get("inviteCode"));
+  // Whatever goes wrong, the invite (member link or recruiter code) stays in the URL.
+  const keep: Record<string, string> = {
+    ...(ref ? { ref, via: "invite" } : {}),
+    ...(inviteCode ? { code: inviteCode } : {}),
+  };
   if (!parsed.success) {
-    back("/signup", { error: parsed.error.errors[0]?.message ?? "Invalid input", ...(ref ? { ref, via: "invite" } : {}) });
+    back("/signup", { error: parsed.error.errors[0]?.message ?? "Invalid input", ...keep });
   }
 
   const { email, password, firstName, lastName, phone, invitedBy } = parsed.data;
   const supabase = await createSupabaseServerClient();
+
+  // A code must belong to someone on the Delta team. If the lookup itself fails
+  // we still let the sign-up through; the database only credits a real code.
+  if (inviteCode) {
+    const { data: invite, error: lookupError } = await supabase.rpc("resolve_invite_code", { p_code: inviteCode });
+    if (!lookupError && (invite as { kind?: string } | null)?.kind !== "staff") {
+      back("/signup", { error: "That invite code isn't recognized. Check it or leave it blank.", ...keep });
+    }
+  }
+
   const origin = await siteOrigin();
+  const platform = platformFromUserAgent((await headers()).get("user-agent"));
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -77,11 +108,14 @@ export async function signupAction(formData: FormData): Promise<void> {
         last_name: lastName,
         phone: phone ?? "",
         invited_by: invitedBy ?? "",
+        // The new-account trigger reads these to credit the recruiter.
+        invite_code: inviteCode,
+        platform,
       },
     },
   });
 
-  if (error) back("/signup", { error: error.message, ...(ref ? { ref, via: "invite" } : {}) });
+  if (error) back("/signup", { error: error.message, ...keep });
 
   // Email confirmation on → no session yet.
   if (!data.session) back("/check-email", { email });

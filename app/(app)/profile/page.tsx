@@ -3,6 +3,7 @@ import { Page, PageTitle } from "@/components/ui/Page";
 import { ResumeCard } from "@/components/profile/ResumeCard";
 import { AddToHomeScreenGuide } from "@/components/onboarding/AddToHomeScreenGuide";
 import { InviteLink } from "@/components/profile/InviteLink";
+import { InviteCodeCard } from "@/components/profile/InviteCodeCard";
 import { getCurrentProfile } from "@/lib/auth/session";
 import Link from "next/link";
 import { AppSettings } from "@/components/native/AppSettings";
@@ -62,6 +63,9 @@ export default async function ProfilePage() {
 
         </CardContent>
       </Card>
+
+      {/* Shows only while the member has no recruiter (and to confirm right after they connect). */}
+      {profile.role !== "admin" && <InviteCodeCard hasRecruiter={Boolean(profile.recruitedByStaffId)} />}
 
       {canInvite && (
         <div id="invite">

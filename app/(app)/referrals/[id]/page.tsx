@@ -32,12 +32,19 @@ export default async function ReferralDetailPage(props: PageProps) {
     redirect("/referrals");
   }
 
+  // `candidate` is the live record while this member can still read it. Once
+  // the person joins ECRN it is rebuilt from what the member submitted (the
+  // referral snapshot) and carries the referral's own status, so everything
+  // below keys off the referral, which the member can always read.
+  const candidateId = referral.candidateId;
+  const status = candidate.status ?? referral.status;
+
   const [activity, jobReferrals, allPayouts] = await Promise.all([
-    listReferralTimeline(referral, candidate.id),
-    listJobReferralsByCandidate(candidate.id),
-    listPayoutsByReferrer(profile.id),
+    listReferralTimeline(referral, candidateId),
+    listJobReferralsByCandidate(candidateId),
+    listPayoutsByReferrer(referral.referrerUserId),
   ]);
-  const payouts = allPayouts.filter((p) => p.candidateId === candidate.id);
+  const payouts = allPayouts.filter((p) => p.candidateId === candidateId);
 
   const yrs = candidate.yearsExperience != null ? `${candidate.yearsExperience} years of experience` : null;
   const rows: [string, string | null][] = [
@@ -104,7 +111,7 @@ export default async function ReferralDetailPage(props: PageProps) {
         </section>
       )}
 
-      <PipelineCard status={candidate.status} />
+      <PipelineCard status={status} />
 
       {payouts.length > 0 && (
         <section>
@@ -147,7 +154,7 @@ export default async function ReferralDetailPage(props: PageProps) {
             {activity.map((a) => (
               <li key={a.id} className="relative">
                 <span className="absolute -left-[1.5rem] top-1.5 w-2.5 h-2.5 rounded-full bg-ecrn-green ring-4 ring-ecrn-paper" />
-                <div className="text-[14.5px] font-medium text-ecrn-ink">{humanizeAction(a.action)}</div>
+                <div className="text-[14.5px] font-medium text-ecrn-ink">{humanizeAction(a.action, a.metadata.to)}</div>
                 <div className="t-meta">{formatDate(a.createdAt)}</div>
               </li>
             ))}
@@ -211,8 +218,12 @@ function Banner({
   return <div className={`px-4 py-3 rounded-[14px] text-[14px] leading-relaxed ${styles}`}>{children}</div>;
 }
 
-function humanizeAction(action: string): string {
-  return action.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+function humanizeAction(action: string, to?: unknown): string {
+  // Delta's status changes read as the stage the person moved to.
+  if (action === "status_changed" && typeof to === "string" && to in STATUS_LABEL) {
+    return `Moved to ${STATUS_LABEL[to as ReferralStatus].toLowerCase()}`;
+  }
+  return action.replace(/_/g, " ").replace(/^\w/, (m) => m.toUpperCase());
 }
 
 function formatDate(iso: string): string {

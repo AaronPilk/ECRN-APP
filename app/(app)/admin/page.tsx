@@ -1,351 +1,178 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { getCurrentProfile } from "@/lib/auth/session";
-import {
-  getAdminDashboardStats,
-  listAllReferralsEnriched,
-  listAllApplicationsEnriched,
-  listCompanyLeads,
-  listDuplicateReferralAttempts,
-  listRecentActivity,
-} from "@/lib/data/repository";
-import {
-  AlertTriangle,
-  Briefcase,
-  Building2,
-  DollarSign,
-  FileText,
-  Users,
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { requireAdmin } from "@/lib/auth/session";
+import { DEFAULT_RANGE, RANGE_OPTIONS, getAdminAnalytics, parseRange, pctChange, type AdminAnalytics, type RangeOption } from "@/lib/admin/analytics";
+import { AdminHeader, AdminPage, FilterTabs, Notice, StatCard, fmtMoney, fmtNum, fmtPct } from "@/components/admin/ui";
+import { AttentionStrip } from "@/components/admin/dashboard/parts";
+import { GrowthPanels, MemberPanels, TeamPanels } from "@/components/admin/dashboard/people";
+import { JobsPanels, PayoutPanels, PipelinePanels } from "@/components/admin/dashboard/work";
+import { ActivityPanels, IntegrationPanels } from "@/components/admin/dashboard/system";
+import type { Scope } from "@/components/admin/dashboard/labels";
 
-export default async function AdminDashboard() {
-  const profile = (await getCurrentProfile())!;
-  if (profile.role !== "admin") redirect("/dashboard");
+/**
+ * Admin overview: the owners' command center. One RPC (`admin_analytics`)
+ * returns everything on this page; the range lives in the URL as ?range=.
+ */
 
-  const stats = await getAdminDashboardStats();
-  const recentReferrals = (await listAllReferralsEnriched()).slice(0, 5);
-  const recentApps = (await listAllApplicationsEnriched()).slice(0, 5);
-  const newLeads = (await listCompanyLeads())
-    .filter((l) => l.status === "new")
-    .slice(0, 5);
-  const duplicates = (await listDuplicateReferralAttempts()).slice(0, 5);
-  const activity = await listRecentActivity(15);
+const SECTIONS = [
+  { id: "growth", label: "Growth" },
+  { id: "team", label: "Team" },
+  { id: "members", label: "Members" },
+  { id: "pipeline", label: "Pipeline" },
+  { id: "jobs", label: "Jobs" },
+  { id: "payouts", label: "Payouts" },
+  { id: "integrations", label: "Bullhorn" },
+  { id: "activity", label: "Activity" },
+];
+
+const rangeHref = (key: string) => (key === DEFAULT_RANGE ? "/admin" : `/admin?range=${key}`);
+
+function scopeFor(range: RangeOption): Scope {
+  return range.days == null
+    ? { days: null, when: "so far", title: "All time" }
+    : { days: range.days, when: `in ${range.phrase}`, title: `Last ${range.label}` };
+}
+
+/** "Oct 22 to Nov 20" in the reporting time zone (years added when the range crosses one). */
+function dateSpan(a: AdminAnalytics): string | null {
+  if (!a.range.from) return null;
+  const from = new Date(a.range.from);
+  const to = new Date(a.generated_at);
+  const zone = a.range.timezone;
+  const year = (d: Date) => d.toLocaleDateString("en-US", { timeZone: zone, year: "numeric" });
+  const fmt = (d: Date, withYear: boolean) =>
+    d.toLocaleDateString("en-US", { timeZone: zone, month: "short", day: "numeric", ...(withYear ? { year: "numeric" as const } : {}) });
+  const crossesYear = year(from) !== year(to);
+  return `${fmt(from, crossesYear)} to ${fmt(to, crossesYear)}`;
+}
+
+export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ range?: string | string[] }> }) {
+  await requireAdmin();
+  const sp = await searchParams;
+  const range = parseRange(sp.range);
+  const scope = scopeFor(range);
+  const tabs = <FilterTabs tabs={RANGE_OPTIONS.map((r) => ({ label: r.label, href: rangeHref(r.key), active: r.key === range.key }))} />;
+
+  const result = await getAdminAnalytics(range.days);
+
+  if (!result.ok) {
+    return (
+      <AdminPage>
+        <AdminHeader eyebrow="Delta operations" title="Dashboard" subtitle="Everything happening in ECRN, Staffing Referrals and Bullhorn." actions={tabs} />
+        <Notice tone="amber">
+          <p className="font-medium">The dashboard numbers could not be loaded.</p>
+          <p className="mt-1">
+            If this is a new environment, apply the database migration <code>0010_admin_analytics.sql</code> and reload.
+          </p>
+          <p className="mt-1 text-[12.5px] opacity-80">Details: {result.error}</p>
+        </Notice>
+      </AdminPage>
+    );
+  }
+
+  const a = result.data;
+  const k = a.kpis;
+  const days = a.range.days;
+  const dates = dateSpan(a);
+
+  // "12 in the 30 days before", so the change badge has its number next to it.
+  const versus = (previous: number | null, total: number | null, asMoney = false): ReactNode => {
+    const f = asMoney ? fmtMoney : fmtNum;
+    if (days == null) return "All time";
+    if (previous != null) return `${f(previous)} in the ${days} days before`;
+    return total != null ? `${f(total)} all time` : undefined;
+  };
+  // Long dollar amounts get a slightly smaller face so the change badge still fits beside them.
+  const money = (cents: number) => {
+    const s = fmtMoney(cents);
+    return s.length > 7 ? <span className="text-[23px]">{s}</span> : s;
+  };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-      <div>
-        <p className="text-xs font-medium tracking-[0.18em] uppercase text-slate-500">
-          Delta operations
-        </p>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
-          Admin overview
-        </h1>
-        <p className="mt-1 text-slate-500">
-          Real-time view of the ECRN network — candidates, jobs, leads, payouts.
-        </p>
-      </div>
+    <AdminPage>
+      <AdminHeader
+        eyebrow="Delta operations"
+        title="Dashboard"
+        subtitle={
+          dates && days != null
+            ? `Everything happening in ECRN, Staffing Referrals and Bullhorn. Showing ${dates}, compared with the ${days} days before.`
+            : "Everything happening in ECRN, Staffing Referrals and Bullhorn, since day one."
+        }
+        actions={tabs}
+      />
 
-      {/* Hero metric strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat
-          label="Candidates"
-          value={stats.candidates}
-          delta={`+${stats.candidatesAddedThisWeek} this week`}
-          icon={<Users className="w-4 h-4" />}
-        />
-        <Stat
-          label="Referrals"
-          value={stats.referrals}
-          delta={`+${stats.referralsThisWeek} this week`}
-          icon={<FileText className="w-4 h-4" />}
-        />
-        <Stat
-          label="Placements"
-          value={stats.placements}
-          delta="All-time"
-          icon={<Briefcase className="w-4 h-4" />}
-        />
-        <Stat
-          label="Open jobs"
-          value={stats.jobsOpen}
-          delta={`${stats.applications} apps · ${stats.newApplicationsThisWeek} this week`}
-          icon={<Briefcase className="w-4 h-4" />}
-        />
-      </div>
+      <AttentionStrip
+        items={[
+          { label: "unassigned people", count: a.attention.unassigned_people, href: "/admin/routing" },
+          { label: "jobs without an owner", count: a.attention.jobs_without_owner, href: "/admin/jobs" },
+          { label: "payouts to approve", count: a.attention.payouts_to_approve, href: "/admin/payouts" },
+          { label: "duplicates to review", count: a.attention.duplicates_to_review, href: "/admin/referrals" },
+          { label: "failed sync events", count: a.attention.failed_sync_events, href: "/admin/sync" },
+          { label: "applications to review", count: a.attention.applications_to_review, href: "/admin/applications" },
+          { label: "new hiring requests", count: a.attention.hiring_requests_waiting, href: "/admin/companies" },
+        ]}
+      />
 
-      {/* Payout bar */}
-      <Card className="bg-ecrn-black text-white border-ecrn-black p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-ecrn-green font-semibold">
-              Payout ledger
-            </p>
-            <div className="mt-2 flex items-baseline gap-3 flex-wrap">
-              <Money
-                label="Pending"
-                cents={stats.payoutsPendingCents}
-                color="text-amber-300"
-              />
-              <Money
-                label="Approved"
-                cents={stats.payoutsApprovedCents}
-                color="text-blue-300"
-              />
-              <Money
-                label="Paid"
-                cents={stats.payoutsPaidCents}
-                color="text-ecrn-green"
-              />
-            </div>
-          </div>
-          <Link
+      <section aria-label="Headline numbers" className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+        <StatCard label="New members" value={fmtNum(k.new_members.value)} delta={pctChange(k.new_members)} hint={versus(k.new_members.previous, null)} href="/admin/members" tone="green" />
+        <StatCard
+          label="Total members"
+          value={fmtNum(k.total_members.value)}
+          delta={pctChange(k.total_members)}
+          hint={k.total_members.previous != null ? `${fmtNum(k.total_members.previous)} when this period began` : "Every member account"}
+          href="/admin/members"
+        />
+        <StatCard label="New candidates" value={fmtNum(k.new_candidates.value)} delta={pctChange(k.new_candidates)} hint={versus(k.new_candidates.previous, k.new_candidates.total)} href="/admin/candidates" />
+        <StatCard label="Referrals submitted" value={fmtNum(k.referrals.value)} delta={pctChange(k.referrals)} hint={versus(k.referrals.previous, k.referrals.total)} href="/admin/referrals" />
+        <StatCard label="Applications" value={fmtNum(k.applications.value)} delta={pctChange(k.applications)} hint={versus(k.applications.previous, k.applications.total)} href="/admin/applications" />
+        <StatCard label="Placements" value={fmtNum(k.placements.value)} delta={pctChange(k.placements)} hint={versus(k.placements.previous, k.placements.total)} href="/admin/candidates" tone="green" />
+        <div className="col-span-2 sm:col-span-1 [&>a]:block [&>a]:h-full">
+          <StatCard
+            label="Payouts owed"
+            value={money(k.payouts_owed_cents.value)}
+            delta={pctChange(k.payouts_owed_cents)}
+            hint={`${fmtMoney(a.payouts.pending_cents)} to approve, ${fmtMoney(a.payouts.approved_cents)} approved`}
             href="/admin/payouts"
-            className="text-sm text-ecrn-green hover:underline shrink-0"
-          >
-            Manage payouts →
-          </Link>
+            tone={k.payouts_owed_cents.value > 0 ? "amber" : "default"}
+          />
         </div>
-      </Card>
-
-      {/* Action queues */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <QueueCard
-          title="Duplicate review"
-          icon={<AlertTriangle className="w-4 h-4" />}
-          count={stats.duplicateReviewCount}
-          tone="amber"
-          href="/admin/referrals?filter=duplicates"
-          emptyText="No duplicate referrals pending review."
-        >
-          {duplicates.map((d) => (
-            <QueueRow
-              key={d.referral.id}
-              title={`${d.candidate.firstName} ${d.candidate.lastName}`}
-              subtitle={`Attempted by ${
-                d.referrer ? `${d.referrer.firstName} ${d.referrer.lastName}` : "Unknown"
-              }`}
-              date={d.referral.createdAt}
-              href={`/admin/candidates/${d.candidate.id}`}
-            />
-          ))}
-        </QueueCard>
-
-        <QueueCard
-          title="New company leads"
-          icon={<Building2 className="w-4 h-4" />}
-          count={stats.companyLeadsNew}
-          tone="blue"
-          href="/admin/companies"
-          emptyText="No new hiring requests in the queue."
-        >
-          {newLeads.map((l) => (
-            <QueueRow
-              key={l.id}
-              title={l.companyName}
-              subtitle={`${l.roleNeeded ?? "—"} · ${l.contactName}`}
-              date={l.createdAt}
-              href={`/admin/companies/${l.id}`}
-            />
-          ))}
-        </QueueCard>
-
-        <QueueCard
-          title="Recent referrals"
-          icon={<FileText className="w-4 h-4" />}
-          count={stats.referrals}
-          tone="green"
-          href="/admin/referrals"
-          emptyText="No referrals yet."
-        >
-          {recentReferrals.map((r) => (
-            <QueueRow
-              key={r.referral.id}
-              title={`${r.candidate.firstName} ${r.candidate.lastName}`}
-              subtitle={`by ${
-                r.referrer ? `${r.referrer.firstName} ${r.referrer.lastName}` : "Unknown"
-              } · ${r.candidate.currentJobTitle ?? "—"}`}
-              date={r.referral.createdAt}
-              href={`/admin/candidates/${r.candidate.id}`}
-            />
-          ))}
-        </QueueCard>
-
-        <QueueCard
-          title="Direct applications"
-          icon={<FileText className="w-4 h-4" />}
-          count={stats.applications}
-          tone="neutral"
-          href="/admin/referrals?filter=applications"
-          emptyText="No direct applications yet."
-        >
-          {recentApps.map((a) => (
-            <QueueRow
-              key={a.application.id}
-              title={a.candidate ? `${a.candidate.firstName} ${a.candidate.lastName}` : "Applicant"}
-              subtitle={`Applied to ${a.job.title}`}
-              date={a.application.createdAt}
-              href={`/admin/candidates/${a.candidate?.id ?? ""}`}
-            />
-          ))}
-        </QueueCard>
-      </div>
-
-      {/* Activity feed */}
-      <Card>
-        <CardContent className="py-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">
-            Recent activity
-          </h2>
-          {activity.length === 0 ? (
-            <p className="text-sm text-slate-500">No activity yet.</p>
-          ) : (
-            <ol className="relative border-l border-slate-200 ml-2 space-y-3 pl-5">
-              {activity.map((a) => (
-                <li key={a.id} className="relative">
-                  <span className="absolute -left-[1.45rem] top-1.5 w-2.5 h-2.5 rounded-full bg-ecrn-green ring-4 ring-white" />
-                  <div className="text-sm text-ecrn-ink">
-                    <span className="font-medium">{humanize(a.action)}</span>
-                    <span className="text-slate-500">
-                      {" "}
-                      on {a.entityType.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    {new Date(a.createdAt).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  delta,
-  icon,
-}: {
-  label: string;
-  value: number | string;
-  delta?: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-bold tabular-nums text-ecrn-ink">{value}</div>
-      {delta && <div className="text-[11px] text-slate-500 mt-0.5">{delta}</div>}
-    </Card>
-  );
-}
-
-function Money({
-  label,
-  cents,
-  color,
-}: {
-  label: string;
-  cents: number;
-  color: string;
-}) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wide text-white/50">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums ${color}`}>
-        ${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}
-      </div>
-    </div>
-  );
-}
-
-function QueueCard({
-  title,
-  icon,
-  count,
-  tone,
-  href,
-  emptyText,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  count: number;
-  tone: "amber" | "blue" | "green" | "neutral";
-  href: string;
-  emptyText: string;
-  children: React.ReactNode;
-}) {
-  const rows = Array.isArray(children) ? children : [children];
-  const hasRows = rows.flat().filter(Boolean).length > 0;
-  return (
-    <Card>
-      <CardContent className="py-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-ecrn-ink">{title}</h2>
-            <Badge variant={tone}>{count}</Badge>
-          </div>
-          <Link href={href} className="text-xs text-slate-500 hover:text-ecrn-ink">
-            View all →
-          </Link>
+        <div className="col-span-2 sm:col-span-1 [&>a]:block [&>a]:h-full">
+          <StatCard
+            label="Payouts paid"
+            value={money(k.payouts_paid_cents.value)}
+            delta={pctChange(k.payouts_paid_cents)}
+            hint={versus(k.payouts_paid_cents.previous, k.payouts_paid_cents.total, true)}
+            href="/admin/payouts"
+          />
         </div>
-        {hasRows ? (
-          <div className="space-y-1">{children}</div>
-        ) : (
-          <p className="text-sm text-slate-500 py-3">{emptyText}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+        <StatCard
+          label="Open jobs"
+          value={fmtNum(k.open_jobs.value)}
+          hint={days != null ? `${fmtNum(k.open_jobs.opened)} added ${scope.when}` : `${fmtNum(k.open_jobs.total)} jobs in total`}
+          href="/admin/jobs"
+          tone="cobalt"
+        />
+        <StatCard label="Active members" value={fmtNum(k.active_members.value)} hint={k.total_members.value > 0 ? `${fmtPct(k.active_members.value, k.total_members.value)} of members, last 7 days` : "Seen in the last 7 days"} href="/admin/members" />
+      </section>
 
-function QueueRow({
-  title,
-  subtitle,
-  date,
-  href,
-}: {
-  title: string;
-  subtitle: string;
-  date: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between gap-3 px-3 py-2.5 -mx-3 rounded-xl hover:bg-slate-50 transition-colors"
-    >
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-ecrn-ink truncate">{title}</div>
-        <div className="text-xs text-slate-500 truncate">{subtitle}</div>
+      <nav aria-label="Jump to a section" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+        <span className="t-eyebrow">Jump to</span>
+        {SECTIONS.map((s) => (
+          <a key={s.id} href={`#${s.id}`} className="text-ecrn-secondary hover:text-ecrn-ink hover:underline">
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3 [&>div:first-child]:mt-0">
+        <GrowthPanels a={a} scope={scope} />
+        <TeamPanels a={a} scope={scope} />
+        <MemberPanels a={a} scope={scope} />
+        <PipelinePanels a={a} scope={scope} />
+        <JobsPanels a={a} scope={scope} />
+        <PayoutPanels a={a} />
+        <IntegrationPanels a={a} scope={scope} />
+        <ActivityPanels a={a} />
       </div>
-      <div className="text-[11px] text-slate-400 shrink-0">{relative(date)}</div>
-    </Link>
+    </AdminPage>
   );
-}
-
-function humanize(s: string): string {
-  return s.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
-}
-
-function relative(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
-  if (days === 0) return "today";
-  if (days === 1) return "1d";
-  if (days < 30) return `${days}d`;
-  return `${Math.floor(days / 30)}mo`;
 }

@@ -4,13 +4,48 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { saveJobAction } from "@/app/(app)/admin/actions";
-import type { Job } from "@/types";
+import type { Job, Staff } from "@/types";
 
 interface JobFormProps {
   job?: Job;
+  /** Who can own a job: active account managers and owners (from `splitStaff`). */
+  accountManagers?: Staff[];
+  /** Active recruiters (from `splitStaff`). */
+  recruiters?: Staff[];
+  /** Current owner and recruiters when editing. */
+  ownership?: { accountManagerId: string | null; recruiterIds: string[] };
+  /** The real client name and notes from the admin-only `job_private` table. */
+  privateInfo?: { clientCompany: string | null; internalNotes: string | null };
 }
 
-export function JobForm({ job }: JobFormProps) {
+const selectClass =
+  "w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-[15px] text-ecrn-ink focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20";
+
+const fullName = (s: Staff) => `${s.firstName} ${s.lastName}`.trim();
+
+/** Recruiters grouped under their account manager; the job owner's team comes first. */
+function groupRecruiters(recruiters: Staff[], accountManagers: Staff[], ownerId: string | null) {
+  const managers = new Map(accountManagers.map((m) => [m.id, m]));
+  const groups = new Map<string, { key: string; label: string; members: Staff[] }>();
+  for (const r of recruiters) {
+    const manager = r.managerId ? managers.get(r.managerId) : undefined;
+    // "other": their manager is not in the picker (for example, no longer active).
+    const key = manager?.id ?? (r.managerId ? "other" : "none");
+    if (!groups.has(key)) {
+      const label = manager ? `${fullName(manager)}'s team` : key === "other" ? "Other recruiters" : "No account manager";
+      groups.set(key, { key, label, members: [] });
+    }
+    groups.get(key)!.members.push(r);
+  }
+  const rank = (key: string) => (key === ownerId ? 0 : key === "other" ? 2 : key === "none" ? 3 : 1);
+  return [...groups.values()].sort((a, b) => rank(a.key) - rank(b.key) || a.label.localeCompare(b.label));
+}
+
+export function JobForm({ job, accountManagers = [], recruiters = [], ownership, privateInfo }: JobFormProps) {
+  const ownerId = ownership?.accountManagerId ?? job?.accountManagerId ?? null;
+  const selectedRecruiters = new Set(ownership?.recruiterIds ?? []);
+  const recruiterGroups = groupRecruiters(recruiters, accountManagers, ownerId);
+
   return (
     <Card>
       <CardContent className="py-6">
@@ -26,9 +61,12 @@ export function JobForm({ job }: JobFormProps) {
                 <Input
                   id="companyName"
                   name="companyName"
-                  defaultValue={job?.companyName ?? ""}
-                  placeholder="Confidential or actual name"
+                  defaultValue={privateInfo?.clientCompany ?? job?.companyName ?? ""}
+                  placeholder="The real client name"
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  Only admins see this unless “Reveal company name” is on.
+                </p>
               </Field>
               <Field label="Job type" htmlFor="jobType">
                 <Input
@@ -41,12 +79,7 @@ export function JobForm({ job }: JobFormProps) {
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <Field label="Trade" htmlFor="trade">
-                <select
-                  id="trade"
-                  name="trade"
-                  defaultValue={job?.trade ?? ""}
-                  className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-[15px] text-ecrn-ink focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20"
-                >
+                <select id="trade" name="trade" defaultValue={job?.trade ?? ""} className={selectClass}>
                   <option value="">Select trade…</option>
                   <option value="electrical">Electrical</option>
                   <option value="mechanical">Mechanical</option>
@@ -57,12 +90,7 @@ export function JobForm({ job }: JobFormProps) {
                 </select>
               </Field>
               <Field label="Urgency" htmlFor="urgency">
-                <select
-                  id="urgency"
-                  name="urgency"
-                  defaultValue={job?.urgency ?? "normal"}
-                  className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-[15px] text-ecrn-ink focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20"
-                >
+                <select id="urgency" name="urgency" defaultValue={job?.urgency ?? "normal"} className={selectClass}>
                   <option value="low">Low</option>
                   <option value="normal">Normal</option>
                   <option value="high">High</option>
@@ -70,6 +98,94 @@ export function JobForm({ job }: JobFormProps) {
                 </select>
               </Field>
             </div>
+          </Section>
+
+          <Section title="Ownership">
+            <p className="text-[13px] leading-relaxed text-slate-500">
+              Applications and referrals for this job go to the account manager, who hands them to a recruiter.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Field label="Account manager (owns this job)" htmlFor="accountManagerId">
+                <select
+                  id="accountManagerId"
+                  name="accountManagerId"
+                  defaultValue={ownerId ?? ""}
+                  className={selectClass}
+                >
+                  <option value="">Not set</option>
+                  {accountManagers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {fullName(s)}
+                      {s.staffRole === "owner" ? " (owner)" : ""}
+                      {s.isActive ? "" : " (inactive)"}
+                    </option>
+                  ))}
+                </select>
+                {accountManagers.length === 0 && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    No account managers yet.{" "}
+                    <Link href="/admin/team" className="underline hover:text-ecrn-ink">
+                      Add your team
+                    </Link>{" "}
+                    to give this job an owner.
+                  </p>
+                )}
+              </Field>
+              <Field label="Bullhorn job ID" htmlFor="externalCrmId">
+                <Input
+                  id="externalCrmId"
+                  name="externalCrmId"
+                  defaultValue={job?.externalCrmId ?? ""}
+                  placeholder="Optional"
+                  autoComplete="off"
+                  maxLength={64}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  The job order&apos;s ID in Bullhorn. Used to match this job once Bullhorn is connected.
+                </p>
+              </Field>
+            </div>
+
+            <fieldset>
+              <legend className="block text-sm font-medium text-ecrn-ink mb-1.5">Recruiters working this job</legend>
+              {recruiterGroups.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-slate-200 px-3.5 py-3 text-[13px] text-slate-500">
+                  No recruiters yet. Add them on the{" "}
+                  <Link href="/admin/team" className="underline hover:text-ecrn-ink">
+                    Team page
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <div className="max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+                  {recruiterGroups.map((group) => (
+                    <div key={group.key} className="px-3.5 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                        {group.label}
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2">
+                        {group.members.map((r) => (
+                          <label key={r.id} className="flex items-start gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="recruiterIds"
+                              value={r.id}
+                              defaultChecked={selectedRecruiters.has(r.id)}
+                              className="mt-0.5 w-4 h-4 rounded accent-ecrn-green shrink-0"
+                            />
+                            <span className="text-sm text-ecrn-ink min-w-0">
+                              {fullName(r)}
+                              {!r.isActive && <span className="text-slate-500"> (inactive)</span>}
+                              {r.title && <span className="block text-xs text-slate-500 truncate">{r.title}</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </fieldset>
           </Section>
 
           <Section title="Location">
@@ -170,7 +286,7 @@ export function JobForm({ job }: JobFormProps) {
                 id="internalNotes"
                 name="internalNotes"
                 rows={3}
-                defaultValue={job?.internalNotes ?? ""}
+                defaultValue={privateInfo?.internalNotes ?? job?.internalNotes ?? ""}
                 placeholder="Notes never shown to candidates or partners."
               />
             </Field>
@@ -179,12 +295,7 @@ export function JobForm({ job }: JobFormProps) {
           <Section title="Visibility">
             <div className="grid sm:grid-cols-2 gap-3">
               <Field label="Status" htmlFor="status">
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={job?.status ?? "draft"}
-                  className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-[15px] text-ecrn-ink focus:outline-none focus:border-ecrn-green focus:ring-2 focus:ring-ecrn-green/20"
-                >
+                <select id="status" name="status" defaultValue={job?.status ?? "draft"} className={selectClass}>
                   <option value="draft">Draft</option>
                   <option value="open">Open</option>
                   <option value="paused">Paused</option>
@@ -201,7 +312,7 @@ export function JobForm({ job }: JobFormProps) {
                     className="w-4 h-4 rounded accent-ecrn-green"
                   />
                   <span className="text-sm text-ecrn-ink">
-                    Public — partners and candidates can see this job
+                    Public: partners and candidates can see this job
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">

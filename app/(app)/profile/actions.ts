@@ -1,9 +1,55 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { deleteMyAccount, registerDeviceToken } from "@/lib/data/repository";
+
+export interface ClaimInviteCodeState {
+  ok: boolean;
+  /** The recruiter's name, once connected. */
+  name?: string;
+  error?: string;
+  /** What the member typed, so the field keeps it after an error. */
+  code?: string;
+}
+
+/**
+ * A member who signed up without a recruiter's link (for example straight from
+ * the App Store) adds the recruiter's code afterwards. The database function
+ * does the linking and refuses if they already have a recruiter.
+ */
+export async function claimInviteCodeAction(
+  _prev: ClaimInviteCodeState,
+  formData: FormData
+): Promise<ClaimInviteCodeState> {
+  const raw = formData.get("code");
+  const code = (typeof raw === "string" ? raw : "").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 24);
+
+  const profile = await getCurrentProfile();
+  if (!profile) return { ok: false, code, error: "Please log in again to add a code." };
+  if (code.length < 3) return { ok: false, code, error: "Enter the code your recruiter gave you." };
+
+  try {
+    const sb = await createSupabaseServerClient();
+    const { data, error } = await sb.rpc("claim_invite_code", { p_code: code });
+    if (error) {
+      if (/recognized/i.test(error.message)) {
+        return { ok: false, code, error: "That code isn't recognized. Check it with your recruiter and try again." };
+      }
+      if (/already linked/i.test(error.message)) {
+        return { ok: false, code, error: "Your account is already connected with a recruiter." };
+      }
+      return { ok: false, code, error: "We couldn't connect you just now. Please try again." };
+    }
+    const name = String((data as { name?: string } | null)?.name ?? "").trim();
+    revalidatePath("/profile");
+    return { ok: true, name: name || "your recruiter" };
+  } catch {
+    return { ok: false, code, error: "We couldn't connect you just now. Please try again." };
+  }
+}
 
 /** Called by the app after the user allows notifications. */
 export async function registerPushTokenAction(

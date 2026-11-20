@@ -1,79 +1,90 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Briefcase, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Page, PageTitle, EmptyState } from "@/components/ui/Page";
 import { ApplicationStatusBadge } from "@/components/referrals/StatusBadge";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { listApplicationsByApplicantEnriched } from "@/lib/data/repository";
-import { Briefcase, FileText } from "lucide-react";
+import { jobLocation } from "@/lib/jobs";
+import type { ApplicationStatus, Job } from "@/types";
+
+const CLOSED: ApplicationStatus[] = ["hired", "rejected", "withdrawn"];
+
+/** A client name is only ever shown when the job is marked "company public". */
+function clientLabel(job: Pick<Job, "companyName" | "isCompanyPublic">): string {
+  return job.isCompanyPublic && job.companyName ? job.companyName : "Confidential client";
+}
+
+function appliedOn(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 export default async function CandidateApplicationsPage() {
   const profile = (await getCurrentProfile())!;
   const apps = await listApplicationsByApplicantEnriched(profile.id);
+  const inReview = apps.filter(({ application }) => !CLOSED.includes(application.status)).length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
-            My applications
-          </h1>
-          <p className="mt-1 text-slate-500">
-            {apps.length} application{apps.length === 1 ? "" : "s"}.
-          </p>
-        </div>
-        <Link href="/jobs">
-          <Button size="sm" variant="primary">
-            <Briefcase className="w-4 h-4" /> Browse jobs
-          </Button>
-        </Link>
-      </div>
+    <Page>
+      <PageTitle
+        eyebrow="Your job search"
+        title="My applications"
+        subtitle={
+          apps.length === 0
+            ? "Roles you apply to show up here, with where each one stands."
+            : `${inReview} in review with Delta`
+        }
+      />
 
-      {apps.length === 0 ? (
-        <Card className="p-10 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 grid place-items-center mb-4">
-            <FileText className="w-6 h-6 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-ecrn-ink">No applications yet</h3>
-          <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-            Browse open roles and apply directly. Your information stays confidential until you
-            say otherwise.
-          </p>
-          <Link href="/jobs" className="inline-block mt-5">
-            <Button variant="dark" size="md">
-              See open jobs
-            </Button>
-          </Link>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {apps.map(({ application, job }) => (
-            <Link key={application.id} href={`/candidate/applications/${application.id}`}>
-              <Card className="hover:shadow-float hover:border-ecrn-green/40 transition-all">
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-[15px] font-semibold text-ecrn-ink">
-                          {job.title}
-                        </h3>
+      <Link href="/jobs" className="block">
+        <Button fullWidth>
+          <Briefcase className="w-4 h-4" /> Browse jobs
+        </Button>
+      </Link>
+
+      <section>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-display text-[18px] font-semibold text-ecrn-ink">Applied roles</h2>
+          <span className="t-eyebrow">{apps.length} total</span>
+        </div>
+
+        {apps.length === 0 ? (
+          <EmptyState
+            title="No applications yet"
+            body="Browse open roles and apply directly. Your information stays confidential until you say otherwise."
+            action={
+              <Link href="/jobs">
+                <Button size="sm">See open jobs</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-ecrn-line border-b border-ecrn-line">
+            {apps.map(({ application, job }) => {
+              const where = jobLocation(job);
+              return (
+                <li key={application.id}>
+                  <Link href={`/candidate/applications/${application.id}`} className="flex items-center gap-3 py-3.5">
+                    <span className="w-10 h-10 shrink-0 rounded-[10px] bg-white border border-ecrn-line grid place-items-center">
+                      <FileText className="w-4 h-4 text-ecrn-secondary" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-[16px] font-semibold text-ecrn-ink truncate">{job.title}</h3>
                         <ApplicationStatusBadge status={application.status} />
                       </div>
-                      <p className="mt-1 text-sm text-slate-500 truncate">
-                        {job.companyName ?? "Confidential client"} ·{" "}
-                        {[job.locationCity, job.locationState].filter(Boolean).join(", ")}
+                      <p className="text-[12.5px] text-ecrn-secondary truncate">
+                        {[clientLabel(job), where].filter(Boolean).join(" · ")}
                       </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Applied {application.createdAt.slice(0, 10)}
-                      </p>
+                      <p className="mt-0.5 t-eyebrow">Applied {appliedOn(application.createdAt)}</p>
                     </div>
-                    <div className="text-slate-300 text-lg shrink-0">›</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </Page>
   );
 }

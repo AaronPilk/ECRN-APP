@@ -229,5 +229,5 @@ export async function demoLoginAction(formData: FormData): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) back("/login", { error: `Demo sign-in failed: ${error.message}` });
 
-  redirect(role === "candidate" ? "/candidate" : "/dashboard");
+  redirect("/dashboard");
 }

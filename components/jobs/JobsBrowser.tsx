@@ -24,7 +24,11 @@ export function JobsBrowser({
   detailBase,
   showReferral = true,
   initialOrigin,
+  heading = "Open jobs",
+  intro,
 }: {
+  heading?: string;
+  intro?: string;
   jobs: Job[];
   detailBase: string;
   showReferral?: boolean;
@@ -77,8 +81,8 @@ export function JobsBrowser({
     <div className="space-y-5">
       <div>
         <p className="t-eyebrow mb-2">Opportunities</p>
-        <h1 className="t-page">Open jobs</h1>
-        <p className="mt-2 text-[15px] text-ecrn-secondary">{subtitle}</p>
+        <h1 className="t-page">{heading}</h1>
+        <p className="mt-2 text-[15px] text-ecrn-secondary">{intro && !origin ? intro : subtitle}</p>
       </div>
 
       {/* Location controls */}

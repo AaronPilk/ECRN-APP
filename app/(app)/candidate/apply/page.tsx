@@ -1,194 +1,132 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/Card";
+import { notFound, redirect } from "next/navigation";
+import { CircleCheck, FileText, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input, Textarea } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { Textarea } from "@/components/ui/Input";
 import { FormMessage } from "@/components/ui/FormMessage";
+import { Page, BackLink } from "@/components/ui/Page";
+import { GroupField } from "@/components/ui/GroupField";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getJobById } from "@/lib/data/repository";
+import { jobLocation } from "@/lib/jobs";
 import { applyAction } from "../actions";
 
 interface PageProps {
   searchParams: Promise<{ jobId?: string; error?: string }>;
 }
 
+/**
+ * Apply with your ECRN profile: everything we already know is sent with the
+ * application, so most members only tap Submit.
+ */
 export default async function ApplyPage(props: PageProps) {
-  const searchParams = await props.searchParams;
-  const profile = (await getCurrentProfile())!;
-  const jobId = searchParams?.jobId;
-  if (!jobId) {
-    // Without a jobId there's nothing to apply to — bounce them to the jobs list.
-    return (
-      <div className="max-w-xl mx-auto px-4 py-10 text-center">
-        <p className="text-slate-500">Which role would you like to apply to?</p>
-        <Link href="/candidate/jobs" className="inline-block mt-3">
-          <Button size="sm" variant="dark">
-            Browse jobs
-          </Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const job = await getJobById(jobId);
+  const sp = await props.searchParams;
+  if (!sp.jobId) redirect("/jobs");
+  const [profile, job] = await Promise.all([getCurrentProfile(), getJobById(sp.jobId)]);
   if (!job) notFound();
+  const p = profile!;
+  const hasResume = Boolean(p.resumePath || p.resumeBuilder.generated);
+  const needsName = !p.firstName || !p.lastName;
+  const needsPhone = !p.phone;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
-      <Link href={`/jobs/${job.id}`} className="text-sm text-slate-500 hover:text-ecrn-ink">
-        ← Back to role
-      </Link>
-
+    <Page className="pb-36">
       <div>
-        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-ecrn-green">
-          Applying to
-        </p>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-ecrn-ink">
-          {job.title}
-        </h1>
-        <p className="mt-1 text-slate-500">
-          {job.companyName ?? "Confidential client"} ·{" "}
-          {[job.locationCity, job.locationState].filter(Boolean).join(", ")}
-        </p>
+        <BackLink href={`/jobs/${job.id}`} label="Back to role" />
+        <p className="t-eyebrow mt-4">Apply</p>
+        <h1 className="t-page mt-1 !text-[34px] !leading-[37px]">{job.title}</h1>
+        <p className="mt-2 text-[14.5px] text-ecrn-secondary">{jobLocation(job)}</p>
       </div>
 
-      <FormMessage error={searchParams.error} />
+      <FormMessage error={sp.error} />
 
-      <Card>
-        <CardContent className="py-6">
-          <form action={applyAction} className="space-y-5">
-            <input type="hidden" name="jobId" value={job.id} />
+      <form id="apply-form" action={applyAction} className="space-y-5">
+        <input type="hidden" name="jobId" value={job.id} />
+        {!needsName && (
+          <>
+            <input type="hidden" name="firstName" value={p.firstName ?? ""} />
+            <input type="hidden" name="lastName" value={p.lastName ?? ""} />
+          </>
+        )}
+        {!needsPhone && <input type="hidden" name="phone" value={p.phone ?? ""} />}
+        <input type="hidden" name="locationCity" value={p.locationCity ?? ""} />
+        <input type="hidden" name="locationState" value={p.locationState ?? ""} />
+        <input type="hidden" name="currentJobTitle" value={p.discipline ?? ""} />
 
-            <Section title="Your information">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="firstName">First name *</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    required
-                    defaultValue={profile.firstName ?? ""}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last name *</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    required
-                    defaultValue={profile.lastName ?? ""}
-                  />
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    defaultValue={profile.email}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    defaultValue={profile.phone ?? ""}
-                  />
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                <div>
-                  <Label htmlFor="locationCity">City</Label>
-                  <Input
-                    id="locationCity"
-                    name="locationCity"
-                    defaultValue={profile.locationCity ?? ""}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="locationState">State</Label>
-                  <Input
-                    id="locationState"
-                    name="locationState"
-                    defaultValue={profile.locationState ?? ""}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Your background">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="currentJobTitle">Current title</Label>
-                  <Input id="currentJobTitle" name="currentJobTitle" />
-                </div>
-                <div>
-                  <Label htmlFor="trade">Trade</Label>
-                  <Input id="trade" name="trade" placeholder="e.g. electrical" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
-                <Input
-                  id="linkedinUrl"
-                  name="linkedinUrl"
-                  type="url"
-                  placeholder="https://www.linkedin.com/in/..."
-                  defaultValue={profile.linkedinUrl ?? ""}
-                />
-              </div>
-              <div className="mt-3">
-                <Label htmlFor="resumeUrl">Resume URL (Google Drive, Dropbox, etc.)</Label>
-                <Input id="resumeUrl" name="resumeUrl" type="url" />
-                <p className="mt-1.5 text-xs text-slate-500">
-                  Resume file upload comes in a later batch — for now share a link.
-                </p>
-              </div>
-            </Section>
-
-            <Section title="Anything else?">
-              <Textarea
-                id="notes"
-                name="notes"
-                rows={4}
-                placeholder="Why this role catches your eye, your availability, comp expectations…"
-              />
-            </Section>
-
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              <Button type="submit" variant="dark" size="lg" fullWidth>
-                Submit application
-              </Button>
-              <Link href={`/jobs/${job.id}`} className="sm:w-auto">
-                <Button type="button" variant="ghost" size="lg" fullWidth>
-                  Cancel
-                </Button>
-              </Link>
+        <section>
+          <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-2">Sent with your application</h2>
+          <div className="group-surface">
+            <div className="group-row">
+              <span className="text-[15px] text-ecrn-secondary">Name</span>
+              <span className="text-[15px] text-ecrn-ink">{[p.firstName, p.lastName].filter(Boolean).join(" ") || "—"}</span>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Your application goes directly to Delta&apos;s recruiting team. Your information is
-              confidential and only shared with the hiring company after you approve.
+            <div className="group-row">
+              <span className="text-[15px] text-ecrn-secondary">Email</span>
+              <span className="text-[15px] text-ecrn-ink truncate">{p.email}</span>
+            </div>
+            {p.phone && (
+              <div className="group-row">
+                <span className="text-[15px] text-ecrn-secondary">Phone</span>
+                <span className="text-[15px] text-ecrn-ink">{p.phone}</span>
+              </div>
+            )}
+            <div className="group-row">
+              <span className="text-[15px] text-ecrn-secondary">Resume</span>
+              {hasResume ? (
+                <span className="inline-flex items-center gap-1 text-[15px] text-ecrn-green-text">
+                  <CircleCheck className="w-4 h-4" /> On file
+                </span>
+              ) : (
+                <Link href="/profile#resume" className="text-[15px] font-medium text-ecrn-green-text">
+                  Add one
+                </Link>
+              )}
+            </div>
+          </div>
+          {!hasResume && (
+            <p className="mt-2 flex items-start gap-2 text-[12.5px] text-ecrn-secondary">
+              <FileText className="w-4 h-4 shrink-0" /> You can apply without one. A recruiter may ask for it later.
             </p>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+          )}
+        </section>
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 mb-3">
-        {title}
-      </h2>
-      {children}
-    </div>
+        {(needsName || needsPhone) && (
+          <section>
+            <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-2">A couple of details</h2>
+            <div className="group-surface">
+              {needsName && (
+                <>
+                  <GroupField label="First name" name="firstName" required defaultValue={p.firstName ?? ""} />
+                  <GroupField label="Last name" name="lastName" required defaultValue={p.lastName ?? ""} />
+                </>
+              )}
+              {needsPhone && <GroupField label="Phone" name="phone" type="tel" inputMode="tel" required placeholder="(555) 555-0123" />}
+            </div>
+          </section>
+        )}
+
+        <section>
+          <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-2">Optional</h2>
+          <div className="group-surface mb-3">
+            <GroupField label="LinkedIn" name="linkedinUrl" type="url" placeholder="linkedin.com/in/…" defaultValue={p.linkedinUrl ?? ""} autoCapitalize="none" />
+          </div>
+          <Textarea name="notes" rows={3} placeholder="Anything Delta should know? e.g. available in two weeks" />
+        </section>
+
+        {p.careerStatus === "open_to_offers" && (
+          <p className="flex items-start gap-2 text-[12.5px] text-navy">
+            <Lock className="w-4 h-4 shrink-0 text-cobalt" /> Confidential: Delta won&apos;t contact your current employer.
+          </p>
+        )}
+      </form>
+
+      <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+        <div className="max-w-3xl mx-auto px-[22px] py-3">
+          <Button form="apply-form" type="submit" fullWidth size="lg" variant="deep">
+            Submit application
+          </Button>
+        </div>
+      </div>
+    </Page>
   );
 }

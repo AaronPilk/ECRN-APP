@@ -5,7 +5,6 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/referrals",
-  "/jobs",
   "/earnings",
   "/profile",
   "/candidate",

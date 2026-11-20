@@ -101,8 +101,8 @@ export default async function LoginPage({ searchParams }: PageProps) {
             Preview ECRN with sample data. These accounts only see demo records.
           </p>
           <div className="mt-4 space-y-2">
-            <DemoButton role="referral_partner" title="Referral Partner" subtitle="What a network ambassador sees" />
-            <DemoButton role="candidate" title="Job Seeker" subtitle="What someone looking for a role sees" />
+            <DemoButton role="referral_partner" title="Demo member: referrals" subtitle="Has referrals and earnings on file" />
+            <DemoButton role="candidate" title="Demo member: job search" subtitle="Has an application and resume on file" />
           </div>
         </Card>
       )}

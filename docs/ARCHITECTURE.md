@@ -32,6 +32,22 @@ _Last updated Nov 20, 2026._
 - Admin → **Bullhorn sync** shows the queue and the exact payloads.
 - Next step: get Staffing Referrals' spec and confirm field names. Inbound status updates from Bullhorn come after that.
 
+## One member experience
+
+- There is no separate partner side or job-seeker side. Every member gets the same app: **Home, Jobs, Referrals, Earnings, Profile**.
+- On any job, a member can **apply directly** (one tap, using their profile and resume) or **refer someone**.
+- The onboarding answer ("looking", "open to a move", "refer", "both") only changes:
+  - which questions are asked
+  - the order of the Home sections
+  - the confidential flag for recruiters
+- After onboarding, a **guided product tour** walks through the features. It's stored as `profiles.tour_completed_at`, and members can replay it from Profile.
+
+## Public website (ecrn.com)
+
+- The marketing site lives in `app/(site)`. It's a rebuild of the old one-page ecrn.com, split into indexable pages.
+- `/jobs` is a public job board with JobPosting schema. Signed-in members see the same pages inside the app shell.
+- SEO setup, audit and launch steps: `docs/seo/README.md`.
+
 ## Onboarding (fewest taps)
 
 1. **Sign-up screen:** first name, last name, phone, email, password.

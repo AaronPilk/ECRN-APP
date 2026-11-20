@@ -47,6 +47,7 @@ export function toProfile(r: Row): Profile {
     resumeUploadedAt: r.resume_uploaded_at ?? null,
     resumeBuilder: obj(r.resume_builder),
     onboardingCompletedAt: r.onboarding_completed_at ?? null,
+    tourCompletedAt: r.tour_completed_at ?? null,
     metadata: obj(r.metadata),
     createdAt: r.created_at,
     updatedAt: r.updated_at,

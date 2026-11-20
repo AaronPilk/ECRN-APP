@@ -1,2 +1,5 @@
-import JobsPage from "@/app/(app)/jobs/page";
-export default JobsPage;
+import { redirect } from "next/navigation";
+
+export default function CandidateJobsRedirect() {
+  redirect("/jobs");
+}

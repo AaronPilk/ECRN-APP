@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+
+export const metadata = { title: "Thanks", robots: { index: false, follow: true } };
 
 export default function HireThanksPage() {
   return (
-    <div className="min-h-screen bg-ecrn-mist flex flex-col">
-      <header className="px-5 sm:px-8 py-5 pt-safe-plus">
-        <Link href="/"><Logo /></Link>
-      </header>
-      <main className="flex-1 flex items-center justify-center px-5 sm:px-8">
+    <div className="flex flex-col py-16">
+      <div className="flex-1 flex items-center justify-center px-5 sm:px-8">
         <Card className="max-w-md w-full p-8 text-center">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center text-2xl">✓</div>
           <h1 className="mt-5 text-2xl font-bold text-ecrn-ink">We&apos;ve got it.</h1>
@@ -23,7 +21,7 @@ export default function HireThanksPage() {
             </Button>
           </Link>
         </Card>
-      </main>
+      </div>
     </div>
   );
 }

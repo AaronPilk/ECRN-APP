@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage, SUPPORT_EMAIL } from "@/components/legal/LegalPage";
+import { pageMeta } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Support" };
+export const metadata: Metadata = pageMeta({
+  title: "Help & Support | ECRN",
+  description:
+    "Get help with ECRN: referral payouts, duplicate referrals, account access, deleting your account, and hiring through Delta Construction Partners.",
+  path: "/support",
+});
 
 export default function SupportPage() {
   return (
@@ -17,7 +23,7 @@ export default function SupportPage() {
         <strong>How do referral payouts work?</strong>
         <br />
         Refer someone you know. If Delta places them in a role, you&apos;re eligible for that role&apos;s
-        referral payout (typically $1,000–$10,000). Track status under Earnings.
+        referral payout (up to $10,000, depending on the role). Track status under Earnings.
       </p>
       <p>
         <strong>Someone already referred my contact — what happens?</strong>

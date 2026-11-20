@@ -36,8 +36,7 @@ export async function completeOnboardingAction(a: QuizAnswers): Promise<{ home?:
 
   const role = (data as { role: UserRole }).role;
   revalidatePath("/", "layout");
-  let home = homeForRole(role, true);
-  if (role === "candidate") home = a.resume_choice === "build" ? "/candidate/resume/build" : "/candidate?welcome=1";
-  else if (role === "referral_partner") home = "/referrals/import?welcome=1";
+  // Everyone lands on the same home, where the product tour starts.
+  const home = role === "admin" ? homeForRole(role, true) : a.resume_choice === "build" ? "/candidate/resume/build?tour=1" : "/dashboard?tour=1";
   return { home };
 }

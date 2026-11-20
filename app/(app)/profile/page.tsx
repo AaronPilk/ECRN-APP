@@ -16,10 +16,10 @@ export default async function ProfilePage() {
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${proto}://${host}` : "https://goecrn.com");
   const inviteUrl = `${appUrl}/r/${profile.id}`;
-  const invitedCount = profile.role === "referral_partner" ? await countInvitedBy(profile.id) : 0;
+  const invitedCount = profile.role !== "admin" ? await countInvitedBy(profile.id) : 0;
 
-  const isSeeker = profile.role === "candidate";
-  const canInvite = profile.role === "referral_partner" || profile.intent === "both";
+  const isSeeker = profile.role !== "admin";
+  const canInvite = profile.role !== "admin";
   const STATUS: Record<string, string> = {
     actively_looking: "Actively looking",
     open_to_offers: "Open to a move (private)",
@@ -59,7 +59,7 @@ export default async function ProfilePage() {
           {isSeeker && profile.relocation && (
             <Row label="Relocation" value={{ yes: "Open to relocating", maybe: "For the right role", no: "Not relocating" }[profile.relocation]} />
           )}
-          {!isSeeker && <Row label="Role" value={profile.role.replace(/_/g, " ")} />}
+
         </CardContent>
       </Card>
 
@@ -90,6 +90,8 @@ export default async function ProfilePage() {
       <div>
         <h2 className="font-display text-[18px] font-semibold text-ecrn-ink mb-3">Account</h2>
         <Card className="divide-y divide-ecrn-line overflow-hidden">
+          <LinkRow href="/dashboard?tour=1" label="Replay the app tour" />
+          <LinkRow href="/candidate/applications" label="My applications" />
           <LinkRow href="/support" label="Help & support" />
           <LinkRow href="/privacy" label="Privacy policy" />
           <LinkRow href="/terms" label="Terms of use" />

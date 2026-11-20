@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { DeltaLockup } from "@/components/ui/DeltaLockup";
 
+/** App and auth screens stay out of search results. */
+export const metadata = { robots: { index: false, follow: false } };
+
 /**
  * Shared layout for /login, /signup, /forgot-password, /onboarding.
  * Centered card on a soft light background.

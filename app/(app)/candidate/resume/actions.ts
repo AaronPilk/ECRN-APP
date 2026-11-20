@@ -17,7 +17,7 @@ export async function setResumePathAction(path: string | null): Promise<{ ok: bo
   const { error } = await sb.rpc("set_my_resume", { p_path: path });
   if (error) return { ok: false, error: error.message };
   if (old && old !== path) await sb.storage.from("resumes").remove([old]);
-  revalidatePath("/candidate", "layout");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -51,6 +51,6 @@ export async function saveResumeBuilderAction(
   const sb = await createSupabaseServerClient();
   const { error } = await sb.from("profiles").update({ resume_builder: builder }).eq("id", profile.id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/candidate", "layout");
+  revalidatePath("/", "layout");
   return { ok: true, usedAi };
 }

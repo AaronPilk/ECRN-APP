@@ -2,7 +2,7 @@
   "name": "ecrn",
   "version": "0.2.0",
   "private": true,
-  "description": "Electrical Construction Referral Network — a Delta Construction Partners initiative",
+  "description": "Electrical Construction Referral Network \u2014 a Delta Construction Partners initiative",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +13,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "ios": "cap sync ios && cap open ios",
     "android": "cap sync android && cap open android",
-    "app-icons": "capacitor-assets generate --iconBackgroundColor '#0A100C' --splashBackgroundColor '#0A100C'"
+    "app-icons": "capacitor-assets generate --iconBackgroundColor '#0A100C' --splashBackgroundColor '#0A100C'",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",

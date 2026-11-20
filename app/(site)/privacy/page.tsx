@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage, SUPPORT_EMAIL } from "@/components/legal/LegalPage";
+import { pageMeta } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = pageMeta({
+  title: "Privacy Policy | ECRN",
+  description:
+    "How ECRN collects, uses, and protects your information, including contacts you choose to refer, resumes, and location for nearby jobs.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

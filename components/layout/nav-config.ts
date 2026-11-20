@@ -31,19 +31,13 @@ export interface NavItem {
   icon: IconName;
 }
 
-export const referralPartnerNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "dashboard" },
-  { label: "Referrals", href: "/referrals", icon: "referrals" },
+/** Every member gets the same app: anyone can apply or refer. */
+export const memberNav: NavItem[] = [
+  { label: "Home", href: "/dashboard", icon: "dashboard" },
   { label: "Jobs", href: "/jobs", icon: "jobs" },
+  { label: "Referrals", href: "/referrals", icon: "referrals" },
   { label: "Earnings", href: "/earnings", icon: "earnings" },
   { label: "Profile", href: "/profile", icon: "profile" },
-];
-
-export const candidateNav: NavItem[] = [
-  { label: "Dashboard", href: "/candidate", icon: "dashboard" },
-  { label: "Jobs", href: "/candidate/jobs", icon: "jobs" },
-  { label: "Applications", href: "/candidate/applications", icon: "applications" },
-  { label: "Profile", href: "/candidate/profile", icon: "profile" },
 ];
 
 export const adminNav: NavItem[] = [
@@ -58,24 +52,6 @@ export const adminNav: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: "settings" },
 ];
 
-/** Job seekers who also refer ("both") get a Referrals tab. */
-export const candidateReferrerNav: NavItem[] = [
-  { label: "Dashboard", href: "/candidate", icon: "dashboard" },
-  { label: "Jobs", href: "/candidate/jobs", icon: "jobs" },
-  { label: "Referrals", href: "/referrals", icon: "referrals" },
-  { label: "Applications", href: "/candidate/applications", icon: "applications" },
-  { label: "Profile", href: "/candidate/profile", icon: "profile" },
-];
-
-export function getNavForRole(role: UserRole, alsoRefers = false): NavItem[] {
-  switch (role) {
-    case "admin":
-      return adminNav;
-    case "candidate":
-      return alsoRefers ? candidateReferrerNav : candidateNav;
-    case "referral_partner":
-    case "company_contact":
-    default:
-      return referralPartnerNav;
-  }
+export function getNavForRole(role: UserRole): NavItem[] {
+  return role === "admin" ? adminNav : memberNav;
 }

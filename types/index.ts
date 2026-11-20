@@ -105,6 +105,7 @@ export interface Profile {
   resumeUploadedAt: string | null;
   resumeBuilder: Record<string, unknown>;
   onboardingCompletedAt: string | null;
+  tourCompletedAt: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

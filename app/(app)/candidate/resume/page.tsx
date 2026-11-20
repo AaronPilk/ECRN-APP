@@ -20,7 +20,7 @@ export default async function MyResumePage({ searchParams }: PageProps) {
   return (
     <Page>
       <div className="print:hidden">
-        <BackLink href="/candidate/profile#resume" label="Profile" />
+        <BackLink href="/profile#resume" label="Profile" />
         {sp.built && (
           <div className="mt-3 rounded-[14px] bg-ecrn-action-surface px-4 py-3 text-[14px] text-ecrn-green-text">
             Your resume is ready and on file with Delta&apos;s recruiters.

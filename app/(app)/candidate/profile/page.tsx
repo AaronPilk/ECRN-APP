@@ -1,2 +1,5 @@
-import ProfilePage from "@/app/(app)/profile/page";
-export default ProfilePage;
+import { redirect } from "next/navigation";
+
+export default function CandidateProfileRedirect() {
+  redirect("/profile");
+}

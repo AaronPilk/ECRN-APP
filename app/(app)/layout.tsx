@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/lib/auth/session";
 
+/** App and auth screens stay out of search results. */
+export const metadata = { robots: { index: false, follow: false } };
+
 /**
  * Layout for every signed-in page. Middleware already bounces signed-out
  * visitors; this also sends people who haven't picked a role to onboarding.

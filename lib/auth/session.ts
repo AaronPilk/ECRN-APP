@@ -38,8 +38,6 @@ export function homeForRole(role: UserRole, onboarded = true): string {
   switch (role) {
     case "admin":
       return "/admin";
-    case "candidate":
-      return "/candidate";
     case "company_contact":
       return "/hire";
     default:

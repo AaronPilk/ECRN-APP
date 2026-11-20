@@ -25,13 +25,13 @@ const ROLES: { key: "admin" | "referral_partner" | "candidate"; label: string; s
   },
   {
     key: "referral_partner",
-    label: "Referral Partner",
+    label: "Demo member (referrals)",
     subtitle: "Demo account · sample data",
     icon: <Users className="w-4 h-4" />,
   },
   {
     key: "candidate",
-    label: "Job Seeker",
+    label: "Demo member (job search)",
     subtitle: "Demo account · sample data",
     icon: <Briefcase className="w-4 h-4" />,
   },

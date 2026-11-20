@@ -29,7 +29,7 @@ function initials(p: Profile): string {
 }
 
 export function AppShell({ profile, children }: AppShellProps) {
-  const items = getNavForRole(profile.role, profile.intent === "both");
+  const items = getNavForRole(profile.role);
   // Only the shared demo accounts see the demo role switcher.
   const isMockMode = DEMO_MODE && profile.email.endsWith("@demo.goecrn.com");
 
@@ -51,7 +51,7 @@ export function AppShell({ profile, children }: AppShellProps) {
           <div className="h-[60px] mx-[22px] flex items-center justify-between border-b border-ecrn-line">
             <DeltaLockup />
             <Link
-              href={profile.role === "candidate" ? "/candidate/profile" : profile.role === "admin" ? "/admin/settings" : "/profile"}
+              href={profile.role === "admin" ? "/admin/settings" : "/profile"}
               aria-label="Your profile"
               className="w-9 h-9 shrink-0 rounded-full bg-ecrn-carbon text-white flex items-center justify-center text-[12px] font-semibold tracking-wide"
             >

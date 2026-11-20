@@ -2,15 +2,17 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
+import { SITE_URL } from "@/lib/site";
 import { NativeBootstrap } from "@/components/native/NativeBootstrap";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "ECRN — Electrical Construction Referral Network",
+    default: "ECRN: Electrical Construction Referral Network",
     template: "%s · ECRN",
   },
   description:
-    "Your construction network has value. Refer the right people, track placements, and earn payouts. An initiative of Delta Construction Partners.",
+    "Find electrical construction jobs or refer people you know and earn up to $10,000 when they're hired. A Delta Construction Partners initiative.",
   applicationName: "ECRN",
   appleWebApp: {
     capable: true,
@@ -21,11 +23,14 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "ECRN — Electrical Construction Referral Network",
+    title: "ECRN: Electrical Construction Jobs & Referral Rewards",
     description:
-      "Refer construction industry talent and earn referral payouts when Delta places them.",
+      "Find electrical construction jobs or refer people you know and earn up to $10,000 when they're hired.",
     type: "website",
+    siteName: "ECRN",
+    images: [{ url: "/og.jpg", width: 1200, height: 630 }],
   },
+  twitter: { card: "summary_large_image", images: ["/og.jpg"] },
   manifest: "/manifest.webmanifest",
 };
 

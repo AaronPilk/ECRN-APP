@@ -21,7 +21,7 @@ export default async function CandidateApplicationsPage() {
             {apps.length} application{apps.length === 1 ? "" : "s"}.
           </p>
         </div>
-        <Link href="/candidate/jobs">
+        <Link href="/jobs">
           <Button size="sm" variant="primary">
             <Briefcase className="w-4 h-4" /> Browse jobs
           </Button>
@@ -38,7 +38,7 @@ export default async function CandidateApplicationsPage() {
             Browse open roles and apply directly. Your information stays confidential until you
             say otherwise.
           </p>
-          <Link href="/candidate/jobs" className="inline-block mt-5">
+          <Link href="/jobs" className="inline-block mt-5">
             <Button variant="dark" size="md">
               See open jobs
             </Button>

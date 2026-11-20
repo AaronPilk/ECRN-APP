@@ -23,12 +23,18 @@ export type IconName =
   | "companies"
   | "users"
   | "settings"
-  | "sync";
+  | "sync"
+  | "routing"
+  | "team"
+  | "activity"
+  | "members";
 
 export interface NavItem {
   label: string;
   href: string;
   icon: IconName;
+  /** Optional sidebar group heading (admin). */
+  section?: string;
 }
 
 /** Every member gets the same app: anyone can apply or refer. */
@@ -41,15 +47,19 @@ export const memberNav: NavItem[] = [
 ];
 
 export const adminNav: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard" },
-  { label: "Candidates", href: "/admin/candidates", icon: "candidates" },
-  { label: "Referrals", href: "/admin/referrals", icon: "referrals" },
-  { label: "Jobs", href: "/admin/jobs", icon: "jobs" },
-  { label: "Companies", href: "/admin/companies", icon: "companies" },
-  { label: "Payouts", href: "/admin/payouts", icon: "earnings" },
-  { label: "Users", href: "/admin/users", icon: "users" },
-  { label: "Bullhorn sync", href: "/admin/sync", icon: "sync" },
-  { label: "Settings", href: "/admin/settings", icon: "settings" },
+  { label: "Dashboard", href: "/admin", icon: "dashboard", section: "Overview" },
+  { label: "Routing", href: "/admin/routing", icon: "routing", section: "Overview" },
+  { label: "Activity", href: "/admin/activity", icon: "activity", section: "Overview" },
+  { label: "Members", href: "/admin/members", icon: "members", section: "People" },
+  { label: "Candidates", href: "/admin/candidates", icon: "candidates", section: "People" },
+  { label: "Team", href: "/admin/team", icon: "team", section: "People" },
+  { label: "Jobs", href: "/admin/jobs", icon: "jobs", section: "Pipeline" },
+  { label: "Applications", href: "/admin/applications", icon: "applications", section: "Pipeline" },
+  { label: "Referrals", href: "/admin/referrals", icon: "referrals", section: "Pipeline" },
+  { label: "Payouts", href: "/admin/payouts", icon: "earnings", section: "Pipeline" },
+  { label: "Companies", href: "/admin/companies", icon: "companies", section: "Pipeline" },
+  { label: "Integrations", href: "/admin/sync", icon: "sync", section: "System" },
+  { label: "Settings", href: "/admin/settings", icon: "settings", section: "System" },
 ];
 
 export function getNavForRole(role: UserRole): NavItem[] {

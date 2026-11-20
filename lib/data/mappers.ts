@@ -1,5 +1,6 @@
 import type {
   ActivityLog,
+  Staff,
   Candidate,
   CandidateNote,
   CompanyLead,
@@ -48,6 +49,11 @@ export function toProfile(r: Row): Profile {
     resumeBuilder: obj(r.resume_builder),
     onboardingCompletedAt: r.onboarding_completed_at ?? null,
     tourCompletedAt: r.tour_completed_at ?? null,
+    recruitedByStaffId: r.recruited_by_staff_id ?? null,
+    signupSource: r.signup_source ?? "organic",
+    signupPlatform: r.signup_platform ?? null,
+    lastSeenAt: r.last_seen_at ?? null,
+    lastPlatform: r.last_platform ?? null,
     metadata: obj(r.metadata),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -76,6 +82,10 @@ export function toCandidate(r: Row): Candidate {
     relocation: r.relocation ?? null,
     moveMotivators: r.move_motivators ?? [],
     isConfidential: Boolean(r.is_confidential),
+    accountManagerId: r.account_manager_id ?? null,
+    recruiterId: r.recruiter_id ?? null,
+    routedAt: r.routed_at ?? null,
+    routingReason: r.routing_reason ?? null,
     sourceType: r.source_type,
     primaryReferrerUserId: r.primary_referrer_user_id ?? null,
     duplicateOfCandidateId: r.duplicate_of_candidate_id ?? null,
@@ -131,6 +141,10 @@ export function candidateFromReferralSnapshot(r: Referral): Candidate {
     relocation: null,
     moveMotivators: [],
     isConfidential: false,
+    accountManagerId: null,
+    recruiterId: null,
+    routedAt: null,
+    routingReason: null,
     sourceType: "referred",
     primaryReferrerUserId: null,
     duplicateOfCandidateId: null,
@@ -165,6 +179,7 @@ export function toJob(r: Row): Job {
     referralPayoutDisplay: r.referral_payout_display ?? null,
     locationLat: r.location_lat ?? null,
     locationLng: r.location_lng ?? null,
+    accountManagerId: r.account_manager_id ?? null,
     internalNotes: r.internal_notes ?? null,
     externalCrmId: r.external_crm_id ?? null,
     metadata: obj(r.metadata),
@@ -181,6 +196,8 @@ export function toJobReferral(r: Row): JobReferral {
     referrerUserId: r.referrer_user_id,
     status: r.status,
     notes: r.notes ?? null,
+    accountManagerId: r.account_manager_id ?? null,
+    recruiterId: r.recruiter_id ?? null,
     metadata: obj(r.metadata),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -197,6 +214,8 @@ export function toApplication(r: Row): JobApplication {
     resumeUrl: r.resume_url ?? null,
     linkedinUrl: r.linkedin_url ?? null,
     notes: r.notes ?? null,
+    accountManagerId: r.account_manager_id ?? null,
+    recruiterId: r.recruiter_id ?? null,
     metadata: obj(r.metadata),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -272,4 +291,26 @@ export function one<T>(v: unknown, map: (r: Row) => T): T | null {
   if (!v) return null;
   if (Array.isArray(v)) return v.length ? map(v[0]) : null;
   return map(v as Row);
+}
+
+export function toStaff(r: Row): Staff {
+  return {
+    id: r.id,
+    profileId: r.profile_id ?? null,
+    firstName: r.first_name,
+    lastName: r.last_name ?? "",
+    email: r.email ?? null,
+    phone: r.phone ?? null,
+    title: r.title ?? null,
+    staffRole: r.staff_role,
+    managerId: r.manager_id ?? null,
+    inviteCode: r.invite_code,
+    specialties: r.specialties ?? [],
+    territories: r.territories ?? [],
+    externalCrmId: r.external_crm_id ?? null,
+    isActive: r.is_active ?? true,
+    metadata: obj(r.metadata),
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
 }

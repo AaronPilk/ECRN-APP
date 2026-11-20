@@ -14,7 +14,9 @@
     "ios": "cap sync ios && cap open ios",
     "android": "cap sync android && cap open android",
     "app-icons": "capacitor-assets generate --iconBackgroundColor '#0A100C' --splashBackgroundColor '#0A100C'",
-    "indexnow": "node scripts/indexnow.mjs"
+    "indexnow": "node scripts/indexnow.mjs",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",
@@ -29,15 +31,16 @@
     "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.4",
-    "@opennextjs/cloudflare": "^1.20.7",
+    "@opennextjs/cloudflare": "^1.20.18",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.117.0",
     "clsx": "^2.1.1",
     "geist": "^1.9.2",
     "lucide-react": "^0.453.0",
-    "next": "15.5.27",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "next": "^16.4.6",
+    "qrcode-generator": "^2.0.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8"
@@ -46,12 +49,15 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
     "@types/node": "^20.16.10",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.166.0"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

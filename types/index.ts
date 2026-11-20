@@ -70,6 +70,34 @@ export type NotificationStatus = "queued" | "sent" | "delivered" | "failed" | "o
 // Domain entities
 // ─────────────────────────────────────────────────────────────────────
 
+export type StaffRole = "owner" | "account_manager" | "recruiter";
+export type SignupSource = "organic" | "recruiter" | "member_invite";
+
+/** A Delta team member: owner, account manager, or recruiter (admin-only data). */
+export interface Staff {
+  id: string;
+  /** Their ECRN login, if they have one. */
+  profileId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  title: string | null;
+  staffRole: StaffRole;
+  /** The account manager a recruiter reports to. */
+  managerId: string | null;
+  /** Personal code: ecrn.com/r/CODE and the sign-up "invite code". */
+  inviteCode: string;
+  specialties: string[];
+  territories: string[];
+  /** Bullhorn CorporateUser id. */
+  externalCrmId: string | null;
+  isActive: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type OnboardingIntent = "job" | "open" | "refer" | "both";
 export type CareerStatus = "actively_looking" | "open_to_offers" | "not_looking";
 
@@ -106,6 +134,12 @@ export interface Profile {
   resumeBuilder: Record<string, unknown>;
   onboardingCompletedAt: string | null;
   tourCompletedAt: string | null;
+  /** Attribution (0008): the Delta recruiter credited with this sign-up. */
+  recruitedByStaffId: string | null;
+  signupSource: SignupSource;
+  signupPlatform: string | null;
+  lastSeenAt: string | null;
+  lastPlatform: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -132,6 +166,11 @@ export interface Candidate {
   relocation: string | null;
   moveMotivators: string[];
   isConfidential: boolean;
+  /** Routing (0008): owning account manager + assigned recruiter (staff ids). */
+  accountManagerId: string | null;
+  recruiterId: string | null;
+  routedAt: string | null;
+  routingReason: string | null;
   sourceType: CandidateSource;
   primaryReferrerUserId: string | null;
   duplicateOfCandidateId: string | null;
@@ -187,6 +226,8 @@ export interface Job {
   referralPayoutDisplay: string | null;
   locationLat: number | null;
   locationLng: number | null;
+  /** The account manager (staff id) who owns this job. */
+  accountManagerId: string | null;
   internalNotes: string | null;
   externalCrmId: string | null;
   metadata: Record<string, unknown>;
@@ -201,6 +242,8 @@ export interface JobReferral {
   referrerUserId: string;
   status: ReferralStatus;
   notes: string | null;
+  accountManagerId: string | null;
+  recruiterId: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -215,6 +258,8 @@ export interface JobApplication {
   resumeUrl: string | null;
   linkedinUrl: string | null;
   notes: string | null;
+  accountManagerId: string | null;
+  recruiterId: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

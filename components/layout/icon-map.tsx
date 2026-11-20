@@ -10,6 +10,10 @@ import {
   Building2,
   Settings,
   RefreshCw,
+  Split,
+  Contact,
+  Activity,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "./nav-config";
@@ -33,4 +37,8 @@ export const iconMap: Record<IconName, LucideIcon> = {
   users: User,
   settings: Settings,
   sync: RefreshCw,
+  routing: Split,
+  team: Contact,
+  activity: Activity,
+  members: UsersRound,
 };

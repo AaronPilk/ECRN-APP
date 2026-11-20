@@ -23,7 +23,13 @@ export function MobileNav({ items }: MobileNavProps) {
       aria-label="Primary"
       className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-ecrn-line pb-safe"
     >
-      <ul className="grid grid-flow-col auto-cols-fr items-center px-1 pt-1.5">
+      <ul
+        className={cn(
+          "items-center px-1 pt-1.5",
+          // Admin has many sections: scroll sideways on phones instead of squeezing.
+          items.length > 5 ? "flex overflow-x-auto [&>li]:shrink-0 [&>li]:w-[76px]" : "grid grid-flow-col auto-cols-fr"
+        )}
+      >
         {items.map((item) => {
           const Icon = iconMap[item.icon];
           const active = item.href === activeHref;

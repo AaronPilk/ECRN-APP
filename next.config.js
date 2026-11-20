@@ -3,7 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   // Types are checked separately with `npm run type-check`.
   typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
   // Cloudflare Workers: serve images as-is (no Next image optimizer).
   images: { unoptimized: true },
   async headers() {

@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/site/SiteChrome";
 import { SiteImage } from "@/components/site/SiteImage";
 import { BLOG_PATH } from "@/lib/blog/routes";
 import { ANSWER_ID, TAKEAWAYS_ID, blogPostingJsonLd, postCrumbs } from "@/lib/blog/seo";
-import { AUTHORS, readingMinutes, type BlogPost } from "@/lib/blog/types";
+import { AUTHORS, BLOG_CATEGORIES, readingMinutes, type BlogPost } from "@/lib/blog/types";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/site";
 import { cn } from "@/lib/utils/cn";
 import { AboutEcrn } from "./AboutEcrn";
@@ -46,7 +46,7 @@ const HERO_LIGHT: CSSProperties = {
  * as a closed disclosure in the flow (it never floats over the text), and a
  * reading column of about 40 characters a line on a phone and 65 on desktop.
  */
-export function PostView({ post, related }: { post: BlogPost; related: BlogPost[] }) {
+export function PostView({ post, related, more = [] }: { post: BlogPost; related: BlogPost[]; more?: BlogPost[] }) {
   const author = AUTHORS[post.author];
   const crumbs = postCrumbs(post);
   const minutes = readingMinutes(post);
@@ -238,8 +238,43 @@ export function PostView({ post, related }: { post: BlogPost; related: BlogPost[
         </section>
       )}
 
+      {more.length > 0 && <MoreInTopic post={post} posts={more} />}
+
       <FinalCta />
     </>
+  );
+}
+
+/**
+ * Every other guide on the same topic, as a plain list of links. It keeps
+ * each post within reach of its siblings (the SOP's "new pages get links
+ * from older pages on the same topic") without another row of cards.
+ */
+function MoreInTopic({ post, posts }: { post: BlogPost; posts: BlogPost[] }) {
+  const label = BLOG_CATEGORIES[post.category].label;
+  return (
+    <section aria-labelledby="more-in-topic-heading" className="pb-14 sm:pb-20">
+      <Container>
+        <div className="border-t border-ecrn-line pt-8 sm:pt-10">
+          <h2 id="more-in-topic-heading" className="font-display text-[20px] font-semibold tracking-[-0.015em] text-ecrn-ink sm:text-[22px]">
+            More on {label.toLowerCase()}
+          </h2>
+          <ul className="mt-3 grid gap-x-10 sm:grid-cols-2">
+            {posts.map((p) => (
+              <li key={p.slug} className="border-b border-ecrn-line">
+                <Link
+                  href={`${BLOG_PATH}/${p.slug}`}
+                  className="flex min-h-[52px] items-center justify-between gap-4 py-3 text-[16px] leading-snug text-ecrn-ink active:opacity-70 [@media(hover:hover)]:hover:text-ecrn-green-text"
+                >
+                  <span>{p.title}</span>
+                  <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-ecrn-secondary" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Container>
+    </section>
   );
 }
 

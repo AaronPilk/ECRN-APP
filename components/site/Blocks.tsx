@@ -66,7 +66,7 @@ import { siteVars } from "./motion/vars";
  *   Container      carries `site-container` so islands can line it up with the page gutter.
  */
 
-export { CoBrandLockup, DELTA, DeltaBadge, DeltaLogo, DeltaMark, DeltaWordmark, EcrnLogo, PoweredByDelta } from "./Delta";
+export { CoBrandLockup, DELTA, DeltaArt, DeltaBadge, DeltaLogo, DeltaMark, DeltaWordmark, EcrnLogo, PoweredByDelta } from "./Delta";
 export type { BrandTone, LockupSize } from "./Delta";
 
 export type SiteTone = "paper" | "white" | "dark";

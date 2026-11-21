@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostView } from "@/components/blog/PostView";
-import { allPosts, getPost, relatedPosts } from "@/content/blog";
+import { allPosts, getPost, postsInCategory, relatedPosts } from "@/content/blog";
 import { postMetadata } from "@/lib/blog/seo";
 
 interface PageProps {
@@ -26,5 +26,7 @@ export default async function BlogPostPage(props: PageProps) {
   const { slug } = await props.params;
   const post = getPost(slug);
   if (!post) notFound();
-  return <PostView post={post} related={relatedPosts(post)} />;
+  const related = relatedPosts(post);
+  const more = postsInCategory(post.category).filter((p) => p.slug !== post.slug && !related.includes(p));
+  return <PostView post={post} related={related} more={more} />;
 }

@@ -1,0 +1,302 @@
+import type { BlogPost } from "@/lib/blog/types";
+
+export const howToHireAnElectricalProjectManager: BlogPost = {
+  slug: "how-to-hire-an-electrical-project-manager",
+  title: "How to hire an electrical project manager: a step-by-step playbook",
+  metaTitle: "How to Hire an Electrical Project Manager: Playbook | ECRN",
+  description:
+    "A hiring playbook for electrical contractors: the scorecard, where good PMs come from, BLS pay benchmarks, interviews, references, offers and the first 90 days.",
+  category: "employers",
+  targetQuery: "how to hire an electrical project manager",
+  secondaryQueries: [
+    "hiring an electrical project manager",
+    "electrical project manager hiring process",
+    "where to find electrical project managers",
+    "how much to pay an electrical project manager",
+    "project manager scorecard construction",
+    "onboarding a new construction project manager",
+  ],
+  answer:
+    "Write a scorecard first (project types, contract sizes, which numbers the PM owns and who they lead), recruit from assistant PMs, project engineers, competitors and referrals, and test finalists on a real job's numbers. Pay at least the market rate: BLS puts the median for construction managers, the closest federal proxy, at $114,990 (May 2025).",
+  keyTakeaways: [
+    "Write the scorecard before the job post: project types and sizes, money responsibility, team, and what success looks like at 90 days and one year.",
+    "In the 2026 AGC and NCCER survey, 74% of firms with project manager and supervisor openings reported difficulty filling them.",
+    "BLS has no electrical PM category. Construction managers earned a median $114,990 in May 2025, and $104,100 at specialty trade contractors.",
+    "Test finalists with a work sample from a real job, such as a cost report or change order log.",
+    "SHRM puts the median time to fill at about a month and a half across all industries, so start before the seat is empty.",
+  ],
+  publishedAt: "2026-11-21",
+  updatedAt: "2026-11-21",
+  author: "ecrn-team",
+  cover: "cover-hire-pm",
+  body: [
+    { type: "h2", text: "What should an electrical project manager scorecard include?" },
+    {
+      type: "p",
+      text: "A scorecard is one page that says what this PM is for. Write it with your operations leader and the superintendent the new hire will work beside, before anyone drafts a post. Without one, you end up weighing a PM who ran tenant fit-outs against one who ran a hospital, with no way to choose.",
+    },
+    {
+      type: "table",
+      caption: "A one-page scorecard for an electrical project manager",
+      head: ["Line", "What to decide", "Example, for illustration"],
+      rows: [
+        ["Project types", "The work this PM will run for the next two years", "Hospital expansions and data center fit-outs"],
+        ["Size and load", "Typical electrical contract value, and how many jobs at once", "Three to five jobs of $2 million to $12 million"],
+        ["Money", "Which numbers the PM owns", "Budget, buyout, billing, change orders and the monthly forecast"],
+        ["Team", "Who reports to the PM or works beside them", "An assistant PM, a project engineer, a superintendent and four foremen"],
+        ["Customers", "Who they answer to outside the company", "General contractor PMs and the owner's representative"],
+        ["Results", "What good looks like at 90 days and at one year", "Runs two jobs alone by day 90; no profit fade at year end"],
+      ],
+      note: "Fill in your own numbers. The examples show the level of detail, not a benchmark.",
+    },
+    {
+      type: "p",
+      text: "Keep the must-haves short: the experience the work requires, the software you run, travel, and any credential your contracts call for. Everything else is a nice-to-have. Our [job description template](/blog/electrical-project-manager-job-description) turns the scorecard into a posting.",
+    },
+    { type: "h2", text: "Where do strong electrical project managers come from?" },
+    {
+      type: "p",
+      text: "Usually from the seat just below. BLS says new construction managers are typically hired as assistants and work under an experienced manager for up to a year, sometimes several. It adds that construction managers typically need a bachelor's degree, and that large firms may prefer candidates with both construction experience and a construction-related degree.[^1]",
+    },
+    {
+      type: "table",
+      head: ["Source", "Why it works", "Watch for"],
+      rows: [
+        ["Your [assistant PMs](/blog/assistant-project-manager-electrical) and project engineers", "They know your systems, customers and superintendents", "Promoting before they have owned a job's money; see [project engineer vs project manager](/blog/project-engineer-vs-project-manager)"],
+        ["Your estimators", "They know what the job was bid at, and why", "Less time with customers and crews"],
+        ["Foremen and superintendents", "BLS notes electricians can advance into project management roles[^10]", "The top 10% of construction supervisors earned more than $128,260 in May 2025, so the move may not be a raise[^5]"],
+        ["Competitors' PMs", "Already running your kind of work at your size", "They are employed and busy, so you have to reach them"],
+        ["Referrals from your people", "Your superintendents know who runs a clean job", "The EEOC warns that word-of-mouth recruiting can be unlawful if new hires all come from one group[^6]"],
+        ["Recruiters", "Reach employed PMs who are not applying, quietly", "Fees and specialization vary"],
+      ],
+    },
+    {
+      type: "p",
+      text: "You will not be the only one looking. In the 2026 AGC and NCCER Workforce Survey, 74% of firms with project manager and supervisor openings reported difficulty filling them, and 87% of firms with salaried openings said they were as hard or harder to fill than a year earlier.[^3] Before you pay a fee, weigh [whether a construction recruiter is worth it](/blog/are-construction-recruiters-worth-it) for your situation.",
+    },
+    { type: "h2", text: "How much should you pay an electrical project manager?" },
+    {
+      type: "p",
+      text: "BLS has no electrical project manager category. The closest proxy is construction managers (SOC 11-9021), a group that mixes general contractors' PMs with subcontractors'. Their median pay was $114,990 in May 2025, and $104,100 at specialty trade contractors, the BLS group that includes electrical contractors.[^1]",
+    },
+    {
+      type: "table",
+      caption: "Construction managers (SOC 11-9021), annual wages, United States, May 2025",
+      head: ["Benchmark", "Annual wage", "Rough fit"],
+      rows: [
+        ["25th percentile", "$88,550[^2]", "Newer PM, smaller jobs"],
+        ["Median, specialty trade contractors", "$104,100[^1]", "Experienced PM at a subcontractor"],
+        ["Median, all industries", "$114,990[^1]", "Experienced PM"],
+        ["75th percentile", "$151,640[^2]", "Senior PM on larger work"],
+        ["90th percentile", "$189,440[^1]", "Top of the market"],
+      ],
+      note: "Wage and salary workers, national figures. The fit column is our rule of thumb, not BLS data.",
+    },
+    {
+      type: "p",
+      text: "Price the whole package: bonus (BLS notes construction managers may earn bonuses on top of salary[^1]), vehicle or allowance, phone, and per diem on travel jobs. Location moves the number most, so check the state and metro figures in our [electrical project manager salary](/blog/electrical-project-manager-salary) guide. Pay is rising too: 53% of AGC respondents raised salaried base pay by more than they had a year earlier.[^3]",
+    },
+    { type: "h2", text: "How should you interview an electrical project manager?" },
+    {
+      type: "steps",
+      items: [
+        {
+          title: "Phone screen",
+          text: "Thirty minutes against the scorecard: project types, contract sizes, jobs at once, pay expectations and notice period.",
+        },
+        {
+          title: "Project walk-through",
+          text: "Have them take one finished job from award to closeout: original budget, final cost, change orders and what they would do differently. Specific numbers are a good sign. A lot of “we” and no numbers is not.",
+        },
+        {
+          title: "Work sample",
+          text: "Hand over a scrubbed cost report, schedule or change order log from a real job. Ask what worries them and what they would do about it this week.",
+        },
+        {
+          title: "Field fit",
+          text: "Have the superintendent and a foreman spend an hour with them. The PM and the superintendent run the job together.",
+        },
+        {
+          title: "Final interview",
+          text: "The owner or operations leader covers authority, bonus, the growth path and anything the references raised.",
+        },
+      ],
+    },
+    {
+      type: "p",
+      text: "Pull your questions from our list of [electrical project manager interview questions](/blog/electrical-project-manager-interview-questions), ask every finalist the same core set, and have each interviewer score against the scorecard before anyone compares notes.",
+    },
+    { type: "h2", text: "What should you ask a project manager's references?" },
+    {
+      type: "p",
+      text: "Ask for three: a former boss, a superintendent who worked beside them, and someone on the customer side, such as a general contractor's PM. Then ask what only someone who watched them work can answer:",
+    },
+    {
+      type: "ul",
+      items: [
+        "Which job did they run for you, and how did it finish against the budget?",
+        "Were change orders priced and signed before the work, or chased afterward?",
+        "How did the field crews feel about working for them?",
+        "Would you hire them again, for the same size of work?",
+      ],
+    },
+    {
+      type: "p",
+      text: "If a screening company runs your background check, the Fair Credit Reporting Act requires a stand-alone written notice and the candidate's written permission first, plus specific notices before and after you turn someone down because of the report.[^7]",
+    },
+    { type: "h2", text: "How do you make an offer an electrical PM will accept?" },
+    {
+      type: "ul",
+      items: [
+        "**Move fast.** SHRM's 2025 benchmarking put the median time to fill at about a month and a half, across all industries.[^4] Strong PMs have options, so make a verbal offer within days of the final interview and send the written one right behind it.",
+        "**Write all of it down.** Base pay, the bonus formula and payout date, vehicle, phone, paid time off, start date and the projects they will run.",
+        "**Ask about expectations, not history.** California and Washington bar employers from seeking an applicant's salary history, and California's Labor Commissioner says asking about salary expectations is allowed.[^8][^9]",
+        "**Plan for the counteroffer.** Ask early what would make them stay where they are. Our guide to [counteroffers](/blog/should-you-accept-a-counteroffer) shows the decision from the candidate's side.",
+      ],
+    },
+    {
+      type: "callout",
+      tone: "warning",
+      title: "Not legal advice",
+      text: "Hiring rules on background checks, salary questions and pay vary by state and city. Check the rules where the job is, with counsel if you need to.",
+    },
+    { type: "h2", text: "What should a new PM's first 90 days look like?" },
+    {
+      type: "table",
+      head: ["When", "Focus", "Done when"],
+      rows: [
+        ["Week 1", "Safety orientation, system access, introductions to superintendents, foremen and key customers", "They have walked every job they will own"],
+        ["Days 1 to 30", "Co-manage: review each job's budget, buyout, schedule and billing", "They can explain where each job stands without notes"],
+        ["Days 31 to 60", "Take over billing, change orders and the forecast on one job", "The first monthly forecast comes in on time"],
+        ["Days 61 to 90", "Carry the full load on the scorecard", "A 90-day review against the scorecard"],
+      ],
+    },
+    {
+      type: "p",
+      text: "Pair the new PM with a peer and hold a short weekly check-in. Contractors in the 2026 AGC survey reported adding structured onboarding, regular check-ins and mentor or buddy programs to keep new field hires through their first 90 days.[^3] The same habits work in the office.",
+    },
+    { type: "h2", text: "Where does ECRN fit?" },
+    {
+      type: "p",
+      text: "ECRN is the Electrical Construction Referral Network, powered by Delta Construction Partners, a construction recruiting firm that has been recruiting since 2008, with 30+ recruiters and relationships with contractors nationally. If you want help with the search, [send Delta your scorecard](/hire). Ask about fees and terms directly; this guide does not quote them.",
+    },
+    {
+      type: "cta",
+      title: "Hiring an electrical project manager?",
+      text: "Tell Delta Construction Partners the project types, contract sizes, location and pay range. A recruiter will reach out.",
+      href: "/hire",
+      label: "Submit a hiring need",
+    },
+  ],
+  faqs: [
+    {
+      q: "How long does it take to hire an electrical project manager?",
+      a: "There is no electrical-specific figure. SHRM's 2025 benchmarking put the median time to fill at about a month and a half across all industries, and 74% of construction firms with project manager and supervisor openings reported difficulty filling them in 2026.",
+    },
+    {
+      q: "How much should I pay an electrical project manager?",
+      a: "Benchmark against BLS construction managers, the closest proxy: a median of $114,990 in May 2025, with the middle half earning $88,550 to $151,640. Adjust for your market, project size and bonus.",
+    },
+    {
+      q: "Where do I find electrical project managers?",
+      a: "Start with your own assistant PMs, project engineers and estimators, then competitors' PMs, referrals from your superintendents, and a recruiter who works the trade and can reach employed PMs who are not applying.",
+    },
+    {
+      q: "Does an electrical project manager need a degree?",
+      a: "Not always. BLS says construction managers typically need a bachelor's degree and that large firms may prefer one plus construction experience, but it also notes that electricians can advance into project management roles.",
+    },
+    {
+      q: "Should I promote an assistant PM or hire from outside?",
+      a: "Promote when the assistant has already run a job's budget, billing and change orders with light supervision. Hire from outside when you need someone who has run larger or different work than anyone on your team.",
+    },
+  ],
+  sources: [
+    {
+      id: 1,
+      title: "Occupational Outlook Handbook: Construction Managers",
+      publisher: "U.S. Bureau of Labor Statistics",
+      url: "https://www.bls.gov/ooh/management/construction-managers.htm",
+      accessed: "2026-11-20",
+      note: "Page last modified August 27, 2026. SOC 11-9021, May 2025: median $114,990 a year; highest 10% above $189,440; median at specialty trade contractors $104,100. New construction managers are typically hired as assistants and work under an experienced manager for up to 1 year, sometimes several. Typically need a bachelor's degree; large firms may prefer construction experience plus a construction-related degree. May earn bonuses in addition to salary.",
+    },
+    {
+      id: 2,
+      title: "Local Wages: Construction Managers (11-9021.00)",
+      publisher: "O*NET OnLine, U.S. Department of Labor",
+      url: "https://www.onetonline.org/link/localwages/11-9021.00",
+      accessed: "2026-11-20",
+      note: "BLS OEWS May 2025 data, from the ECRN verified-facts ledger. U.S. annual wages: 25th percentile $88,550, 75th percentile $151,640.",
+    },
+    {
+      id: 3,
+      title: "2026 Workforce Survey Analysis",
+      publisher: "Associated General Contractors of America and NCCER",
+      url: "https://www.agc.org/sites/default/files/users/user21902/2026%20Workforce%20Survey%20Analysis%20(4).pdf",
+      accessed: "2026-11-20",
+      note: "Survey of 1,830 respondents, July and August 2026. 74% of firms with project manager and supervisor openings report difficulty filling them. 87% of firms with salaried openings say they are as hard or harder to fill than a year ago. 53% increased salaried base pay by more than a year earlier. Contractors are responding to early field turnover with structured onboarding, regular check-ins, formal jobsite orientations, safety-focused onboarding and mentor or buddy programs.",
+    },
+    {
+      id: 4,
+      title: "2025 Recruiting Benchmarking Report",
+      publisher: "SHRM",
+      url: "https://www.shrm.org/content/dam/en/shrm/research/2025-recruiting-benchmarking-report.pdf",
+      accessed: "2026-11-20",
+      note: "Median time to fill of about a month and a half, all industries (figure from the ECRN verified-facts ledger; the PDF blocks automated reading).",
+    },
+    {
+      id: 5,
+      title: "Local Wages: First-Line Supervisors of Construction Trades and Extraction Workers (47-1011.00)",
+      publisher: "O*NET OnLine, U.S. Department of Labor",
+      url: "https://www.onetonline.org/link/localwages/47-1011.00",
+      accessed: "2026-11-20",
+      note: "BLS OEWS May 2025 data, from the ECRN verified-facts ledger. U.S. 90th percentile $128,260 a year; this occupation is the BLS proxy for foremen and superintendents.",
+    },
+    {
+      id: 6,
+      title: "Prohibited Employment Policies/Practices",
+      publisher: "U.S. Equal Employment Opportunity Commission",
+      url: "https://www.eeoc.gov/prohibited-employment-policiespractices",
+      accessed: "2026-11-20",
+      note: "Recruitment section: reliance on word-of-mouth recruitment by a mostly one-group workforce may violate the law if almost all new hires come from that group.",
+    },
+    {
+      id: 7,
+      title: "Background Checks: What Employers Need to Know",
+      publisher: "U.S. Equal Employment Opportunity Commission and Federal Trade Commission",
+      url: "https://www.eeoc.gov/laws/guidance/background-checks-what-employers-need-know",
+      accessed: "2026-11-20",
+      note: "Issued March 11, 2014. When a company in the business of compiling background information runs the check, the FCRA requires a written, stand-alone notice, the applicant's written permission, and pre-adverse and adverse action notices.",
+    },
+    {
+      id: 8,
+      title: "California Equal Pay Act and Pay Transparency Law (Labor Code sections 432.3 and 1197.5) Frequently Asked Questions",
+      publisher: "California Department of Industrial Relations, Labor Commissioner's Office",
+      url: "https://www.dir.ca.gov/dlse/California_Equal_Pay_Act.htm",
+      accessed: "2026-11-20",
+      note: "Page dated August 24, 2026. FAQ 21: employers generally cannot seek an applicant's salary history (Labor Code 432.3(b)), but may ask about salary expectations for the position (432.3(j)).",
+    },
+    {
+      id: 9,
+      title: "Equal Pay & Opportunities Act",
+      publisher: "Washington State Department of Labor & Industries",
+      url: "https://lni.wa.gov/workers-rights/wages/equal-pay-opportunities-act/",
+      accessed: "2026-11-20",
+      note: "Employers cannot seek the wage or salary history of an applicant; they may confirm salary after an offer that includes pay has been accepted.",
+    },
+    {
+      id: 10,
+      title: "Occupational Outlook Handbook: Electricians",
+      publisher: "U.S. Bureau of Labor Statistics",
+      url: "https://www.bls.gov/ooh/construction-and-extraction/electricians.htm",
+      accessed: "2026-11-20",
+      note: "Page last modified August 27, 2026. Advancement: electricians may find opportunities to advance to supervisor or to other roles in project management.",
+    },
+  ],
+  related: [
+    "electrical-project-manager-job-description",
+    "electrical-project-manager-interview-questions",
+    "electrical-project-manager-salary",
+    "are-construction-recruiters-worth-it",
+  ],
+  moneyPage: { href: "/hire", label: "Hire an electrical project manager through ECRN" },
+};

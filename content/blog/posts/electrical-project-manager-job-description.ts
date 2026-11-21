@@ -1,0 +1,278 @@
+import type { BlogPost } from "@/lib/blog/types";
+
+export const electricalProjectManagerJobDescription: BlogPost = {
+  slug: "electrical-project-manager-job-description",
+  title: "Electrical project manager job description: template and tips",
+  metaTitle: "Electrical Project Manager Job Description Template | ECRN",
+  description:
+    "A copy-ready electrical project manager job description with duties, requirements and BLS pay benchmarks, plus pay range laws and Google's job posting rules.",
+  category: "employers",
+  targetQuery: "electrical project manager job description",
+  secondaryQueries: [
+    "electrical project manager job description template",
+    "electrical project manager responsibilities",
+    "electrical project manager requirements",
+    "electrical project manager job posting",
+    "construction project manager job description sample",
+    "how to get a job posting on Google Jobs",
+  ],
+  answer:
+    "An electrical project manager job description should say what the PM will run (project types, contract sizes and jobs at once), which numbers they own, who they work with, the real requirements and the pay range. For Google's job search, post it on a page for one real, open job with JobPosting structured data, or through a job site that works with Google, and remove it once it is filled.",
+  keyTakeaways: [
+    "Lead with the work: project types, contract sizes, jobs at once and the team, not a list of adjectives.",
+    "Split must-haves from nice-to-haves so strong PMs from the field or a general contractor still apply.",
+    "California and Washington require pay ranges in postings from employers with 15 or more employees, and New York from businesses with four or more.",
+    "Google's rules: one real, open job per page, a complete description, a way to apply, no fees, and take it down once it is filled.",
+    "BLS construction managers, the closest proxy, earned a median $114,990 in May 2025 and $104,100 at specialty trade contractors.",
+  ],
+  publishedAt: "2026-11-21",
+  updatedAt: "2026-11-21",
+  author: "ecrn-team",
+  cover: "cover-pm-job-description",
+  body: [
+    { type: "h2", text: "What goes in an electrical project manager job description?" },
+    {
+      type: "p",
+      text: "Six parts, in this order: a short summary, responsibilities, requirements, nice-to-haves, pay and benefits, and how to apply. Google asks for the same core in a job posting: a complete description covering responsibilities, qualifications, skills, working hours, education and experience.[^1]",
+    },
+    {
+      type: "p",
+      text: "BLS describes construction managers, the federal category closest to electrical PMs, as the people who plan, coordinate, budget and supervise projects from start to finish. It says they typically need a bachelor's degree, though candidates with a high school diploma and several years of relevant experience may also qualify, which is why the template lists the degree as preferred.[^2]",
+    },
+    { type: "h2", text: "Is there an electrical project manager job description template I can copy?" },
+    {
+      type: "p",
+      text: "Yes, this one. Replace everything in brackets and delete any line that isn't true for your company. The [electrical project manager career page](/careers/electrical-project-manager) shows how candidates see the same role.",
+    },
+    { type: "h3", text: "Job title" },
+    {
+      type: "p",
+      text: "**Electrical Project Manager** (or Senior Electrical Project Manager). Keep job codes, locations, pay and your company name out of the title itself; Google's guidelines say the title should be the name of the job only.[^1]",
+    },
+    { type: "h3", text: "Summary" },
+    {
+      type: "p",
+      text: "[Company] is a [union or open shop] electrical contractor in [city], building [project types] for [customer types]. We are hiring a project manager to run [number] projects at a time, typically $[X] million to $[Y] million in electrical contract value, from award through closeout. You will report to [title] and work alongside a dedicated superintendent and [number] foremen.",
+    },
+    { type: "h3", text: "Responsibilities" },
+    {
+      type: "ul",
+      items: [
+        "Own each project's budget, cost reports and monthly forecast, from the estimate handoff to closeout.",
+        "Lead buyout: issue purchase orders for switchgear, lighting and other major packages, and track long-lead deliveries against the schedule.",
+        "Price, negotiate and document [change orders](/glossary#change-order), and get them approved before the work is done whenever the contract allows.",
+        "Manage [submittals](/glossary#submittal), RFIs and project records with the project engineer or assistant PM.",
+        "Bill monthly, follow up on receivables and protect cash flow.",
+        "Run owner and general contractor meetings, and keep the customer informed on schedule, risk and cost.",
+        "Plan manpower with the superintendent and support safety and quality on site.",
+        "Coach assistant project managers and project engineers.",
+      ],
+    },
+    { type: "h3", text: "Requirements" },
+    {
+      type: "ul",
+      items: [
+        "[X]+ years managing electrical construction projects of $[X] million or more, or [Y]+ years as an assistant PM, estimator or field leader responsible for project costs.",
+        "Able to read electrical drawings, specifications and contracts.",
+        "Working knowledge of [project management and accounting software] and spreadsheets.",
+        "[OSHA 30 card, if your contracts or company policy require it.]",
+        "[Valid driver's license, only if driving between sites is an essential part of the job.]",
+      ],
+    },
+    { type: "h3", text: "Preferred" },
+    {
+      type: "ul",
+      items: [
+        "Experience on [data center, health care or industrial] projects.",
+        "Bachelor's degree in construction management, electrical engineering or a related field, or equivalent experience.",
+        "Field background as a journeyman electrician or foreman.",
+      ],
+    },
+    { type: "h3", text: "Pay and benefits" },
+    {
+      type: "p",
+      text: "$[minimum] to $[maximum] a year, plus [bonus basis, for example an annual bonus tied to project margin]. [Company vehicle or monthly allowance], phone, [health, dental and vision coverage], [retirement plan and match] and [paid time off].",
+    },
+    { type: "h3", text: "Equal opportunity statement" },
+    {
+      type: "p",
+      text: "[Insert your company's equal employment opportunity statement, as approved under your own HR policy.]",
+    },
+    { type: "h2", text: "How do you set the pay range for an electrical PM?" },
+    {
+      type: "p",
+      text: "BLS has no electrical project manager occupation, so start from construction managers (SOC 11-9021), the closest federal proxy.[^2]",
+    },
+    {
+      type: "table",
+      caption: "Construction managers (SOC 11-9021), annual wages, May 2025",
+      head: ["Benchmark", "Annual wage"],
+      rows: [
+        ["25th percentile, United States", "$88,550[^3]"],
+        ["Median, specialty trade contractors", "$104,100[^2]"],
+        ["Median, United States", "$114,990[^2]"],
+        ["75th percentile, United States", "$151,640[^3]"],
+        ["90th percentile, United States", "$189,440[^2]"],
+      ],
+      note: "Wage and salary workers, all industries unless shown.",
+    },
+    {
+      type: "p",
+      text: "Adjust for market, project size and how much of the margin the PM owns; our [electrical project manager salary](/blog/electrical-project-manager-salary) guide has state and metro figures. Then publish a real range, with a real bottom and a real top.",
+    },
+    { type: "h2", text: "Do you have to put the salary in the job posting?" },
+    {
+      type: "p",
+      text: "In a growing number of places, yes. California requires employers with 15 or more employees to include a pay scale, meaning a good faith estimate of the range they expect to pay, in every job posting. Its Labor Commissioner applies that to any position that may be filled in California, in person or remotely.[^4]",
+    },
+    {
+      type: "p",
+      text: "Washington requires employers with 15 or more employees to post a wage scale or salary range plus a general description of benefits and other compensation, and says open-ended phrases such as “up to $29.00/hour” don't meet the rule.[^5] New York requires compensation ranges from businesses with four or more employees.[^6]",
+    },
+    {
+      type: "callout",
+      tone: "warning",
+      title: "Not legal advice",
+      text: "Other states and cities have their own pay transparency rules, and they change. Check the law where the job is located, with counsel if you need to.",
+    },
+    {
+      type: "p",
+      text: "Even where a range is optional, posting one screens out candidates you can't afford. If you add salary to the job's structured data, Google says it must be the actual base salary provided by the employer, and it must also appear on the page.[^1]",
+    },
+    { type: "h2", text: "How do you write a PM posting that strong candidates answer?" },
+    {
+      type: "ul",
+      items: [
+        "**Lead with the work.** “Three to five hospital jobs at a time” tells a PM more than “fast-paced environment”.",
+        "**Say what they own.** Estimating, purchasing and billing split differently at every contractor, so spell out yours.",
+        "**Name the support.** An assistant PM, a project engineer and a dedicated superintendent are selling points.",
+        "**Keep must-haves short.** Every extra requirement removes people who could do the job, including foremen ready to move inside.",
+        "**Be straight about hours and travel.** BLS notes construction managers may work more than 40 hours a week, may be on call for emergencies, and may travel when they run several sites.[^2] Say how much.",
+        "**Watch your wording.** The EEOC says a job ad that shows a preference based on age or another protected trait may break the law, and gives “recent college graduates” as an example.[^7]",
+      ],
+    },
+    { type: "h2", text: "How do you get a job posting into Google's job search?" },
+    {
+      type: "p",
+      text: "Google shows job listings in a dedicated job search experience. To be eligible, a posting needs JobPosting structured data on its own page, or it can reach Google through a third-party job site. If the job lives on your own website, have whoever runs it add the markup and check it with Google's Rich Results Test.[^1] Google's rules, in short:",
+    },
+    {
+      type: "ul",
+      items: [
+        "**Real, open jobs only.** Google prohibits fake or non-existent jobs, including postings whose main purpose is collecting applicant information, and allows resume collection only for open positions.[^1]",
+        "**One job per page.** The markup belongs on the page for a single job, never on a list of jobs.[^1]",
+        "**Required fields.** Date posted, a full description, the hiring organization, the job location with country, and the title. Base salary, employment type and an expiry date (validThrough) are recommended.[^1]",
+        "**Easy to read and apply.** No login to see the description, a way to apply, and no payment from applicants.[^1]",
+        "**Clean text.** No keyword stuffing or false locations, normal capitalization instead of all caps, and only widely understood abbreviations, so spell out terms like medium voltage at least once.[^1]",
+        "**Expire it.** Once the job is filled, remove the page, drop the markup or set validThrough to a past date. Google recommends its Indexing API so it recrawls quickly, and warns that expired postings left up can lead to a manual action.[^1]",
+      ],
+    },
+    { type: "h2", text: "Should you post the job or have a recruiter run the search?" },
+    {
+      type: "p",
+      text: "Post it when qualified PMs in your market are actively looking. When the people you want are employed and not reading job boards, a recruiter can reach them; we weigh the trade-offs in [are construction recruiters worth it](/blog/are-construction-recruiters-worth-it).",
+    },
+    {
+      type: "p",
+      text: "For sourcing, interviews, references and the first 90 days, see our playbook on [how to hire an electrical project manager](/blog/how-to-hire-an-electrical-project-manager).",
+    },
+    {
+      type: "p",
+      text: "ECRN is powered by Delta Construction Partners, a construction recruiting firm recruiting since 2008, with 30+ recruiters and national contractor relationships. The [employer form](/hire) has a field for your job description, so you can paste this one straight in.",
+    },
+    {
+      type: "cta",
+      title: "Job description ready?",
+      text: "Send it to Delta Construction Partners with the location and pay range. A recruiter will reach out.",
+      href: "/hire",
+      label: "Submit a hiring need",
+    },
+  ],
+  faqs: [
+    {
+      q: "What does an electrical project manager do?",
+      a: "An electrical project manager runs the business side of an electrical contractor's projects, including budget, buyout, schedule, billing and change orders, alongside the superintendent who runs the field. The closest BLS occupation is construction managers.",
+    },
+    {
+      q: "What qualifications should an electrical project manager have?",
+      a: "Experience running electrical projects of a similar size and type, the ability to read drawings, specifications and contracts, and cost control. BLS says construction managers typically need a bachelor's degree, while noting that people with a high school diploma and years of relevant experience may also qualify.",
+    },
+    {
+      q: "Do I have to include a salary range in a job posting?",
+      a: "It depends on where the job is. California and Washington require one from employers with 15 or more employees, and New York from businesses with four or more. Check the current rules for your state and city.",
+    },
+    {
+      q: "How do I get my job posting on Google?",
+      a: "Publish it on a page for one real, open job with JobPosting structured data, or through a job site that works with Google. Include the required fields, and remove the posting or set an expiry date once the job is filled.",
+    },
+    {
+      q: "What should I leave out of a job description?",
+      a: "Wording that shows a preference based on age or another protected trait, such as asking for recent college graduates, plus keyword stuffing, inflated requirements and anything that isn't true about the job.",
+    },
+  ],
+  sources: [
+    {
+      id: 1,
+      title: "Job posting (JobPosting) structured data for Job Search",
+      publisher: "Google Search Central",
+      url: "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+      accessed: "2026-11-20",
+      note: "Page last updated September 8, 2026. JobPosting markup makes postings eligible for the job search experience, or employers can integrate through a third-party job site; validate markup with the Rich Results Test. Required: datePosted, description (complete: responsibilities, qualifications, skills, working hours, education, experience), hiringOrganization, jobLocation with addressCountry, title (job title only, no codes, addresses, dates, salaries or company names). Recommended include baseSalary (actual base salary from the employer, also visible on the page), employmentType and validThrough. Content policies: single job per page; no incomplete descriptions; no fake or non-existent jobs, including postings mainly collecting applicant information; no keyword stuffing or false locations; no expired postings; must offer a way to apply and no login to view; resume collection for open positions only; no payment from applicants; proper grammar and capitalization, widely understood abbreviations. Removal by validThrough in the past, a 404 or 410, or removing the markup; Indexing API recommended; failure to expire jobs may result in a manual action.",
+    },
+    {
+      id: 2,
+      title: "Occupational Outlook Handbook: Construction Managers",
+      publisher: "U.S. Bureau of Labor Statistics",
+      url: "https://www.bls.gov/ooh/management/construction-managers.htm",
+      accessed: "2026-11-20",
+      note: "Page last modified August 27, 2026. Construction managers plan, coordinate, budget and supervise construction projects from start to finish. Typically need a bachelor's degree; candidates with a high school diploma and several years of relevant work experience may qualify. SOC 11-9021, May 2025: median $114,990; highest 10% above $189,440; specialty trade contractors median $104,100. Some work more than 40 hours a week, may be on call 24 hours a day for emergencies, and those who manage multiple projects may travel.",
+    },
+    {
+      id: 3,
+      title: "Local Wages: Construction Managers (11-9021.00)",
+      publisher: "O*NET OnLine, U.S. Department of Labor",
+      url: "https://www.onetonline.org/link/localwages/11-9021.00",
+      accessed: "2026-11-20",
+      note: "BLS OEWS May 2025 data, from the ECRN verified-facts ledger. U.S. annual wages: 25th percentile $88,550, 75th percentile $151,640.",
+    },
+    {
+      id: 4,
+      title: "California Equal Pay Act and Pay Transparency Law (Labor Code sections 432.3 and 1197.5) Frequently Asked Questions",
+      publisher: "California Department of Industrial Relations, Labor Commissioner's Office",
+      url: "https://www.dir.ca.gov/dlse/California_Equal_Pay_Act.htm",
+      accessed: "2026-11-20",
+      note: "Page dated August 24, 2026. FAQ 26: an employer with 15 or more employees must include the pay scale in any job posting (Labor Code 432.3(c)(3)); the Labor Commissioner applies this to any position that may be filled in California, in person or remotely. FAQ 28: pay scale means a good faith estimate of the salary or hourly wage range the employer reasonably expects to pay upon hire.",
+    },
+    {
+      id: 5,
+      title: "Equal Pay & Opportunities Act",
+      publisher: "Washington State Department of Labor & Industries",
+      url: "https://lni.wa.gov/workers-rights/wages/equal-pay-opportunities-act/",
+      accessed: "2026-11-20",
+      note: "Employers with 15 or more employees must include a wage scale or salary range, a general description of all benefits and a general description of other compensation in job postings. Ranges should not be open-ended, such as “$60,000/per year and up” or “up to $29.00/hour”.",
+    },
+    {
+      id: 6,
+      title: "Pay Transparency",
+      publisher: "New York State Department of Labor",
+      url: "https://dol.ny.gov/pay-transparency",
+      accessed: "2026-11-20",
+      note: "Labor Law Section 194-B requires businesses with four or more employees to provide job descriptions and list compensation ranges for designated job opportunities, promotions and transfers.",
+    },
+    {
+      id: 7,
+      title: "Prohibited Employment Policies/Practices",
+      publisher: "U.S. Equal Employment Opportunity Commission",
+      url: "https://www.eeoc.gov/prohibited-employment-policiespractices",
+      accessed: "2026-11-20",
+      note: "Job advertisements: it is illegal to publish a job advertisement that shows a preference for or discourages someone from applying because of race, color, religion, sex, national origin, age (40 or older), disability or genetic information; an ad seeking “recent college graduates” may discourage people over 40 and may violate the law.",
+    },
+  ],
+  related: [
+    "how-to-hire-an-electrical-project-manager",
+    "electrical-project-manager-salary",
+    "electrical-project-manager-interview-questions",
+    "electrical-superintendent-job-description",
+  ],
+  moneyPage: { href: "/hire", label: "Send your PM job description to Delta" },
+};

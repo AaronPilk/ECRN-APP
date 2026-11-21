@@ -1,0 +1,288 @@
+import type { BlogPost } from "@/lib/blog/types";
+
+export const journeymanVsMasterElectrician: BlogPost = {
+  slug: "journeyman-vs-master-electrician",
+  title: "Journeyman vs master electrician: what each license lets you do",
+  metaTitle: "Journeyman vs Master Electrician: Rules by State | ECRN",
+  description:
+    "A journeyman works under a master; a master can be the license a contracting business runs on. What each allows, and what Texas, Minnesota and Florida require.",
+  category: "licensing",
+  targetQuery: "journeyman vs master electrician",
+  secondaryQueries: [
+    "difference between journeyman and master electrician",
+    "can a journeyman electrician work alone",
+    "how long does it take to become a master electrician",
+    "master electrician requirements by state",
+    "can a journeyman electrician pull permits",
+    "do you need a master electrician to start an electrical business",
+  ],
+  answer:
+    "A journeyman electrician is licensed to do electrical work under a master electrician's supervision, while a master can take responsibility for the work and, in states such as Texas, is the license an electrical contracting business must have on record. In Texas a journeyman needs 8,000 hours of supervised on-the-job training, and a master needs 12,000 hours plus two years holding a journeyman license.",
+  keyTakeaways: [
+    "In Texas, a journeyman works under the general supervision of a master electrician, and an electrical contractor must have a master electrician of record.",
+    "Texas requires 8,000 hours for a journeyman license and 12,000 hours plus two years as a journeyman for a master license.",
+    "Minnesota counts months: at least 48 for a Class A journeyworker and 60 for a Class A master, including time spent planning, laying out and supervising.",
+    "Florida has no state journeyman or master license: counties and cities license journeymen, and the state licenses electrical contractors.",
+    "Rules vary by state and sometimes by county or city, so check the board where you will work before you take the job.",
+  ],
+  publishedAt: "2026-11-21",
+  updatedAt: "2026-11-21",
+  author: "ecrn-team",
+  cover: "cover-journeyman-vs-master",
+  body: [
+    { type: "h2", text: "What is the difference between a journeyman and a master electrician?" },
+    {
+      type: "p",
+      text: "A journeyman is licensed to do electrical work. A master is licensed to take responsibility for it. Texas puts the line in writing: a journeyman “is licensed to perform electrical work under the general supervision of a Master Electrician,” while a master is licensed to install, maintain or extend an electrical wiring system and its equipment, service entrance conductors included.[^1][^2]",
+    },
+    {
+      type: "p",
+      text: "The master license also opens the business side. In Texas, an electrical contractor must either assign the owner's own master license to the company or employ a master electrician as its “Master Electrician of Record.”[^3] A journeyman license cannot fill that role.",
+    },
+    { type: "h2", text: "What can a journeyman electrician do?" },
+    {
+      type: "p",
+      text: "A journeyman does the work the license covers, but under someone else's responsibility. In Texas that means the general supervision of a master electrician.[^1] Hillsborough County, Florida, says something similar about its journeyman certificate: it “does not permit the holder to perform any work or enter into any contracts on his/her own,” and the holder must always work under a properly licensed electrical contractor.[^5]",
+    },
+    {
+      type: "p",
+      text: "A journeyman can supervise apprentices. Texas apprentices are licensed to work under the general supervision of a master electrician, a journeyman electrician or a residential wireman.[^4]",
+    },
+    { type: "h2", text: "What can a master electrician do that a journeyman cannot?" },
+    {
+      type: "ul",
+      items: [
+        "**Hold the license a contractor depends on.** A Texas electrical contractor needs a master electrician of record, either the owner or an employee.[^3] A master can be assigned to only one contractor unless the master owns more than 50 percent of the business, and when the master of record leaves, the company has 30 business days to name a new one.[^6]",
+        "**Work without a supervision condition.** TDLR's description of the master license carries no supervision requirement; the journeyman description does.[^1][^2]",
+      ],
+    },
+    {
+      type: "p",
+      text: "A master license alone does not make you a contractor in Texas. The business needs its own electrical contractor license, which has no exam but requires liability insurance of at least $300,000 per occurrence and a $110 application fee.[^3][^6]",
+    },
+    {
+      type: "p",
+      text: "Permits are a separate, local question. TDLR's FAQ notes that cities can still charge building permit fees to electricians who hold a state license,[^3] so ask the local building department who may pull an electrical permit there before you plan work under your own name.",
+    },
+    { type: "h2", text: "How do journeyman and master requirements compare by state?" },
+    {
+      type: "p",
+      text: "Three states show the range. Texas and Minnesota license both levels statewide. Florida licenses neither level at the state level.",
+    },
+    {
+      type: "table",
+      caption: "Journeyman and master requirements in three states, as published in November 2026",
+      head: ["State", "Journeyman", "Master", "Who issues it"],
+      rows: [
+        [
+          "Texas[^1][^2]",
+          "8,000 hours of on-the-job training under a Texas master (you may test at 7,000) and a state exam",
+          "12,000 hours under a Texas master, two years holding a journeyman license and a state exam",
+          "Texas Department of Licensing and Regulation, valid statewide",
+        ],
+        [
+          "Minnesota[^7]",
+          "Class A journeyworker: at least 48 months of experience, 24 of them wiring and installing, and an exam",
+          "Class A master: at least 60 months, including at least 2 months each of planning, layout and supervising, and an exam",
+          "Department of Labor and Industry, statewide",
+        ],
+        [
+          "Florida[^8][^9]",
+          "No state license. Counties and cities may license journeymen who score at least 75% on an approved exam, finish a state-approved apprenticeship or 12,000 hours of training, and complete approved building code coursework",
+          "No state master license. The state certifies or registers electrical contractors instead",
+          "Counties and cities for journeymen; the state Electrical Contractors' Licensing Board for contractors",
+        ],
+      ],
+      note: "Minimums as listed on each board's page or in the statute on November 20, 2026. Each state adds fees, renewal rules and other conditions, so read the source before you apply.",
+    },
+    { type: "h2", text: "How long does it take to go from journeyman to master?" },
+    {
+      type: "p",
+      text: "In Texas, at least two years after your journeyman license, and only once your hours under a Texas master reach 12,000. Time on a journeyman industrial license does not count toward the master.[^2] At the roughly 2,000 hours a year of paid training that apprentices typically log, 12,000 hours is about six years of full-time work.[^10]",
+    },
+    {
+      type: "p",
+      text: "Minnesota asks for at least 60 months for a master against 48 for a journeyworker, and the master's experience must include planning, laying out and supervising installations, not only wiring.[^7]",
+    },
+    {
+      type: "p",
+      text: "Florida has no state master step. After a local journeyman license, the next state license is an electrical contractor's, and certification takes experience such as four years as a foreman, supervisor or contractor in the trade within the last eight years.[^8]",
+    },
+    { type: "h2", text: "Does a master electrician make more money than a journeyman?" },
+    {
+      type: "p",
+      text: "Federal pay data cannot answer that. The Bureau of Labor Statistics reports one figure for all electricians, a median of $63,190 a year in May 2025, with no split by license level.[^10] Our [electrician salary by state](/blog/electrician-salary-by-state) table shows how much location moves that number.",
+    },
+    {
+      type: "p",
+      text: "What the master license changes is responsibility: it can make you the license a contractor depends on, or let you open your own company. For the wider ladder from the tools to the office, see our [electrical construction career path](/blog/electrical-construction-career-path).",
+    },
+    { type: "h2", text: "Why do licensing rules differ by state and city?" },
+    {
+      type: "p",
+      text: "Each state writes its own rules, and some leave part of the job to local government. In Texas, a city electrician license is valid only in the city that issued it, while a state license is valid anywhere in Texas.[^3]",
+    },
+    {
+      type: "p",
+      text: "Florida leaves journeymen to counties and cities, and two neighboring counties show what that means. Pinellas County says journeymen “must be certified by the Pinellas County Construction Licensing Board (PCCLB) to work in our county.”[^11] Hillsborough County notes there is no state requirement to hold a journeyman certificate of competency.[^5] Our guide to [how Florida electrician licensing works](/blog/how-to-get-an-electrician-license-in-florida) covers both levels.",
+    },
+    {
+      type: "callout",
+      tone: "warning",
+      title: "Check before you move or bid",
+      text: "Rules vary by state, and some licensing is local. Before you take a job in a new state, county or city, look up its licensing board or office and confirm which license the work requires.",
+    },
+    { type: "h2", text: "Can a journeyman or master license move to another state?" },
+    {
+      type: "p",
+      text: "Sometimes. Texas accepts journeyman licenses from ten states and master licenses from nine under reciprocal agreements; the conditions include passing that state's exam and holding the license for at least a year.[^12] Our [electrician license reciprocity](/blog/electrician-license-reciprocity) guide lists the agreements and what to do where none exist.",
+    },
+    {
+      type: "p",
+      text: "If you are licensing in Texas from scratch, our step-by-step [Texas electrician license guide](/blog/how-to-get-an-electrician-license-in-texas) covers the apprentice card, the exam and renewal.",
+    },
+    { type: "h2", text: "Which license should you aim for?" },
+    {
+      type: "p",
+      text: "If you want to stay on the tools and lead crews for a contractor, the journeyman license is the one to plan around. Our [journeyman electrician career page](/careers/journeyman-electrician) covers what contractors look for.",
+    },
+    {
+      type: "p",
+      text: "If you want your name on the company, or to be the license a contractor cannot operate without, plan for the master and budget the extra years. In Texas that means two years as a journeyman and 12,000 total hours under a master.[^2]",
+    },
+    {
+      type: "cta",
+      title: "Ready for your next journeyman role?",
+      text: "See what contractors look for in a licensed journeyman, then browse open electrical construction jobs.",
+      href: "/careers/journeyman-electrician",
+      label: "Journeyman electrician careers",
+    },
+  ],
+  faqs: [
+    {
+      q: "Can a journeyman electrician work without a master?",
+      a: "It depends on the state. In Texas a journeyman is licensed to work under the general supervision of a master electrician, and in Hillsborough County, Florida, a journeyman certificate holder must work under a licensed electrical contractor.",
+    },
+    {
+      q: "How many hours do you need to become a master electrician?",
+      a: "Texas requires 12,000 hours of on-the-job training under a Texas master electrician plus two years holding a journeyman license. Minnesota requires at least 60 months of experience for a Class A master license.",
+    },
+    {
+      q: "Can a journeyman electrician start their own electrical business?",
+      a: "Not in Texas, where an electrical contractor must be a master electrician or employ one as its master electrician of record. Other states set their own rules, so check the state board first.",
+    },
+    {
+      q: "Does Florida have a state master electrician license?",
+      a: "No. Florida's state board certifies or registers electrical contractors, and journeyman licenses come from counties and cities, so check with the county where you will work.",
+    },
+    {
+      q: "Does a master electrician license transfer to another state?",
+      a: "Only where states have an agreement. Texas accepts master licenses from nine states, including Alabama, Ohio and Tennessee, and the conditions include passing that state's exam and holding the license for at least a year.",
+    },
+  ],
+  sources: [
+    {
+      id: 1,
+      title: "Apply for a New Journeyman Electrician License",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/apply/individuals/journeyman-electrician.htm",
+      accessed: "2026-11-20",
+      note: "“A Journeyman Electrician is licensed to perform electrical work under the general supervision of a Master Electrician.” At least 7,000 hours of on-the-job training under a Texas master lets you take the exam before reaching the 8,000 hours required for licensure.",
+    },
+    {
+      id: 2,
+      title: "Apply for a New Master Electrician License",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/apply/individuals/master-electrician.htm",
+      accessed: "2026-11-20",
+      note: "A master is licensed to install, maintain or extend an electrical wiring system, including service entrance conductors. Requires holding a journeyman license for at least two years and 12,000 hours of on-the-job training under a Texas master; journeyman industrial experience may not be used.",
+    },
+    {
+      id: 3,
+      title: "Electrical Safety and Licensing Frequently Asked Questions",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/elecfaq.htm",
+      accessed: "2026-11-20",
+      note: "Q3.6: an electrical contractor must assign its own master license or employ a master as “Master Electrician of Record.” Q4.2: contractor licenses do not require examinations. Q9.1 and 9.2: a municipal license is valid only in that city; a state license is valid anywhere in Texas. Q9.3: cities may still collect building permit fees.",
+    },
+    {
+      id: 4,
+      title: "Apply for a New Electrical Apprentice License",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/apply/individuals/apprentice-electrician.htm",
+      accessed: "2026-11-20",
+      note: "An electrical apprentice is licensed to work under the general supervision of a master electrician, journeyman electrician or residential wireman.",
+    },
+    {
+      id: 5,
+      title: "Journeyman, Electrician, or Plumber Certificate of Competency",
+      publisher: "Hillsborough County, Florida, Development Services",
+      url: "https://hcfl.gov/businesses/hillsgovhub/contractor-licensing/journeyman-electrician-or-plumber-certificate-of-competency",
+      accessed: "2026-11-20",
+      note: "Page last modified August 6, 2026. “There is no State of Florida requirement for anyone to hold a Journeyman Certificate of Competency.” The certificate does not permit the holder to perform any work or enter into contracts on his or her own; the holder must work under a licensed electrical contractor.",
+    },
+    {
+      id: 6,
+      title: "Apply for a New Electrical Contractor License",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/apply/businesses/contractor-elec.htm",
+      accessed: "2026-11-20",
+      note: "Must employ a licensed master electrician (who may be the owner). A master may be assigned to only one contractor unless owning more than 50 percent of the business; a new master of record within 30 business days of separation. Liability insurance minimum $300,000 per occurrence. Non-refundable $110 application fee.",
+    },
+    {
+      id: 7,
+      title: "Experience requirements: electrical license",
+      publisher: "Minnesota Department of Labor and Industry",
+      url: "https://www.dli.mn.gov/workers/electrician-or-electrical-installer/experience-requirements-electrical-license",
+      accessed: "2026-11-20",
+      note: "Minnesota Rules 3800.3520. Class A master: minimum 60 months, including at least 2 months each of planning, laying out and supervising and 12 months of wiring and installing. Class A journeyworker: minimum 48 months, including 24 months of wiring and installing. An exam is required for every class of license.",
+    },
+    {
+      id: 8,
+      title: "Electrical Contractors: FAQs",
+      publisher: "Florida Department of Business and Professional Regulation, Electrical Contractors' Licensing Board",
+      url: "https://www2.myfloridalicense.com/electrical-contractors/faqs/",
+      accessed: "2026-11-20",
+      note: "DBPR “does not license or regulate the journeyman's license”; contact the local county licensing office. The board certifies and registers electrical contractors. Experience for certification includes four years as a foreman, supervisor or contractor in the trade within the last eight years, among other options.",
+    },
+    {
+      id: 9,
+      title: "Florida Statutes, section 489.5335: Journeyman; reciprocity; standards (2026)",
+      publisher: "The Florida Senate",
+      url: "https://m.flsenate.gov/statutes/489.5335",
+      accessed: "2026-11-20",
+      note: "Counties and municipalities are authorized to issue electrical journeyman licenses to people who scored at least 75 percent on an approved proctored exam, completed a registered state-approved apprenticeship or at least 12,000 hours of on-the-job training, and completed approved building code coursework.",
+    },
+    {
+      id: 10,
+      title: "Occupational Outlook Handbook: Electricians",
+      publisher: "U.S. Bureau of Labor Statistics",
+      url: "https://www.bls.gov/ooh/construction-and-extraction/electricians.htm",
+      accessed: "2026-11-20",
+      note: "From the site's verified-facts ledger: median pay for electricians (SOC 47-2111) $63,190 a year in May 2025; apprenticeships of 4 or 5 years with about 2,000 hours of paid on-the-job training a year. The six-year figure for 12,000 hours is our arithmetic.",
+    },
+    {
+      id: 11,
+      title: "Apply for Journeyman Examination",
+      publisher: "Pinellas County, Florida",
+      url: "https://pinellas.gov/services/apply-for-journeyman-examination/",
+      accessed: "2026-11-20",
+      note: "“Journeymen are employed by construction contractors and must be certified by the Pinellas County Construction Licensing Board (PCCLB) to work in our county.”",
+    },
+    {
+      id: 12,
+      title: "Transfer Your Out-of-State Electrician License to Texas",
+      publisher: "Texas Department of Licensing and Regulation",
+      url: "https://www.tdlr.texas.gov/electricians/out-of-state.htm",
+      accessed: "2026-11-20",
+      note: "Reciprocal agreements: master licenses from nine states (including Alabama, Ohio and Tennessee) and journeyman licenses from ten. Applicants must have passed the other state's exam and held that license for at least one year.",
+    },
+  ],
+  related: [
+    "how-to-get-an-electrician-license-in-texas",
+    "electrician-license-reciprocity",
+    "electrical-construction-career-path",
+    "electrician-salary-by-state",
+  ],
+  moneyPage: { href: "/careers/journeyman-electrician", label: "Journeyman electrician careers" },
+};

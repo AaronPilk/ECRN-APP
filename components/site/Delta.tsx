@@ -55,7 +55,10 @@ export const DELTA = {
 /** Official ECRN artwork (supplied by Aaron), trimmed and resized: white type and ink type. */
 const ECRN_SRC = "/brand/ecrn-logo-white.webp";
 const ECRN_INK_SRC = "/brand/ecrn-logo-ink.webp";
-const MARK_SRC = "/brand/delta-mark.png";
+const MARK_SRC = "/brand/delta-mark-official.png";
+/** Official Delta Construction Partners artwork (supplied by Aaron), trimmed: white type and navy type. */
+const DELTA_SRC = "/brand/delta-logo-white.webp";
+const DELTA_INK_SRC = "/brand/delta-logo-ink.webp";
 
 /** The surface the artwork sits on: "dark" sets white type, "light" sets ink, navy and cobalt. */
 export type BrandTone = "dark" | "light";
@@ -65,9 +68,9 @@ export type LockupSize = "header" | "app" | "lg" | "badge" | number;
 
 const SIZES: Record<Exclude<LockupSize, number>, string> = {
   /** Site header and menu: 19 px on a 320 px phone, 22 at 360, 23.5 at 390, 24 from 400 up. */
-  header: "clamp(1.1875rem, 5vw + 0.25rem, 1.5rem)",
+  header: "clamp(1.375rem, 5vw + 0.375rem, 1.75rem)",
   /** Member app top bar (beside a 36 px avatar): 20 at 360, 21.5 at 390, 22 from 400 up. */
-  app: "clamp(1.125rem, 5vw + 0.125rem, 1.375rem)",
+  app: "clamp(1.25rem, 5vw + 0.125rem, 1.5rem)",
   /** Footer and other large placements: 30 on phones, 36 on desktop. */
   lg: "clamp(1.875rem, 2.4vw + 1.2rem, 2.25rem)",
   badge: "1.625rem",
@@ -76,9 +79,9 @@ const SIZES: Record<Exclude<LockupSize, number>, string> = {
 const fontSize = (size: LockupSize) => (typeof size === "number" ? `${size}px` : SIZES[size]);
 
 const G = {
-  ecrnH: 482 / 476,
-  ecrnShift: -0.0063,
-  ecrnPadL: 0.0168,
+  ecrnH: 1,
+  ecrnShift: 0,
+  ecrnPadL: 0,
   dividerBefore: 0.42,
   dividerAfter: 0.4,
   markW: 400 / 319,
@@ -183,7 +186,27 @@ export function DeltaWordmark({ tone = "dark", className, style }: { tone?: Bran
   );
 }
 
-/** Delta's half of the lockup: the mark and the typeset name. */
+/**
+ * The official Delta Construction Partners logo (mark, DELTA and the
+ * CONSTRUCTION PARTNERS line). Its triangle runs the full height of the file,
+ * like the trimmed ECRN artwork, so the two sit side by side at one height.
+ */
+export function DeltaArt({ tone = "dark", alt = "", className, style }: { tone?: BrandTone; alt?: string; className?: string; style?: CSSProperties }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={tone === "dark" ? DELTA_SRC : DELTA_INK_SRC}
+      alt={alt}
+      width={900}
+      height={224}
+      decoding="async"
+      className={cn("block h-[1em] w-auto shrink-0", className)}
+      style={style}
+    />
+  );
+}
+
+/** Delta's half of the lockup: the official Delta artwork. */
 export function DeltaLogo({
   tone = "dark",
   size = "header",
@@ -203,8 +226,7 @@ export function DeltaLogo({
 }) {
   const art = (
     <span className="flex shrink-0 items-start leading-none">
-      <DeltaMark className="block" style={{ height: "1em", width: `${G.markW}em` }} />
-      <DeltaWordmark tone={tone} style={{ marginLeft: `${G.textGap}em` }} />
+      <DeltaArt tone={tone} />
     </span>
   );
   const outer = { fontSize: fontSize(size), ...style };
@@ -268,14 +290,13 @@ export function CoBrandLockup({
   const ecrn = (
     <EcrnLogo
       tone={tone}
-      className={cn(stack && "ml-[-0.0168em]", auto && "max-[479px]:ml-[-0.0168em]")}
+      className={undefined}
       style={{ height: `${G.ecrnH}em`, marginTop: `${G.ecrnShift}em`, marginBottom: `${G.ecrnShift}em` }}
     />
   );
   const delta = (
     <span className="flex shrink-0 items-start">
-      <DeltaMark className="block" style={{ height: "1em", width: `${G.markW}em` }} />
-      <DeltaWordmark tone={tone} style={{ marginLeft: `${G.textGap}em` }} />
+      <DeltaArt tone={tone} />
     </span>
   );
 

@@ -135,6 +135,7 @@ export function organizationJsonLd() {
       name: BRAND.parent.name,
       url: BRAND.parent.url,
       foundingDate: BRAND.parent.foundingDate,
+      logo: `${SITE_URL}/brand/delta-logo-ink.png`,
       sameAs: BRAND.parent.sameAs,
     },
     areaServed: ORGANIZATION_AREA_SERVED,

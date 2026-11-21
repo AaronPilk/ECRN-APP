@@ -25,8 +25,12 @@ Notes: the BLS OEWS occupation profile pages (`oes472111.htm` and similar) for M
 
 ## Union wage sheets (examples only, always name the local and the date)
 
-- IBEW Local 340 (Sacramento area) inside wireman sheet effective June 1, 2026 (https://www.ibewlocal340.org/wp-content/uploads/2026/06/6-1-2026_LU-340-Inside-Wireman-Wages.pdf): journeyman $53.70/hr, total package $95.77; foreman 110% / 115%; general foreman 125% / 130%; apprentice steps 45–80% ($24.17–$42.96).
-- IBEW Local 11 (Los Angeles) sheet Jan 26 to Jun 30, 2026, now expired (https://www.scibew-neca.org/html/11-inside-wiremen-20260126.pdf): journeyman $65.00; ten apprentice steps from 40% to 85%.
+- IBEW Local 340 (Sacramento area) inside wireman sheet effective **August 1, 2026** (https://www.ibewlocal340.org/wp-content/uploads/2026/07/L340-Inside-Wireman-8-1-2026.pdf), which replaces the June 1, 2026 sheet: journeyman $53.70/hr, total package **$96.77** (the June sheet said $95.77; one fund line rose $1.00); foreman 110% / 115% by crew size; general foreman 125% / 130%; apprentice steps 45–80% ($24.17–$42.96), stepping up at 2,000, 3,500, 5,000 and 6,500 hours, journeyman at 8,000; $60 a day minimum for meals and lodging on travel; a $3.00 raise scheduled for February 1, 2027.
+- IBEW Local 11 (Los Angeles) current sheet, **October 26, 2026 to January 31, 2027** (linked from ibew11.org/contracts-wages): journeyman $67.00; foreman 1.15×; general foreman 1.30×; apprentice steps 40% ($26.80) to 85% ($56.95). The earlier January 26 to June 30, 2026 sheet ($65.00; foreman 1.126×, general foreman 1.252×) has expired.
+- BLS JOLTS table 4 (https://www.bls.gov/news.release/jolts.t04.htm): 198,000 construction quits in September 2026 (preliminary, 2.4% rate), against 127,000 (1.5%) a year earlier.
+- BLS Employee Tenure table 5, January 2026 (https://www.bls.gov/news.release/tenure.t05.htm): median tenure 3.9 years in construction, 4.1 for all workers.
+- GSA FY2027 per diem (FTR Bulletin 27-01 on gsa.gov): standard lodging $113 a night, meals and incidentals $68 a day.
+- IRS: the moving expense deduction and the exclusion for moving reimbursements are permanently eliminated for most taxpayers (P.L. 119-21, per IRS Publication 15 (2026) and Notice 2026-10); exceptions for active-duty military and, from 2026, intelligence community employees.
 
 ## Taxes and law
 

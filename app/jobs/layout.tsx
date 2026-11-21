@@ -1,3 +1,4 @@
+import "../(site)/site.css";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { SiteHeader, SiteFooter, JsonLd } from "@/components/site/SiteChrome";
@@ -15,10 +16,12 @@ export default async function JobsLayout({ children }: { children: React.ReactNo
     return <AppShell profile={profile}>{children}</AppShell>;
   }
   return (
-    <div className="min-h-screen flex flex-col bg-ecrn-paper">
+    <div className="site-root flex min-h-screen flex-col bg-ecrn-paper">
       <JsonLd data={organizationJsonLd()} />
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
       <SiteFooter />
     </div>
   );

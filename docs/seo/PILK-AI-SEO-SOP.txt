@@ -1,0 +1,1159 @@
+PILK AI SEO SOP
+
+
+
+
+  PILK AI SEO SOP
+    Nov 12, 2026 · ​@Pilk
+
+  Run this on every site we own. Phases 1 to 4 set the foundation and get the site into every
+  search engine and AI answer engine, and fit in one working day with Claude and the
+  owner working side by side. Phases 5 to 8 keep it growing. Every step says who does it
+  and how to check it worked.
+
+
+  How to use this
+  Claude does the code, the settings pages and the checks. The owner does the parts no AI
+  is allowed to do: creating accounts, typing passwords, approving Google or Microsoft
+  sign-in screens, solving CAPTCHAs, and saying yes to anything that changes DNS or
+  account settings.
+
+         Claude can: edit and deploy the site, open dashboards the owner is already signed
+         into, add properties, submit sitemaps, request indexing, run speed and tag checks,
+         write content.
+         Owner must: create every new account (Bing, Google Business Profile, Apple, Yelp,
+         socials), sign in, click through any "Allow access" screen, verify by postcard or video,
+         and give an explicit OK before a DNS or nameserver change. Claude's own safety
+         check can still block a DNS edit even after an OK. Then the owner clicks it, with
+         Claude giving the exact steps.
+
+
+  Collect before you start
+
+     What                                  Why                                  Who
+
+     The site's code repo and how it       Tags, files and pages ship through   Owner shares
+     deploys                               code
+
+     Domain registrar login (GoDaddy,      Nameservers, DNS records             Owner signs in
+     Namecheap…)
+
+     Cloudflare account (free plan is      DNS, redirects, Crawler Hints        Owner signs in
+     fine)
+
+     One Google account that will own      Search Console, Business Profile,    Owner signs in
+     the site long term (a work            Analytics
+     address, not a personal Gmail)
+
+
+
+                                                                                               Page 1 of 24
+PILK AI SEO SOP
+
+
+
+
+     What                                         Why                                   Who
+
+     Bing Webmaster login ("Sign in               Bing, Copilot, DuckDuckGo,            Owner creates
+     with Google" works)                          Yahoo                                 and signs in
+
+     Business facts: legal name,                  Listings and LocalBusiness data       Owner gives
+     address or service area, phone,              must match everywhere
+     hours, categories
+
+     Brand social accounts and                    sameAs links and backlinks            Owner gives
+     handles
+
+     Photos and logo                              Listings and rich results             Owner gives
+
+
+  Open all the dashboards in one Chrome window before the session starts. Claude works
+  in its own tabs in the same browser, so it can use those sign-ins.
+
+
+  Today run-sheet
+  Do these in order. Owner steps (O) can run while Claude (C) works on code. Most sites
+  finish in 4 to 6 hours.
+
+
+     #            Step                      Who                  Time           Done when
+
+     1            Audit the live site:      C                    20 min         Audit table saved in
+                  crawl every sitemap                                           the repo
+                  URL, record title,
+                  description, canonical,
+                  robots tag, H1,
+                  structured data, word
+                  count
+
+     2            Move DNS to               O approves, C        30 min             curl -I on the other
+                  Cloudflare (keep the      or O clicks                         host returns 301 to the
+                  registrar), set the one                                       same path on the main
+                  main host (www or                                             host
+                  bare), 301 the other
+                  with path and query
+                  kept, force HTTPS
+
+
+
+
+                                                                                                      Page 2 of 24
+PILK AI SEO SOP
+
+
+
+
+     #            Step                       Who                 Time     Done when
+
+     3            Fix the foundation         C                   1–2 h    Re-run the audit: no
+                  from Phase 1 (robots,                                   gaps
+                  sitemap, canonicals,
+                  titles, structured data,
+                  staging noindex,
+                  llms.txt) and deploy
+
+     4            Google Search              C (O if a sign-in   15 min   "Ownership verified"
+                  Console: add the           screen                       and sitemap listed
+                  property, verify by        appears)
+                  meta tag or DNS TXT,
+                  submit the sitemap
+
+     5            Request indexing for       C                   15 min   "Indexing requested"
+                  the 10–12 most                                          on each; the rest go
+                  important pages                                         tomorrow
+
+     6            Bing Webmaster Tools:      O+C                 15 min   Sitemap shows
+                  owner signs in, Claude                                  "Processing" or
+                  adds the site and                                       "Success"
+                  verifies by meta tag
+                  (or the owner
+                  approves the import
+                  from Google), submit
+                  the sitemap
+
+     7            IndexNow: key file on      C                   30 min   Endpoints answer 202;
+                  the site, submit all                                    Crawler Hints on
+                  URLs, auto-submit on
+                  every deploy; turn on
+                  Cloudflare Crawler
+                  Hints
+
+     8            AI crawlers: check         C                   10 min   Bots listed in Phase 3
+                  robots.txt and                                          are allowed
+                  Cloudflare AI Crawl
+                  Control allow the
+                  search and answer
+                  bots
+
+
+
+
+                                                                                              Page 3 of 24
+PILK AI SEO SOP
+
+
+
+
+     #            Step                       Who            Time           Done when
+
+     9            Local listings, if the     O creates, C   1h+            Each profile submitted
+                  business has an            fills          verification   for verification
+                  address or service                        days
+                  area: Google Business
+                  Profile, Bing Places,
+                  Apple Business
+                  Connect
+
+     10           Brand profiles and         O creates, C   1h             Profiles live and linked
+                  citations: claim social    writes copy                   from the site
+                  handles, add them to
+                   sameAs , submit to the
+                  top directories for the
+                  niche
+
+     11           Analytics: confirm the     C              20 min         Data flowing
+                  site's analytics works,
+                  link Search Console to
+                  it, add Microsoft
+                  Clarity if wanted
+
+     12           Content plan: pull the     C              1–2 h          New pages live, in the
+                  first keyword list, pick                                 sitemap, submitted by
+                  the first 5 pages to                                     IndexNow
+                  write, ship 2 to 3 today
+
+     13           Write it all down: an      C              15 min         Docs committed,
+                  SEO README in the                                        reminder set
+                  repo, the project
+                  memory, and a
+                  reminder for
+                  tomorrow's indexing
+                  requests
+
+
+
+
+  Phase 1: Technical foundation
+  Get one clean, fast, crawlable version of every page before telling any search engine
+  about the site.
+
+
+
+
+                                                                                                Page 4 of 24
+PILK AI SEO SOP
+
+
+
+
+         One host. Pick www or bare as the main host. 301 everything else to it, keeping the
+         path and query string. Test http:// , https:// , bare, www, and a deep path with ?
+         utm_source=test . Registrar forwarding (GoDaddy, Namecheap) usually drops paths,
+         so use a Cloudflare Redirect Rule instead.
+         HTTPS everywhere. Turn on Cloudflare "Always Use HTTPS", set SSL to Full or Full
+         (strict), and send an HSTS header from the site.
+         robots.txt. Allow everything public. Block only admin, API, internal redirect and cart
+         paths. List the sitemap with its full URL. Never block CSS or JS.
+         Sitemap. List every indexable page and nothing else (no redirects, 404s or noindex
+         pages). Use a real lastmod from when content changed, plus image and video entries
+         where the page has them. Split it past 50,000 URLs.
+         Canonical tag on every page, pointing to itself on the main host.
+         Titles and descriptions. Make each one unique. Title about 50–60 characters, saying
+         what people actually search, brand last. Description about 140–160 characters that
+         make someone click.
+         One H1 per page, saying what the page is. Headings in order below it.
+         Open Graph and Twitter card tags with a 1200×630 image, so shared links look right.
+         Structured data (JSON-LD).
+                  Organization (logo, sameAs social links) and WebSite on every page.
+                  Then the type each page really is: LocalBusiness (or a subtype) with address,
+                  phone and hours; Product with price and availability; Article or BlogPosting with
+                  author and dates; BreadcrumbList; ProfilePage or Person; Service; FAQPage only
+                  for questions shown on the page.
+                  Check with Google's Rich Results Test and the Schema.org validator.
+         Hide staging and preview copies. Send X-Robots-Tag: noindex on *.pages.dev ,
+          *.vercel.app , *.netlify.app and preview branches, or password-protect them.
+         llms.txt at the root: a short plain-text guide to the site and its key pages, for AI tools.
+         An llms-full.txt with the full detail is optional.
+         Real 404s. Missing pages return status 404, not 200 or a redirect to the homepage.
+         Speed and Core Web Vitals. Targets: LCP under 2.5 s, INP under 200 ms, CLS under
+         0.1. Run Lighthouse on mobile for the homepage and one page of each template. Fix in
+         this order: images (WebP or AVIF, sized, lazy below the fold), render-blocking scripts,
+         then unused JavaScript.
+         Mobile. No sideways scrolling at 360 px, tap targets at least 44 px, and text readable
+         without zooming.
+
+
+                                                                                                Page 5 of 24
+PILK AI SEO SOP
+
+
+
+
+         Internal links. Every page reachable within 3 clicks of the homepage, with descriptive
+         link text and no orphan pages.
+         Languages. If the site serves several, add hreflang tags and a separate URL per
+         language.
+         Adult or regulated sites. If pages carry explicit content, add <meta name="rating"
+         content="adult"> , since Google expects it for SafeSearch. Non-explicit pages can
+         leave it off. Don't plan on Google Ads for adult offers.
+
+  Check: re-run the step 1 audit and Lighthouse. Every row passes before Phase 2.
+
+
+  Phase 2: Search engines and fast indexing
+  Tell every engine the site exists, prove you own it, and make changes reach them in
+  minutes instead of weeks.
+
+
+     Engine or tool       What to do                           Who          Check
+
+     Google Search        Add a URL-prefix property for        C (O adds    "Ownership
+     Console              the main host and verify with the    the TXT if   verified"; sitemap
+                          HTML meta tag (deploy it in          Claude is    "Success" after a
+                          code) plus the HTML file. If DNS     blocked)     day
+                          is on Cloudflare, also add a
+                          Domain property and verify by
+                          DNS TXT, which covers every
+                          host and protocol. Submit
+                           sitemap.xml .
+
+     Google: request      URL Inspection → Request             C            "Indexing
+     indexing             indexing for the top pages. The                   requested"
+                          quota is about 10–12 a day per
+                          property; we hit it at 11. Do the
+                          rest the next day.
+
+     Google: platform     In Search Console, add the           O approves   Accounts listed
+     accounts             brand's Instagram, TikTok, X and
+                          YouTube (new in 2026) to see
+                          how people find them on Google
+
+
+
+
+                                                                                           Page 6 of 24
+PILK AI SEO SOP
+
+
+
+
+     Engine or tool    What to do                           Who   Check
+
+     Bing Webmaster    Owner signs in (Google sign-in       O+C   Site listed;
+     Tools             works). Then either the owner              sitemap
+                       approves "Import from Google               "Processing" then
+                       Search Console", or Claude adds            "Success"
+                       the site by hand and verifies with
+                       the msvalidate.01 meta tag.
+                       Submit the sitemap. Bing also
+                       powers Copilot, DuckDuckGo
+                       and Yahoo results.
+
+     IndexNow (Bing,   Generate a 32-character key and      C     Endpoints answer
+     Yandex, Seznam,   serve it at /<key>.txt . POST all          200 or 202
+     Naver and         sitemap URLs to
+     others)           api.indexnow.org/indexnow
+                       (up to 10,000 per call). Add a
+                       post-deploy step that sends only
+                       the pages that changed.
+
+     Cloudflare        Caching → Configuration →            C     Toggle on
+     Crawler Hints     Crawler Hints on. Cloudflare
+                       then pings IndexNow
+                       automatically whenever a
+                       cached page changes. Free plan.
+
+     Yandex            Only if the site wants Russian-      O+C   Verified
+     Webmaster         speaking or Turkish traffic.
+     (optional)        Owner creates a Yandex ID,
+                       Claude verifies by meta tag.
+                       IndexNow already covers Yandex
+                       crawling.
+
+     Naver Search      Only for Korean audiences. Meta      O+C   Verified
+     Advisor           tag verify, then submit the
+     (optional)        sitemap.
+
+     Brave Search      No webmaster tool exists, and        —     Site appears in a
+                       Brave finds pages through its              site: search
+                       own crawler. Allow all bots and            within weeks
+                       earn links. Brave matters
+                       because Claude's web search
+                       has relied on it.
+
+
+
+
+                                                                                 Page 7 of 24
+PILK AI SEO SOP
+
+
+
+
+  Things that don't work any more, so skip them: Google's sitemap "ping" URL (retired in
+  2023), the Google Indexing API for normal pages (it's only for job postings and
+  livestreams), and paid "instant indexing" services.
+
+
+  Phase 3: AI answer engines
+  AI answers come from each engine's own crawler and index. Let the right bots in, give
+  them clean answers to quote, and keep the brand's facts identical everywhere.
+
+
+     Engine                    Crawler that fetches pages         Allow in robots.txt and
+                                                                  Cloudflare
+
+     ChatGPT search            OAI-SearchBot for the index,       OAI-SearchBot, ChatGPT-User
+                               ChatGPT-User for live page         (GPTBot is training only)
+                               reads
+
+     Claude                    Claude-SearchBot for the           Claude-SearchBot, Claude-
+                               index, Claude-User for live        User (ClaudeBot is training)
+                               fetches
+
+     Perplexity                PerplexityBot for the index,       PerplexityBot, Perplexity-User
+                               Perplexity-User for live fetches
+
+     Google AI Overviews       The normal Google index            Googlebot. Google-Extended
+     and AI Mode               (Googlebot)                        only controls Gemini training
+                                                                  and grounding, not Search.
+
+     Copilot, DuckDuckGo,      Bing's index                       Bingbot
+     Yahoo
+
+     Apple (Siri, Spotlight)   Applebot                           Applebot (Applebot-Extended
+                                                                  is training)
+
+
+  As of Aug 2026 per this crawler reference. Recheck each vendor's docs before blocking
+  anything.
+
+         Bots allowed. robots.txt allows every bot above. Cloudflare → AI Crawl Control is set
+         to allow search and answer bots. When adding the zone, choose "Allow" for Search,
+         Agents and Training unless the owner wants to keep content out of model training.
+         Bot Fight Mode off for verified bots. Make sure no WAF rule or bot setting blocks
+         them: run a test fetch with each bot's user agent and expect a 200.
+
+
+
+                                                                                             Page 8 of 24
+PILK AI SEO SOP
+
+
+
+
+         llms.txt and llms-full.txt at the root, linking the key pages with a one-line answer
+         each.
+         Answer-first pages. Each page opens with a two-sentence answer to the question it
+         targets, then the detail. Use clear H2 questions, short paragraphs, tables for
+         comparisons, real numbers and dates, and a named author or company.
+         FAQ blocks with the questions people really ask, shown on the page and matched by
+         FAQPage data. Google no longer shows FAQ rich results for most sites, but AI engines
+         quote them.
+         Same facts everywhere. Brand name, description, founder, address and phone are
+         identical on the site, Google Business Profile, LinkedIn, socials, Crunchbase and
+         directories. Add sameAs links to every profile in the Organization data.
+         Entity profiles. A LinkedIn company page, Crunchbase, and Wikidata (only if the
+         brand meets Wikidata's notability rules; never fake it).
+         Track it. Check Bing Webmaster Tools → AI Performance monthly. Once a month, ask
+         ChatGPT, Claude, Perplexity and Google AI Mode the 10 questions customers ask and
+         log whether the brand is named and which page is cited.
+
+
+  Phase 4: Local and business listings
+  Only for businesses with a real address or a real service area: title companies, cleaners,
+  contractors, offices. Skip this phase for online-only sites like Pick a Peach. Google
+  penalizes fake addresses and virtual offices.
+
+
+  Set up once
+
+     Listing                        Notes                                   Who
+
+     Google Business Profile        Exact legal name (no keyword            O creates and
+                                    stuffing), primary category plus 2–4    verifies, C fills
+                                    secondary, service area or address,
+                                    hours, phone, website with UTM
+                                    tags, services with prices, products,
+                                    10+ real photos, logo and cover.
+                                    Verify by video or postcard.
+
+     Bing Places for Business       Import straight from the Google         O
+                                    Business Profile
+
+
+
+
+                                                                                                Page 9 of 24
+PILK AI SEO SOP
+
+
+
+
+     Listing                        Notes                                    Who
+
+     Apple Business Connect         Apple Maps and Siri. Same facts as       O creates, C fills
+                                    Google.
+
+     Yelp, BBB, Facebook page,      Claim, match the facts exactly, add      O creates, C writes
+     Nextdoor                       photos
+
+     Industry directories           The top 5–10 for the trade (for          O creates, C writes
+                                    example Angi or Houzz for home
+                                    services, Avvo for lawyers, Zillow for
+                                    real estate)
+
+     Data aggregators               Data Axle, Foursquare and Neustar        O
+                                    Localeze feed many smaller sites
+
+
+  The name, address and phone (NAP) must match character for character everywhere,
+  including the site's footer and LocalBusiness data.
+
+
+  Bing Places, Apple Business and video verification
+  Bing and Apple don't work like Google. Notes from the Nov 2026 setups:
+
+         Bing Places: import needs a verified Google profile. "Import from Google" only works
+         once the Google Business Profile is verified. Otherwise create the listing by hand.
+         Bing Places: mailed PIN, edits locked. Verification is a mailed PIN only, 5–6 business
+         days. Hours, description, photos and hiding the address all stay locked until the PIN is
+         entered, so request it on day one.
+         Bing Places: finer categories. Bing has more specific categories than Google (for
+         example "Real estate photography"). Pick the most specific one that fits.
+         Apple Business (was Apple Business Connect): Maps needs a walk-in location. An
+         Apple Maps place card can't hide the address, so skip Maps for home-based
+         businesses.
+         Apple Business: brand-only setup. Branded Mail, the Tap to Pay logo and business
+         caller ID work without a location. Sign up with a Managed Apple Account.
+         Apple Business: organization verification needs two methods. Domain validation can
+         fail with "Unable to add domain" when the domain is tied to another Apple account.
+         Then upload the state filing (Articles of Organization) under "Other". The owner
+         enters the EIN under Business ID personally.
+
+
+
+
+                                                                                                  Page 10 of 24
+PILK AI SEO SOP
+
+
+
+
+         Apple Business: one organization per LLC. A separate LLC gets its own organization,
+         not a brand under another LLC.
+         Google video verification for a home-based service-area business. The owner
+         records one live phone video showing:
+            1. Street signs or landmarks near the address. No unit number or interior needed.
+            2. The desk and laptop with the business's real software open.
+            3. Owner-only logins, plus a document with the business name.
+         Keep account numbers and EINs out of frame. On the profile, hide the address and list
+         the service areas.
+
+
+  BBB, Nextdoor and Yelp
+  Google is one listing; BBB, Nextdoor, Apple, Yelp and Bing are the next five. Most owners
+  never claim them.
+
+         BBB: free listing, skip accreditation. Start at bbb.org/get-listed. It creates a free BBB
+         account and profile. Accreditation is the paid extra and isn't needed. Ask BBB to hide
+         the street address for a home-based business.
+         Nextdoor: hangs off a personal account. The business page belongs to the owner's
+         personal Nextdoor account. It needs an address to place the business in a
+         neighborhood. A home address is fine: leave "Show above address" unchecked to
+         keep it hidden.
+         Yelp: service-area setup. Set the service area and hide the address. Verification is a
+         call or text to the business phone, so the owner does it.
+
+
+  Copy the competitor ranking above you
+  Ten minutes once the Google profile is verified, then every quarter. The owner installs the
+  extension; Claude reads it and makes the edits.
+
+     1. Search the main service on Google Maps.
+     2. Open the business ranking right above ours.
+     3. With the free PlePer Local SEO Tools Chrome extension (or GMB Everywhere), read
+         their primary and secondary categories and their services.
+     4. In Google Business Profile, click Edit and add the ones that truly describe our
+        business. Skip any that don't: a category that doesn't fit breaks Google's rules.
+     5. Back in PlePer, check which other platforms they've claimed (Apple Maps, Bing, Yelp)
+        and claim any we're missing.
+
+
+
+                                                                                             Page 11 of 24
+PILK AI SEO SOP
+
+
+
+
+  What changed in 2026
+         Owners choose which photos show first. Lead with the best real job photos.
+         AI flags fake reviews. Google emails the owner when fake reviews are removed. Don't
+         buy reviews or gate them.
+         AI-drafted Q&A. Google drafts answers to customer questions from the profile, the
+         website and reviews. The owner approves, edits or rejects each draft before it goes
+         live (PinMeTo, Jun 2026).
+         Freshness and engagement count more. Practitioners report that a profile with no
+         new photo or post for about 30 days slips in local rankings, and that weight is moving
+         toward review speed, response time and engagement. Treat this as field experience,
+         not a Google statement. The core habit is simple: one real photo and one short post
+         every week, treating the profile like a maintenance schedule.
+
+
+  The 15-minute weekly routine (every Monday)
+         Post one short update about a job you just finished, naming the service and the town
+         ("kitchen remodel in New Canaan"), with a real photo from that job. Two a week is
+         better.
+         Upload at least one new real photo or short video. Phone shots are fine; they just have
+         to be real. Check which photos show first.
+         Reply to every new review within 48 hours, negative ones first. Use the customer's
+         name and the service.
+         Clear the AI Q&A queue: approve or fix every draft answer.
+         Check for edits Google or the public suggested (hours, categories, phone) and reject
+         wrong ones.
+         Send review requests to last week's happy customers by text or email, with the direct
+         review link.
+         Glance at the Performance tab: calls, direction requests, website clicks against last
+         week.
+
+  See the Instagram walkthrough this routine is based on.
+
+
+  Phase 5: Content that ranks
+  Rank for the searches customers already type. Every page must be the most useful
+  answer on the web for its search, written by people who actually know the business.
+
+
+
+
+                                                                                           Page 12 of 24
+PILK AI SEO SOP
+
+
+
+
+  Where the searches come from
+         Search Console → Performance → Queries (after 2–4 weeks of data): pages already
+         showing at positions 8–30 are the quickest wins.
+         Bing Webmaster Tools → Keyword Research: free search volumes.
+         Google autocomplete, "People also ask" and "Related searches" for the main topics.
+         Customer questions from sales calls, reviews, emails and support.
+         Competitors' top pages (what ranks for them that you lack).
+
+
+  Pages to build, in this order
+
+     Page type          Targets                                Example
+
+     Money pages        "[service] in [city]", "[product]      One page per service, and per real
+                        price", "best [category]"              service area
+
+     Entity pages       The brand name, people's names,        About, team bios, each product or
+                        product names                          creator profile with FAQs
+
+     Comparison         "[us] vs [them]", "[them]              Honest tables with real
+     pages              alternatives"                          differences
+
+     Answer guides      "how to", "is X worth it", "how much   800–1,500 words, answer first, FAQ
+                        does X cost"                           at the end
+
+     Data-driven        "top [things] in [place]" built from   Only where the data is genuine
+     lists              real data you hold                     and each page is different
+
+
+
+  Rules that keep Google on side
+         No mass-produced filler. Google's spam policy calls it "scaled content abuse". AI can
+         draft, but a person who knows the business checks every fact and adds something
+         only the business knows.
+         No doorway pages. Don't build near-copies for every city with only the name
+         swapped. A city page needs real local proof: jobs done there, local photos, reviews
+         from there.
+         Real authorship and dates. Each article shows an author, when it was published and
+         when it was updated. Refresh the top pages every quarter.
+         Internal links. Every new page gets 3+ links from related pages, and links out to the
+         money page it supports.
+
+
+
+                                                                                             Page 13 of 24
+PILK AI SEO SOP
+
+
+
+
+         Pace. 2–4 strong pages a week beats 100 thin ones. Each new page goes into the
+         sitemap and is submitted by IndexNow automatically. Request indexing for it in
+         Search Console.
+
+
+  Phase 6: Authority and links
+  Links from real, relevant sites are still the strongest outside signal, for Google and for AI
+  engines deciding whom to trust. Start with links you control, then the ones you can earn.
+
+
+  Day one: links you control
+         Brand profiles on LinkedIn, X, Instagram, Facebook, YouTube, TikTok, Pinterest, Reddit,
+         Crunchbase and Medium. Each links back to the site and goes into the site's sameAs
+         list.
+         Owners, partners and team: link the site from personal bios, email signatures, other
+         businesses you own and client sites ("Website by" credits).
+         Everything you already publish (social bios, link-in-bio pages, YouTube descriptions,
+         newsletters) points to the right page on the site.
+
+
+  Startups, apps and SaaS: launch and listing sites
+  For software products, not local businesses or adult sites. These come from a widely
+  shared "75 places to get backlinks" list (the reel, full list with domain ratings). Prioritize by
+  fit, not by DR. Many of these links are nofollow, and that's fine: they bring visitors, and
+  they tell Google and AI tools the product exists.
+
+
+     Group                                    Sites
+
+     Launch platforms                         Product Hunt, BetaList, Hacker News (Show HN),
+                                              Indie Hackers, Uneed, TinyLaunch, Microlaunch,
+                                              DevHunt, Fazier, PeerPush, StartupBase
+
+     Software directories and reviews         AlternativeTo, SaaSHub, TrustRadius, G2, Capterra,
+                                              SourceForge, Tekpon, GoodFirms, StackShare,
+                                              OpenAlternative
+
+     AI tool directories (AI products only)   There's an AI for That, Futurepedia, Toolify AI
+
+
+
+
+                                                                                                Page 14 of 24
+PILK AI SEO SOP
+
+
+
+
+     Group                                  Sites
+
+     Developer and open source              GitHub, GitHub Pages, Dev.to, Hashnode, Chrome
+                                            Web Store (if there's an extension), OSS Gallery,
+                                            LibHunt
+
+     Publishing                             Medium, Substack, Beehiiv, HackerNoon, Vocal
+                                            Media
+
+     Founder stories                        Indie Page, Starter Story, Failory, Founder Reports,
+                                            Peerlist
+
+
+  Also search Medium for "A Growing List of Free Do-Follow Backlinks". Work through the
+  relevant ones, then paste the list into Claude and ask which relevant dofollow sources are
+  missing. Step by step: see "Running the free dofollow list" below.
+
+
+  Running the free dofollow list (Nick Nolan list + gap prompt)
+  Works for any business, not just software. Claude does the research and writes the copy.
+  The owner approves each batch and keeps every login.
+
+     1. Open Nick Nolan's "A Growing List of Free Do-Follow Backlinks" on Medium.
+     2. Copy the full list into Claude and ask: "What dofollow links are missing from this?"
+     3. Merge both into one tracker with these columns: business, site, URL, category, link
+        type, signup method, fit, priority, owner action, status. Fill in link type by checking the
+         rel on a live profile link, not from the list. No nofollow , ugc or sponsored in rel
+         means dofollow.
+     4. Write the profile copy once per business: taglines, 160-, 300- and 750-character
+        descriptions, and a bio for each platform. Reuse it everywhere.
+     5. Claude submits only after the owner OKs a named batch. Once a batch is approved,
+        signing in with Google as the business account is fine. New accounts and passwords
+        stay with the owner.
+     6. Add 10–15 a week, not all at once. Re-check link types quarterly, because these lists go
+        stale.
+
+
+  Earned links (weekly)
+         Journalist requests: answer reporter questions on Featured, Qwoted or Help a B2B
+         Writer with real numbers or expertise, 3–5 a week.
+
+
+
+
+                                                                                              Page 15 of 24
+PILK AI SEO SOP
+
+
+
+
+         Local and industry: chamber of commerce, trade associations, suppliers' "where to
+         buy" or partner pages, local news, sponsorships.
+         Unlinked mentions: search the brand name. Where a page mentions it without a link,
+         ask for one.
+         Linkable assets: original data, calculators, free tools, guides others cite.
+
+
+  Never
+  No bought links, private blog networks (PBNs), link farms, automated web 2.0 or profile
+  spam, or link swaps at scale. Google's spam team ignores or penalizes them, and a manual
+  action can wipe out every other gain.
+
+
+  Phase 7: Measurement
+  Measure search the same way every month so we know which actions pay off.
+
+         Analytics in place. GA4, or the site's own analytics, records every visit with its source.
+         Link Search Console to GA4 so search queries appear next to behaviour. Keep internal
+         and team visits and bots out of the numbers.
+         Conversions defined. Mark the action that makes money (call, form, booking,
+         purchase, follow) as a conversion, and report it by channel, Organic Search included.
+         Microsoft Clarity (optional). Free heatmaps and session recordings, and it connects
+         to Bing Webmaster Tools. Only add it if the site doesn't already have heatmaps and
+         the cookie banner covers it.
+         Rank tracking. Track the 20–50 target searches weekly. Search Console's average
+         position is enough to start.
+
+
+  Monthly numbers
+
+     Number                                Where                           Why
+
+     Indexed pages vs pages in the         Search Console → Pages          Content Google is
+     sitemap                                                               ignoring
+
+     Impressions, clicks, click-through    Search Console →                Visibility and demand
+     rate, average position                Performance
+
+     Organic visits and organic            Analytics                       Money from search
+     conversions
+
+
+
+
+                                                                                               Page 16 of 24
+PILK AI SEO SOP
+
+
+
+
+     Number                              Where                            Why
+
+     Bing clicks and AI Performance      Bing Webmaster Tools             Bing, Copilot and AI
+     citations                                                            answer reach
+
+     AI answer test (10 questions, 4     Manual log                       Whether AI tools name
+     engines)                                                             the brand
+
+     Google Business Profile calls,      Business Profile →               Local demand
+     directions, website clicks          Performance
+
+     New referring domains               Search Console → Links,          Authority growth
+                                         Bing → Backlinks
+
+     Core Web Vitals pass rate           Search Console → Core Web        Speed problems at
+                                         Vitals                           scale
+
+
+  The monthly report fits on one page: these numbers against last month, the 3 biggest
+  wins, the 3 problems, and next month's 5 actions. Save it in the repo or project docs.
+
+
+  Ongoing cadence
+  The foundation is a one-time job. Rankings come from doing these on schedule.
+
+
+     When                              Task                                            Who
+
+     Every deploy                      Changed pages go out by IndexNow                Automatic
+                                       automatically; new pages land in the
+                                       sitemap
+
+     Daily, first week                 Request indexing for the next 10–12 pages       C
+                                       until every important page is requested
+
+     Weekly                            Google Business Profile routine (Phase 4);      C+O
+                                       publish 2–4 new or refreshed pages;
+                                       answer 3–5 journalist requests; check
+                                       Search Console for new errors
+
+     Monthly                           One-page report (Phase 7); AI answer test;      C
+                                       refresh the 3 pages with the most
+                                       impressions but low click-through (rewrite
+                                       title and description); fix broken links; add
+                                       internal links to new pages
+
+
+
+                                                                                             Page 17 of 24
+PILK AI SEO SOP
+
+
+
+
+     When                                    Task                                            Who
+
+     Quarterly                               Update the top 10 pages with fresh facts        C
+                                             and dates; re-run the full Phase 1 audit and
+                                             Lighthouse; check the NAP on every listing;
+                                             review the keyword list against Search
+                                             Console
+
+     After any site redesign or URL          301 every old URL to its new home, re-          C
+     change                                  submit the sitemap, re-check the redirects
+                                             with curl , watch the Pages report for two
+                                             weeks
+
+
+
+
+  Added 16 Nov 2026: priority order and four new plays
+  Work top-down. Crawl and indexing come first, then internal links. llms.txt does nothing
+  for Google, so it comes last.
+
+
+     Tier         Work                 How we check it
+
+     S            Crawl and indexing   Every "not indexed" group in Search Console is
+                                       either deliberate (redirects, noindex embeds, API
+                                       endpoints like /leads) or fixed and sent for
+                                       validation. Request indexing for each new page the
+                                       day it ships.
+
+     S            Internal links       Every page is within 3 clicks of the homepage and
+                                       nothing is orphaned. New pages get links from
+                                       older pages on the same topic.
+
+     A            Mobile               Every key page works on a phone.
+
+     B            Schema               Only what the page shows. FAQPage data = the
+                                       FAQs on the page, nothing more.
+
+     C            Speed                Fix only what is slow on a phone.
+
+     D            Sitemap, HTTPS       Table stakes, done on all three sites.
+
+     F            llms.txt             Google doesn't read it. Keep it accurate (WML's
+                                       still says "No rates are published"), spend no time
+                                       on it.
+
+
+
+
+                                                                                                   Page 18 of 24
+PILK AI SEO SOP
+
+
+
+
+  Internal links with a site: search
+     1. For the page you want to push, search Google for site:yoursite.com "keyword" .
+     2. Every result that talks about that topic without linking to it gets a link, wrapped
+        around words already in the sentence. No new sentences.
+     3. At most 2 new links per page, varied anchors, never "click here".
+     4. Crawl the built site from the homepage afterwards: nothing deeper than 3 clicks, no
+        broken links.
+
+  Done 16 Nov: Rendprop 107 links in 104 posts (live), WML 59 links on 49 pages (merged,
+  not deployed yet), pilk.ai 16 links (live).
+
+
+  Objection pages from Reddit
+     1. Search site:reddit.com "[category]" "waste of money" , then the same with
+         "worth it" and "scam".
+     2. List the objections that repeat across threads. Paraphrase them; never quote.
+     3. Write one "Is [service] worth it?" page: a two-sentence answer up top, one H2 per
+        objection, a "when to skip it" section. Every rule or law cites a primary source.
+     4. Link it from the matching service page and 2 or 3 related posts, then request indexing.
+
+  Reddit blocks automated reads, so find the threads through search and news write-ups
+  that summarise them. Live: rendprop.com, pilk.ai. WML's broker page is rewritten and
+  waiting on the deploy.
+
+
+  Free .gov listing: SBA Small Business Search
+  Register the LLC on SAM.gov. It's free, and a full, active registration builds the SBA Small
+  Business Search profile, which has a website field. It needs the EIN and bank details, so
+  the owner (Dan for WML) does it. Never pay anyone for SAM registration.
+
+
+  Directory rules from the Klint backlink list
+         Write the tagline as the search you want to win.
+         Many directory profile links are nofollow. They still count as citations and send
+         visitors, so do them, but after the followed ones.
+         "Free if you add our badge" is a link swap. The owner decides each one; never at scale.
+         One G2 listing also covers Capterra, GetApp and Software Advice. TrustRadius
+         belongs to G2 too.
+
+
+
+                                                                                              Page 19 of 24
+PILK AI SEO SOP
+
+
+
+
+         Local citations (Hotfrog, Manta, Brownbook) use the exact Google Business Profile
+         name. Agency directories use the brand.
+         Hide the street address wherever the form allows. Where it's required and public, the
+         owner decides (he OK'd the filed address for Agency Spotter and TopDevelopers).
+         Skip anything that charges, needs public posting on the owner's behalf, or asks AI
+         agents not to submit.
+         Browser tips: images upload from the session's uploads folder, and crop pop-ups need
+         their own Save click (Techreviewer, Agency Vista). The owner types every password,
+         CAPTCHA and code.
+
+
+  Gotchas we hit on Pick a Peach
+  Each of these cost time on Nov 12, 2026. Check for them up front on every site.
+
+
+     Problem             What happened                      Fix
+
+     Bare domain         GoDaddy forwarding sent only       Move DNS to Cloudflare (the domain
+     errors              the homepage to www.               stays at the registrar), then add a
+                         pickapeach.com/anything            Redirect Rule "root to www" that
+                         returned 404, and tracking tags    keeps the query string. Turn on
+                         were stripped.                     Always Use HTTPS.
+
+     Old DNS             After the nameserver switch,       Expected. Re-test after an hour, and
+     answers for an      some networks still served         never switch during ad hours.
+     hour                GoDaddy's records, with their 1-
+                         hour TTL
+
+     Claude blocked      Claude's safety check refused      The owner says the exact instruction
+     on DNS changes      to create the Cloudflare zone,     again ("move X's DNS to
+                         then later to add a TXT record,    Cloudflare"), or clicks it with
+                         even after the owner said go       Claude's steps
+
+     Google and          Claude's browser tool can't        Verify Bing with the meta tag
+     Microsoft sign-     touch accounts.google.com, so      instead, or the owner clicks through
+     in screens          Bing's "Import from Search         the Google screen
+                         Console" stalled
+
+     HTML                Cloudflare Pages 308-redirects     Use the meta tag as the main
+     verification file   .html files to the extensionless   method; Google accepted both
+     redirected          URL                                anyway
+
+
+
+
+                                                                                            Page 20 of 24
+PILK AI SEO SOP
+
+
+
+
+     Problem             What happened                        Fix
+
+     "Couldn't fetch"    Search Console shows it right        Wait a day before worrying; check
+     on the sitemap      after submitting a new property      the live URL test
+
+     Indexing quota      URL Inspection stopped at 11         Do the most important pages first;
+                         requests: "Quota exceeded"           schedule the rest for the next day
+
+     Staging copy        pickapeach.pages.dev served          X-Robots-Tag: noindex for
+     indexable           the full site                        https://:project.pages.dev/* in
+                                                              _headers
+
+     Scripts blocked     Python's default user agent got      Use curl or Node, or set a normal
+     by Cloudflare       403 from the site                    user agent, for checks and IndexNow
+                                                              calls
+
+     AI crawler          Cloudflare's zone setup asks         Allow search, agent and training bots
+     settings on a       about AI bots and "Bot               unless told otherwise. Turn Bot
+     new zone            Preference Sync", which              Preference Sync off so the site's own
+                         rewrites robots.txt                  robots.txt stays as written.
+
+     Link-in-bio         Adding the site to social bios       Create separate tracking links per
+     traffic muddies     mixes that traffic into links that   source before adding bio links
+     tracking            were reading as ad traffic
+
+
+
+
+  Gotchas we hit on Rendprop and WSM Lending (Nov 2026)
+  Each of these cost time on Nov 12, 2026, on rendprop.com, wsmlending.com (WML) and
+  the Rendprop and Pilk Consulting listings. The fix follows each one.
+
+         Check the Google account before every Google action. Chrome had several Google
+         accounts signed in, and a property went under the wrong one. The cleanup meant
+         deleting a stray verification TXT record and removing an unverified property. Read the
+         account email under the avatar first, then pin the URL with /u/N or authuser=N .
+         Cloudflare's AI crawler policy can override robots.txt. AI Crawl Control "Training:
+         Disallow" was blocking GPTBot, ClaudeBot and Claude-User even though the site's
+         robots.txt allowed them. Check Cloudflare, not just robots.txt, and confirm with a
+          curl as each bot's user agent.
+         www returning 522 means a proxied www record with nothing behind it. Fix it with
+         a Single Redirect: https://www.domain/* → https://domain/${1} , 301, preserve
+         query string. Cloudflare's wildcard needs an explicit scheme: *:// is rejected. Turn
+
+
+
+                                                                                              Page 21 of 24
+PILK AI SEO SOP
+
+
+
+
+         on Always Use HTTPS so http://www is caught first. Check with curl -I on www
+         plus a path and a query.
+         Don't add a domain-to-domain redirect before the code deploy. On WML, the live
+         app still 308'd non-root paths to the old domain, so a Cloudflare redirect the other way
+         would have looped. Deploy the code first, then add the redirect.
+         Cloudflare Web Analytics "automatic setup" injects on every path, customers'
+         hosted pages included. A strict CSP silently blocks it, so you get 0 page views. Use
+         manual snippet mode on the marketing pages only, add the two Cloudflare hosts to
+         that CSP ( static.cloudflareinsights.com in script-src, cloudflareinsights.com
+         in connect-src), and update the privacy policy in the same deploy.
+         The privacy policy must match the analytics. If it says "no third-party analytics",
+         adding analytics without a policy change makes a false statement. The owner decides.
+         Deploys from a cloud session can't reach Cloudflare credentials. Ship an owner-run
+         script pinned to one commit that:
+                  checks the live version first and fails closed on any other state;
+                  records the rollback version;
+                  runs live checks after the deploy;
+                  submits IndexNow.
+         If another session has uncommitted work on the Mac, the script refuses to run until
+         that work is merged.
+         Google Business Profile photo upload runs in a cross-origin frame that the browser
+         extension can't attach files to. The owner drags the files in. Prepare the cover
+         (2048×1152) and logo (1024×1024) from real brand files.
+         No AI-generated, stock or someone else's photos on a Business Profile. Google's
+         2026 filters catch them, and they put the listing at risk during verification.
+         Home-based service-area verification is one live phone video. Follow the shot list in
+         Phase 4, and keep account numbers and EINs out of frame.
+         Bing Places can't import an unverified Google profile, and the PIN locks every edit.
+         Create the listing by hand and request the mailed PIN (5–6 business days) on day one.
+         Details in Phase 4.
+         Apple Business Connect is now "Apple Business", and Maps needs a walk-in
+         location. Home-based businesses skip Maps and do the brand-only setup with a
+         Managed Apple Account. If domain validation fails, verify with the Articles of
+         Organization instead. Details in Phase 4.
+
+
+
+
+                                                                                           Page 22 of 24
+PILK AI SEO SOP
+
+
+
+
+         Licensing for a regulated business. Never publish a license number or a "licensed"
+         claim until the owner confirms it against the regulator's public record. Record who
+         confirmed it and when.
+
+
+  Hand-off prompt
+  Paste this into Claude inside another project, with the site and business filled in:
+
+     Run the PILK AI SEO SOP (https://claude.ai/artifact/RDdwVGnvqoiXygHgjMLuUR)
+     for [SITE URL], the website of [BUSINESS: what it does, where, who it
+     serves].
+
+
+     - Read the whole SOP first, then work through the "Today run-sheet" in order.
+     Skip Phase 4 if the business has no real address or service area.
+     - Do everything you can yourself: code, deploys, settings pages I'm signed
+     into, checks.
+     - Stop and ask me only for owner steps: creating accounts, sign-in or "allow
+     access" screens, verification codes, and an explicit OK before DNS or
+     nameserver changes.
+     - Keep a task list as you go. After each phase, re-check it against the SOP's
+     "Check" lines.
+     - At the end, write an SEO README in the repo, save the state to this
+     project's memory, set a reminder to finish tomorrow's indexing requests, and
+     give me a short summary of what's live and what's waiting on me.
+     - Never make up facts, reviews or locations, and never buy links.
+
+
+
+
+  Sources
+         How ChatGPT, Claude, Perplexity and AI Overviews retrieve and cite (crawler names,
+         Aug 2026)
+         Cloudflare Crawler Hints docs
+         Google Business Profile updates 2026, PinMeTo
+         Product launch backlink and directory checklist, Frevana
+         Instagram reel: 15-minute weekly Google Business Profile routine
+         Instagram reel: 75 places to get backlinks
+         Instagram reel: free dofollow list and gap prompt, Edward Sturm (@edward.builds),
+         Oct 2026
+         A Growing List of Free Do-Follow Backlinks, Nick Nolan on Medium
+
+
+
+                                                                                         Page 23 of 24
+PILK AI SEO SOP
+
+
+
+
+         Instagram reel: 5 listings that matter besides Google, Jaron Barnett (@jaron_barnett)
+         PlePer Local SEO Tools, Chrome Web Store
+         BBB: create your free business profile
+         Nextdoor: guide to claiming your business page
+         Pick a Peach setup log, Nov 12, 2026 (repo docs/seo/README.md )
+         Klint AI: 50 free backlinks (list shared by the owner, 16 Nov 2026)
+
+
+
+
+                                                                                         Page 24 of 24
+

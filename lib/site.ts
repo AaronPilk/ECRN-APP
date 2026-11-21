@@ -136,6 +136,8 @@ export function organizationJsonLd() {
       foundingDate: BRAND.parent.foundingDate,
       sameAs: BRAND.parent.sameAs,
     },
+    areaServed: ORGANIZATION_AREA_SERVED,
+    knowsAbout: ORGANIZATION_KNOWS_ABOUT,
     ...(BRAND.sameAs.length ? { sameAs: BRAND.sameAs } : {}),
   };
 }
@@ -184,5 +186,124 @@ export function pageMeta({ title, description, path, image }: { title: string; d
       images: [{ url: image ?? BRAND.ogImage, width: 1200, height: 630, alt: "ECRN, the Electrical Construction Referral Network" }],
     },
     twitter: { card: "summary_large_image" as const, title, description, images: [image ?? BRAND.ogImage] },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SEO additions (Nov 20, 2026). Additive: nothing above changed except
+// two extra facts on the Organization block (areaServed, knowsAbout).
+// ─────────────────────────────────────────────────────────────────────
+
+/** Ids of the two site-wide JSON-LD blocks, so page data can point at them. */
+export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+export const WEBSITE_ID = `${SITE_URL}/#website`;
+
+/** Where ECRN works: the program is for people authorized to work in the United States. */
+export const ORGANIZATION_AREA_SERVED = { "@type": "Country", name: "United States" };
+
+/** Topics the site covers. Topics only: no claims, counts or awards. */
+export const ORGANIZATION_KNOWS_ABOUT = [
+  "Electrical construction",
+  "Electrical construction jobs",
+  "Electrical construction recruiting",
+  "Referral rewards for electrical construction hires",
+  "Electrician, foreman and superintendent careers",
+  "Electrical estimator and project manager careers",
+];
+
+/**
+ * Ownership codes for the tools that verify a site by meta tag
+ * (PILK AI SEO SOP, Phase 2). Paste only the code, which is the `content`
+ * value of the meta tag each tool shows, then deploy and click Verify.
+ * An empty value renders no tag.
+ */
+export const SITE_VERIFICATION = {
+  /** Google Search Console: <meta name="google-site-verification" content="…"> */
+  google: "",
+  /** Bing Webmaster Tools: <meta name="msvalidate.01" content="…"> */
+  bing: "",
+  /**
+   * Meta (Facebook) domain verification. This code is on the old ecrn.com
+   * home page today (read Nov 20, 2026). Keeping it means Meta's verification
+   * of ecrn.com survives the move to this site. Clear it if that Meta
+   * Business account is no longer used.
+   */
+  facebook: "1w0eromzok2zhj8k6tq7d87t1coz13",
+};
+
+/** For `verification` in the root layout's metadata. Undefined when no code is set. */
+export function siteVerification(): { google?: string; other?: Record<string, string> } | undefined {
+  const { google, bing, facebook } = SITE_VERIFICATION;
+  const other: Record<string, string> = {
+    ...(bing ? { "msvalidate.01": bing } : {}),
+    ...(facebook ? { "facebook-domain-verification": facebook } : {}),
+  };
+  if (!google && !Object.keys(other).length) return undefined;
+  return { ...(google ? { google } : {}), ...(Object.keys(other).length ? { other } : {}) };
+}
+
+/** Delta Construction Partners as its own Organization node (the firm that does the recruiting). */
+export function parentOrganizationJsonLd() {
+  return {
+    "@type": "Organization",
+    name: BRAND.parent.name,
+    url: BRAND.parent.url,
+    foundingDate: BRAND.parent.foundingDate,
+    sameAs: BRAND.parent.sameAs,
+  };
+}
+
+/**
+ * A service the page describes (SOP Phase 1: "the type each page really is").
+ * `provider` is "delta" for the recruiting itself (the employer page) and
+ * "ecrn" for the referral network.
+ *
+ *   <JsonLd data={serviceJsonLd({ name: "Electrical construction recruiting", description, path: "/hire",
+ *     serviceType: "Construction recruiting", audience: "Electrical contractors", provider: "delta" })} />
+ */
+export function serviceJsonLd({
+  name,
+  description,
+  path,
+  serviceType,
+  audience,
+  provider = "ecrn",
+}: {
+  name: string;
+  description: string;
+  path: string;
+  serviceType: string;
+  /** Who it is for, in plain words: "Electrical contractors". */
+  audience?: string;
+  provider?: "ecrn" | "delta";
+}) {
+  const url = absoluteUrl(path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${url}#service`,
+    name,
+    description,
+    url,
+    serviceType,
+    provider: provider === "delta" ? parentOrganizationJsonLd() : { "@id": ORGANIZATION_ID },
+    areaServed: ORGANIZATION_AREA_SERVED,
+    ...(audience ? { audience: { "@type": "Audience", audienceType: audience } } : {}),
+  };
+}
+
+/** The About page, tied to the site-wide Organization block as the thing it is about. */
+export function aboutPageJsonLd(description: string, path = "/about") {
+  const url = absoluteUrl(path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: `About ${BRAND.name}`,
+    description,
+    isPartOf: { "@id": WEBSITE_ID },
+    mainEntity: { "@id": ORGANIZATION_ID },
+    inLanguage: "en-US",
   };
 }

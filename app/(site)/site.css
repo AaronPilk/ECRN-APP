@@ -1,0 +1,1760 @@
+/* =============================================================================
+   ECRN public site: materials, motion and type.
+   Loaded by app/(site)/layout.tsx and app/jobs/layout.tsx. Every selector is
+   prefixed site- (or scoped under .site-root), so nothing here reaches the app.
+
+   House rules
+   - Only transform and opacity animate.
+   - Scroll-linked motion is CSS first (animation-timeline) behind @supports;
+     components/site/motion/* is the requestAnimationFrame fallback.
+   - The default state is the finished state. Hidden or "unlit" starting
+     states exist only inside the motion-capable branches, so visitors without
+     JavaScript or with reduced motion still see every word and number.
+   - Clip with overflow: clip, never overflow: hidden, around anything that
+     is scroll-animated or sticky. A hidden ancestor becomes the scroll
+     container, which freezes view() timelines and position: sticky.
+   - A site-* class owns the properties it sets. Do not put a Tailwind utility
+     for the same property on the same element.
+   ========================================================================== */
+
+/* ── Tokens ────────────────────────────────────────────────────────────── */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Idle drift only: a sine-like curve so a looping float never seems to stop. */
+  --ease-drift: cubic-bezier(0.37, 0, 0.63, 1);
+
+  --site-header-h: 4rem;
+  --site-header-total: calc(var(--site-header-h) + env(safe-area-inset-top, 0px));
+  --site-display: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  --site-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --site-canvas: #0a100c;
+  --site-canvas-2: #0e1612;
+  --site-green: #16c172;
+  --site-bright: #36dc86;
+  --site-mint: #91f9b3;
+  --site-cobalt: #0655ce;
+  --site-navy: #00244b;
+  --site-sky: #bcdfff;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --site-header-h: 4.5rem;
+  }
+}
+
+.site-root {
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-root ::selection {
+  background: rgba(54, 220, 134, 0.3);
+}
+
+/* Anchors land below the sticky header. */
+.site-root :where([id]) {
+  scroll-margin-top: calc(var(--site-header-total) + 1rem);
+}
+
+.site-root :where(a, button, summary):focus-visible {
+  outline: 2px solid var(--site-ring, #0655ce);
+  outline-offset: 3px;
+}
+
+/* Tone: a section sets these once, everything inside reads them. */
+.site-tone-dark {
+  --site-fg: #ffffff;
+  --site-fg-2: rgba(255, 255, 255, 0.76);
+  --site-fg-3: rgba(255, 255, 255, 0.6);
+  --site-accent: #91f9b3;
+  --site-rule: rgba(255, 255, 255, 0.1);
+  --site-ring: #91f9b3;
+  color: var(--site-fg);
+}
+
+.site-tone-light {
+  --site-fg: #0f1612;
+  --site-fg-2: #506158;
+  --site-fg-3: #5f6e66;
+  --site-accent: #07653e;
+  --site-rule: #d9dfd8;
+  --site-ring: #0655ce;
+  color: var(--site-fg);
+}
+
+/* ── Type scale ────────────────────────────────────────────────────────── */
+
+.site-display-1,
+.site-display-2,
+.site-display-3,
+.site-display-4,
+.site-display-5 {
+  font-family: var(--site-display);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+/* Home hero: 36 → 68 px. Sized so the headline sets in three lines on a
+   360 px phone. From lg it shares the row with the floating cards, so it
+   tracks the column width instead of jumping to the cap. */
+.site-display-1 {
+  font-size: clamp(2.25rem, 11.1vw - 0.25rem, 2.625rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+@media (min-width: 640px) {
+  .site-display-1 {
+    font-size: clamp(3rem, 7.2vw + 0.75rem, 4.25rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-display-1 {
+    font-size: clamp(3.5rem, 4.4vw + 0.7rem, 4.25rem);
+  }
+}
+
+/* Page hero: 36 → 60 px */
+.site-display-2 {
+  font-size: clamp(2.25rem, 4.4vw + 1.15rem, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.038em;
+}
+
+/* Section heading: 31 → 52 px */
+.site-display-3 {
+  font-size: clamp(1.9375rem, 3.3vw + 1.15rem, 3.25rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+}
+
+/* Card heading: 24 → 30 px */
+.site-display-4 {
+  font-size: clamp(1.5rem, 0.8vw + 1.3rem, 1.875rem);
+  line-height: 1.14;
+  letter-spacing: -0.028em;
+}
+
+/* Small heading: 19 → 21 px */
+.site-display-5 {
+  font-size: clamp(1.1875rem, 0.3vw + 1.1rem, 1.3125rem);
+  line-height: 1.24;
+  letter-spacing: -0.02em;
+}
+
+/* Intro paragraph: 17 → 20 px */
+.site-lede {
+  font-size: clamp(1.0625rem, 0.35vw + 0.98rem, 1.25rem);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.site-eyebrow {
+  font-family: var(--site-mono);
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 374px) {
+  .site-eyebrow {
+    letter-spacing: 0.09em;
+  }
+}
+
+@media (min-width: 640px) {
+  .site-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+/* Money and counts: tabular so digits never jitter. */
+.site-num {
+  font-family: var(--site-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+/* ── Materials ─────────────────────────────────────────────────────────── */
+
+/* These need to be positioned (for their ::before / ::after layers), but at
+   zero specificity, so an absolute, fixed or sticky utility still wins. */
+:where(.site-glass, .site-glass-light, .site-hairline, .site-card, .site-lift, .site-frame, .site-btn, .site-delta-panel) {
+  position: relative;
+}
+
+/* Dark glass: floats over photography or the dark canvas. Weight = hierarchy:
+   thin (chips), regular (cards), thick (the most important surface). */
+.site-glass {
+  --site-glass-fill: rgba(10, 16, 12, 0.66);
+  --site-glass-blur: 22px;
+  isolation: isolate;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.02) 100%),
+    var(--site-glass-fill);
+  -webkit-backdrop-filter: blur(var(--site-glass-blur)) saturate(170%);
+  backdrop-filter: blur(var(--site-glass-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 10px 28px -8px rgba(0, 0, 0, 0.5),
+    0 36px 72px -28px rgba(0, 0, 0, 0.6);
+}
+
+.site-glass-thin {
+  --site-glass-fill: rgba(10, 16, 12, 0.58);
+  --site-glass-blur: 14px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 8px 20px -8px rgba(0, 0, 0, 0.45);
+}
+
+.site-glass-thick {
+  --site-glass-fill: rgba(10, 16, 12, 0.76);
+  --site-glass-blur: 32px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 16px 40px -10px rgba(0, 0, 0, 0.55),
+    0 56px 96px -32px rgba(0, 0, 0, 0.7);
+}
+
+/* Light glass: floats over photography inside light sections. */
+.site-glass-light {
+  isolation: isolate;
+  color: #0f1612;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.72) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 1px 2px rgba(15, 22, 18, 0.06),
+    0 12px 32px -10px rgba(15, 22, 18, 0.24);
+}
+
+/* Hairline that catches the light: brighter at the top-left edge, like the
+   rim of a sheet of glass. Works on any positioned element; glass has it
+   built in. */
+.site-glass::before,
+.site-hairline::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.1) 28%,
+    rgba(255, 255, 255, 0.04) 60%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+/* Inner highlight on its own, for solid dark panels. */
+.site-highlight {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+/* White card for light sections: hairline plus a soft, layered shadow. */
+.site-card {
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.07),
+    0 1px 2px rgba(15, 22, 18, 0.04),
+    0 10px 24px -14px rgba(15, 22, 18, 0.12);
+}
+
+/* A card that is a link: lifts on hover (fine pointers), presses on touch.
+   The deeper shadow is pre-rendered on ::after and only its opacity changes. */
+.site-lift {
+  isolation: isolate;
+  transition: transform 320ms var(--ease-out);
+}
+
+.site-lift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow:
+    0 2px 4px rgba(15, 22, 18, 0.05),
+    0 24px 48px -20px rgba(15, 22, 18, 0.28);
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out);
+  pointer-events: none;
+}
+
+.site-lift:active {
+  transform: scale(0.985);
+  transition-duration: 140ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-lift:hover {
+    transform: translate3d(0, -3px, 0);
+  }
+  .site-lift:hover::after {
+    opacity: 1;
+  }
+  .site-lift:hover:active {
+    transform: translate3d(0, -1px, 0) scale(0.985);
+  }
+}
+
+/* Photo frame. clip, not hidden, so parallax inside keeps working. */
+.site-frame {
+  isolation: isolate;
+  overflow: clip;
+  background: #0e1512;
+}
+
+/* Photo that eases in a little closer when its card is hovered. */
+.site-zoom {
+  transition: transform 900ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-zoom-host:hover .site-zoom {
+    transform: scale(1.035);
+  }
+}
+
+/* Decorative backdrops for dark sections (no blur filters: plain gradients). */
+.site-grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(110% 85% at 50% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(110% 85% at 50% 0%, #000 0%, transparent 78%);
+}
+
+.site-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, var(--site-glow-color, rgba(22, 193, 114, 0.2)), transparent);
+}
+
+/* ── Buttons and links ─────────────────────────────────────────────────── */
+
+/* display is left to utilities (inline-flex, flex, hidden…), so responsive
+   show/hide works: the components add inline-flex themselves. */
+.site-btn {
+  isolation: isolate;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 3.25rem;
+  padding: 0 1.5rem;
+  border-radius: 0.9375rem;
+  font-family: var(--site-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 160ms var(--ease-out);
+}
+
+/* Hover wash: a white layer whose opacity changes (no colour tweening). */
+.site-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.site-btn > svg {
+  flex-shrink: 0;
+  transition: transform 240ms var(--ease-out);
+}
+
+.site-btn:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-btn:hover::before {
+    opacity: var(--site-btn-wash, 0.14);
+  }
+  .site-btn:hover > svg:last-child {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+.site-btn-primary {
+  color: #052b1a;
+  background: linear-gradient(180deg, #4ee79a 0%, #16c172 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(5, 43, 26, 0.16),
+    0 1px 2px rgba(5, 43, 26, 0.35),
+    0 10px 28px -10px rgba(22, 193, 114, 0.7);
+  --site-ring: #91f9b3;
+}
+
+/* For dark backgrounds and photography. No backdrop-filter on purpose: a
+   button usually sits inside a fading wrapper, which cuts a blur off from
+   the photo behind it (see "backdrop root" in the notes at the bottom). */
+.site-btn-ghost {
+  --site-btn-wash: 0.08;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* For light backgrounds. */
+.site-btn-dark {
+  --site-btn-wash: 0.1;
+  color: #fff;
+  background: #0f1612;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px rgba(10, 16, 12, 0.3),
+    0 10px 24px -12px rgba(10, 16, 12, 0.5);
+}
+
+.site-btn-light {
+  --site-btn-wash: 0;
+  color: #0f1612;
+  background: #fff;
+  box-shadow:
+    inset 0 0 0 1px #d9dfd8,
+    0 1px 2px rgba(15, 22, 18, 0.05);
+}
+
+/* Header size: 40 px tall to the eye, 48 px to the finger. */
+.site-btn-sm {
+  height: 2.5rem;
+  padding: 0 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.site-btn-sm::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+
+/* Invisible padding that brings a short control up to a 44 px tap target. */
+.site-hit::after {
+  content: "";
+  position: absolute;
+  inset: -5px 0;
+}
+
+/* Text link with a travelling arrow. */
+.site-link {
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  font-family: var(--site-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--site-accent, #07653e);
+}
+
+.site-link > svg {
+  flex-shrink: 0;
+  transition: transform 240ms var(--ease-out);
+}
+
+.site-link:active {
+  opacity: 0.7;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-link:hover > svg,
+  .site-link-host:hover .site-link > svg {
+    transform: translate3d(3px, 0, 0);
+  }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: env(safe-area-inset-top, 0px);
+  color: #fff;
+  --site-ring: #91f9b3;
+}
+
+/* The glass lives on its own layer so the mobile sheet inside the header is
+   not trapped by a backdrop-filter containing block. */
+.site-header-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 16, 12, 0.88);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.09);
+  pointer-events: none;
+}
+
+/* A page whose first section is a dark hero (data-site-hero) slides it under
+   the header. There the glass starts clear and gains opacity and its hairline
+   over the first 120 px of scroll. Pure CSS where scroll timelines exist. */
+[data-site-hero] {
+  margin-top: calc(var(--site-header-total) * -1);
+}
+
+@supports (animation-timeline: scroll()) {
+  html:not([data-site-scroll="js"]) .site-root:has([data-site-hero]) .site-header-bg {
+    animation: site-header-bg linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 120px;
+  }
+}
+
+/* Fallback (set by HeaderState once JavaScript runs). */
+.site-header[data-js] .site-header-bg {
+  transition: opacity 260ms ease;
+}
+
+.site-root:has([data-site-hero]) .site-header[data-js]:not([data-scrolled]) .site-header-bg {
+  opacity: 0;
+}
+
+@keyframes site-header-bg {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.site-skip {
+  position: absolute;
+  left: 0.75rem;
+  top: calc(env(safe-area-inset-top, 0px) + 0.625rem);
+  z-index: 60;
+  padding: 0.875rem 1rem;
+  border-radius: 0.625rem;
+  background: #fff;
+  color: #0f1612;
+  font-family: var(--site-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transform: translate3d(0, -200%, 0);
+}
+
+.site-skip:focus-visible {
+  transform: none;
+}
+
+.site-nav-link {
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  font-family: var(--site-display);
+  font-size: 0.90625rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.78);
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.site-nav-link[aria-current="page"] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.07);
+  }
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+
+.site-foot-link {
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.78);
+  transition: color 160ms ease;
+}
+
+.site-foot-link:active {
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .site-foot-link {
+    min-height: 2.375rem;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-foot-link:hover {
+    color: #fff;
+  }
+}
+
+/* ── Mobile menu (a modal <dialog>, so focus is trapped for free) ──────── */
+
+.site-menu {
+  position: fixed;
+  inset: 0;
+  margin: 0 0 0 auto;
+  width: min(100vw, 26.25rem);
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overflow: visible;
+  --site-ring: #91f9b3;
+}
+
+.site-menu::backdrop {
+  background: rgba(4, 7, 5, 0.62);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.site-menu[data-state="open"]::backdrop {
+  opacity: 1;
+  transition-duration: 320ms;
+}
+
+.site-menu-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(90% 50% at 100% 0%, rgba(22, 193, 114, 0.14), transparent 70%),
+    radial-gradient(80% 45% at 0% 100%, rgba(6, 85, 206, 0.22), transparent 70%),
+    #0a100c;
+  box-shadow:
+    -1px 0 0 rgba(255, 255, 255, 0.08),
+    -32px 0 80px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transform: translate3d(1.5rem, 0, 0);
+  /* Leaving is quicker than arriving. */
+  transition:
+    opacity 180ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.site-menu[data-state="open"] .site-menu-panel {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 440ms var(--ease-drawer);
+}
+
+.site-menu-item {
+  opacity: 0;
+  transform: translate3d(0, 0.625rem, 0);
+}
+
+.site-menu[data-state="open"] .site-menu-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 420ms var(--ease-out),
+    transform 520ms var(--ease-out);
+  transition-delay: calc(70ms + var(--site-i, 0) * 34ms);
+}
+
+.site-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.75rem;
+  font-family: var(--site-display);
+  font-size: 1.625rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  color: #fff;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.site-menu-link > svg {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.site-menu-link[aria-current="page"] {
+  color: var(--site-mint);
+}
+
+.site-menu-link:active {
+  opacity: 0.6;
+}
+
+/* ── Entrances ─────────────────────────────────────────────────────────── */
+
+/* Above the fold: plays on load, pure CSS, so it never waits for JavaScript.
+   Put it on a wrapper, not on an element that has its own transforms. */
+@media (prefers-reduced-motion: no-preference) {
+  .site-enter {
+    animation: site-rise 820ms var(--ease-out) both;
+    animation-delay: calc(60ms + var(--site-i, 0) * 70ms);
+  }
+}
+
+@keyframes site-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--site-y, 14px), 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Below the fold: <Reveal>. Visible by default. The component hides only
+   elements that are still below the viewport once JavaScript is running, then
+   lets them rise when they arrive. */
+.site-reveal[data-reveal="pending"],
+[data-reveal="pending"] .site-reveal-item {
+  opacity: 0;
+  transform: translate3d(0, var(--site-y, 18px), 0);
+}
+
+.site-reveal[data-reveal="in"],
+[data-reveal="in"] .site-reveal-item {
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 700ms var(--ease-out);
+  transition-delay: calc(var(--site-i, 0) * 70ms);
+}
+
+/* ── Idle motion ───────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-float {
+    animation: site-float var(--site-dur, 8s) var(--ease-drift) var(--site-delay, 0s) infinite alternate;
+  }
+
+  .site-float[data-offscreen] {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes site-float {
+  from {
+    transform: translate3d(0, calc(var(--site-amp, 6px) * -1), 0);
+  }
+  to {
+    transform: translate3d(0, var(--site-amp, 6px), 0);
+  }
+}
+
+/* The "current" dot: a solid core with a ring that travels outward. */
+.site-live-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--site-bright);
+  box-shadow: 0 0 0 3px rgba(54, 220, 134, 0.2);
+}
+
+.site-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--site-bright);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-live-dot::after {
+    animation: site-pulse 2.2s var(--ease-out) infinite;
+  }
+
+  .site-float[data-offscreen] .site-live-dot::after {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes site-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+/* ── Marquee ───────────────────────────────────────────────────────────── */
+
+.site-marquee {
+  overflow: clip;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+.site-marquee-track {
+  display: flex;
+  width: max-content;
+}
+
+.site-marquee-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-marquee-track {
+    animation: site-marquee var(--site-dur, 44s) linear infinite;
+  }
+
+  .site-marquee:focus-within .site-marquee-track,
+  .site-marquee[data-offscreen] .site-marquee-track {
+    animation-play-state: paused;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .site-marquee:hover .site-marquee-track {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes site-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* ── Scroll-linked: parallax ───────────────────────────────────────────── */
+
+/* Window mode: the child is 20 % taller than its frame and drifts inside it. */
+.site-plx-cover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10%;
+  bottom: -10%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-plx-cover {
+    top: 0;
+    bottom: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Free element: sits exactly where it was laid out when it is centred in
+       the viewport, and drifts by speed × scroll distance either side. */
+    html:not([data-site-scroll="js"]) .site-plx {
+      animation: site-plx linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    /* Top of the page (hero backgrounds): at rest at scroll 0. */
+    html:not([data-site-scroll="js"]) .site-plx[data-from="top"] {
+      animation-name: site-plx-top;
+      animation-timeline: scroll(root block);
+      animation-range: 0px 1600px;
+    }
+
+    html:not([data-site-scroll="js"]) .site-plx-cover {
+      animation: site-plx-cover linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+@keyframes site-plx {
+  from {
+    transform: translate3d(0, calc((100vh + 100%) * var(--site-speed, 0.1) * -0.5), 0);
+  }
+  to {
+    transform: translate3d(0, calc((100vh + 100%) * var(--site-speed, 0.1) * 0.5), 0);
+  }
+}
+
+@keyframes site-plx-top {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, calc(1600px * var(--site-speed, 0.1)), 0);
+  }
+}
+
+@keyframes site-plx-cover {
+  from {
+    transform: translate3d(0, -8.333%, 0);
+  }
+  to {
+    transform: translate3d(0, 8.333%, 0);
+  }
+}
+
+/* ── Scroll-linked: the conduit ────────────────────────────────────────── */
+
+/* <ScrollLine>: a run of conduit down the left edge of a list. Each step owns
+   the segment from its junction box to the next one. A current fills each
+   segment as it passes the reading line (58 % down the viewport), and each
+   junction box lights when the current reaches it. Default = fully lit. */
+.site-conduit {
+  --site-marker: 2.5rem;
+  --site-lead: 3rem;
+  position: relative;
+  padding-top: var(--site-lead);
+}
+
+.site-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--site-marker) minmax(0, 1fr);
+  column-gap: 1.25rem;
+  padding-bottom: 3.5rem;
+}
+
+.site-step:last-child {
+  padding-bottom: 0;
+}
+
+@media (min-width: 640px) {
+  .site-conduit {
+    --site-marker: 2.75rem;
+  }
+  .site-step {
+    column-gap: 1.75rem;
+    padding-bottom: 4.5rem;
+  }
+}
+
+.site-conduit-seg,
+.site-conduit-lead {
+  position: absolute;
+  left: calc(var(--site-marker) / 2 - 0.75rem);
+  width: 1.5rem;
+  pointer-events: none;
+}
+
+.site-conduit-seg {
+  top: calc(var(--site-marker) / 2);
+  bottom: calc(var(--site-marker) / -2);
+}
+
+.site-step:last-child > .site-conduit-seg {
+  display: none;
+}
+
+.site-conduit-lead {
+  top: 0;
+  height: calc(var(--site-lead) + var(--site-marker) / 2);
+}
+
+/* The tube. */
+.site-conduit-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 3px);
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.site-conduit-lead > .site-conduit-track {
+  border-radius: 0 0 3px 3px;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+}
+
+/* The current: a soft glow with a bright core, scaled from the top. */
+.site-conduit-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 0;
+  background:
+    linear-gradient(180deg, var(--site-bright), var(--site-mint)) center / 2px 100% no-repeat,
+    linear-gradient(90deg, transparent 0%, rgba(54, 220, 134, 0.42) 50%, transparent 100%) center / 100% 100% no-repeat;
+}
+
+.site-conduit-lead > .site-conduit-fill {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+}
+
+/* The head of the current: a spark that rides the leading edge. */
+.site-conduit-head {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.site-conduit-head::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: -1.75rem 0 0 -1.75rem;
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    #eafff1 0%,
+    rgba(145, 249, 179, 0.9) 9%,
+    rgba(54, 220, 134, 0.45) 26%,
+    rgba(54, 220, 134, 0.12) 58%,
+    transparent 100%
+  );
+}
+
+/* Junction box. Two stacked faces: off (always there) and on (fades in). */
+.site-step-marker {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  width: var(--site-marker);
+  height: var(--site-marker);
+}
+
+.site-step-off,
+.site-step-on {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8125rem;
+  font-family: var(--site-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.site-step-off {
+  color: rgba(255, 255, 255, 0.62);
+  background: #111a15;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.site-step-on {
+  isolation: isolate;
+  color: var(--site-mint);
+  background: linear-gradient(180deg, #133524 0%, #0d2419 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(54, 220, 134, 0.7),
+    inset 0 1px 0 rgba(145, 249, 179, 0.35);
+}
+
+/* Pre-rendered glow: only its opacity changes (it rides the "on" face). */
+.site-step-on::before {
+  content: "";
+  position: absolute;
+  inset: -1.75rem;
+  z-index: -1;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgba(54, 220, 134, 0.34), transparent);
+  pointer-events: none;
+}
+
+.site-step-body {
+  grid-column: 2;
+  min-width: 0;
+  padding-top: calc(var(--site-marker) / 2 - 0.9em);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html:not([data-site-scroll="js"]) .site-conduit-fill {
+      animation: site-conduit-fill linear both;
+      animation-timeline: view();
+      animation-range: cover 42vh cover calc(100% - 58vh);
+    }
+
+    html:not([data-site-scroll="js"]) .site-conduit-head {
+      animation: site-conduit-head linear both;
+      animation-timeline: view();
+      animation-range: cover 42vh cover calc(100% - 58vh);
+    }
+
+    html:not([data-site-scroll="js"]) .site-step {
+      view-timeline: --site-step block;
+    }
+
+    /* The current reaches the box when the reading line crosses its centre. */
+    html:not([data-site-scroll="js"]) .site-step-on {
+      animation: site-step-on linear both;
+      animation-timeline: --site-step;
+      animation-range: cover calc(42vh + var(--site-marker) / 2 - 0.25rem) cover calc(42vh + var(--site-marker) / 2 + 3rem);
+    }
+
+    html:not([data-site-scroll="js"]) .site-step-body {
+      animation: site-step-body linear both;
+      animation-timeline: --site-step;
+      animation-range: cover calc(42vh + var(--site-marker) / 2 - 0.25rem) cover calc(42vh + var(--site-marker) / 2 + 3rem);
+    }
+  }
+}
+
+/* requestAnimationFrame fallback (ScrollLine sets data-live="js"). */
+.site-conduit[data-live="js"] .site-conduit-fill {
+  transform: scaleY(0);
+}
+
+.site-conduit[data-live="js"] .site-step-on,
+.site-conduit[data-live="js"] .site-step-body {
+  transition: opacity 320ms var(--ease-out);
+}
+
+.site-conduit[data-live="js"] .site-step:not([data-lit]) .site-step-on {
+  opacity: 0;
+}
+
+.site-conduit[data-live="js"] .site-step:not([data-lit]) .site-step-body {
+  opacity: 0.72;
+}
+
+@keyframes site-conduit-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes site-conduit-head {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  4% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes site-step-on {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes site-step-body {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Count up ──────────────────────────────────────────────────────────── */
+
+/* The real number stays in the HTML and keeps its space. While counting it
+   is transparent and a twin on top shows the running figure. */
+.site-countup {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.site-countup-live {
+  display: none;
+}
+
+.site-countup[data-counting] > .site-countup-final {
+  opacity: 0;
+}
+
+.site-countup[data-counting] > .site-countup-live {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Reward climb (TierClimb) ──────────────────────────────────────────── */
+
+/* Phones: one card per tier with a bar that gets longer down the list.
+   md and up: a bar chart, four columns on one baseline, $2,500 → $10,000. */
+.site-tiers {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.site-tier {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "meta amount"
+    "roles roles"
+    "bar bar";
+  column-gap: 1rem;
+  padding: 1.25rem 1.25rem 1.375rem;
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.07),
+    0 1px 2px rgba(15, 22, 18, 0.04),
+    0 10px 24px -14px rgba(15, 22, 18, 0.12);
+}
+
+.site-tier-chart {
+  display: contents;
+}
+
+.site-tier-meta {
+  grid-area: meta;
+  min-width: 0;
+}
+
+.site-tier-amount {
+  grid-area: amount;
+  text-align: right;
+  color: var(--site-cobalt);
+}
+
+.site-tier-roles {
+  grid-area: roles;
+  margin-top: 0.5rem;
+}
+
+.site-tier-bar {
+  grid-area: bar;
+  position: relative;
+  height: 0.5rem;
+  margin-top: 1rem;
+  border-radius: 9999px;
+  background: rgba(6, 85, 206, 0.1);
+  overflow: clip;
+}
+
+.site-tier-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #063889 0%, var(--site-cobalt) 60%, #3d86f0 100%);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--site-level, 1));
+}
+
+.site-tiers[data-reveal="pending"] .site-tier {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+}
+
+.site-tiers[data-reveal="pending"] .site-tier-fill {
+  transform: scaleX(0.02);
+}
+
+.site-tiers[data-reveal="in"] .site-tier {
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 700ms var(--ease-out);
+  transition-delay: calc(var(--site-i, 0) * 80ms);
+}
+
+.site-tiers[data-reveal="in"] .site-tier-fill {
+  transition: transform 1100ms var(--ease-out);
+  transition-delay: calc(120ms + var(--site-i, 0) * 80ms);
+}
+
+@media (min-width: 768px) {
+  @supports (grid-template-rows: subgrid) {
+    .site-tiers {
+      --site-climb: 17.5rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: auto auto auto;
+      column-gap: 1.25rem;
+      row-gap: 0;
+    }
+
+    .site-tier {
+      grid-row: span 3;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: subgrid;
+      grid-template-areas: none;
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    .site-tier-chart {
+      grid-area: auto;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .site-tier-meta {
+      grid-area: auto;
+      grid-row: 2;
+      padding-top: 1.25rem;
+      box-shadow: inset 0 1px 0 var(--site-rule, #d9dfd8);
+    }
+
+    .site-tier-roles {
+      grid-area: auto;
+      grid-row: 3;
+    }
+
+    .site-tier-amount {
+      grid-area: auto;
+      text-align: left;
+      padding-bottom: 0.875rem;
+    }
+
+    .site-tier-bar {
+      grid-area: auto;
+      height: calc(var(--site-climb) * var(--site-level, 1));
+      margin-top: 0;
+      border-radius: 1rem 1rem 0 0;
+      background: none;
+      overflow: visible;
+      transform-origin: 50% 100%;
+    }
+
+    /* Every bar is cut from the same column of colour: the gradient is sized
+       to the full climb and anchored to the baseline, so a short bar shows
+       only the deep end and the tallest reaches the bright top. The fine
+       lines mark each tier step. */
+    .site-tier-fill {
+      border-radius: 1rem 1rem 0 0;
+      background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent calc(var(--site-climb) / 4 - 1px),
+            rgba(255, 255, 255, 0.2) calc(var(--site-climb) / 4 - 1px),
+            rgba(255, 255, 255, 0.2) calc(var(--site-climb) / 4)
+          )
+          bottom / 100% var(--site-climb) no-repeat,
+        linear-gradient(180deg, #3d8bf5 0%, #1565dc 30%, var(--site-cobalt) 55%, #063889 100%) bottom / 100% var(--site-climb) no-repeat;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      transform: none;
+    }
+
+    /* The bar rises from the baseline and the amount rides on top of it. */
+    .site-tiers[data-reveal="pending"] .site-tier {
+      opacity: 1;
+      transform: none;
+    }
+
+    .site-tiers[data-reveal="pending"] .site-tier-fill {
+      transform: none;
+    }
+
+    .site-tiers[data-reveal="pending"] .site-tier-bar {
+      opacity: 0;
+      transform: scaleY(0.15);
+    }
+
+    .site-tiers[data-reveal="pending"] .site-tier-amount {
+      opacity: 0;
+      transform: translate3d(0, calc(var(--site-climb) * var(--site-level, 1) * 0.85), 0);
+    }
+
+    .site-tiers[data-reveal="pending"] .site-tier-meta,
+    .site-tiers[data-reveal="pending"] .site-tier-roles {
+      opacity: 0;
+    }
+
+    .site-tiers[data-reveal="in"] .site-tier-bar,
+    .site-tiers[data-reveal="in"] .site-tier-amount {
+      transition:
+        opacity 500ms var(--ease-out),
+        transform 1000ms var(--ease-out);
+      transition-delay: calc(var(--site-i, 0) * 90ms);
+    }
+
+    .site-tiers[data-reveal="in"] .site-tier-meta,
+    .site-tiers[data-reveal="in"] .site-tier-roles {
+      transition: opacity 700ms var(--ease-out);
+      transition-delay: calc(200ms + var(--site-i, 0) * 90ms);
+    }
+  }
+}
+
+/* ── FAQ ───────────────────────────────────────────────────────────────── */
+
+/* Always open: every answer is on the page. Question left, answer right when
+   the list itself is wide enough (a container query, so it also behaves
+   inside a narrow article column). */
+.site-faq {
+  container-type: inline-size;
+}
+
+.site-faq-row {
+  display: grid;
+  gap: 0.625rem;
+  padding: 1.5rem 0;
+  box-shadow: inset 0 -1px 0 var(--site-rule, #d9dfd8);
+}
+
+.site-faq-row:first-child {
+  box-shadow:
+    inset 0 1px 0 var(--site-rule, #d9dfd8),
+    inset 0 -1px 0 var(--site-rule, #d9dfd8);
+}
+
+@container (min-width: 46rem) {
+  .site-faq-row {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3rem;
+    padding: 1.875rem 0;
+  }
+}
+
+/* ── Scrims: what keeps text over photography at 4.5:1 or better ───────── */
+
+.site-scrim,
+.site-scrim-navy,
+.site-scrim-green {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Text sits at the bottom of the tile. */
+.site-scrim {
+  background: linear-gradient(180deg, rgba(10, 16, 12, 0.3) 0%, rgba(10, 16, 12, 0.5) 30%, rgba(10, 16, 12, 0.86) 62%, rgba(10, 16, 12, 0.96) 100%);
+}
+
+.site-scrim-navy {
+  background: linear-gradient(180deg, rgba(0, 28, 60, 0.35) 0%, rgba(0, 30, 64, 0.58) 30%, rgba(0, 24, 54, 0.9) 62%, rgba(0, 18, 42, 0.97) 100%);
+}
+
+.site-scrim-green {
+  background: linear-gradient(180deg, rgba(8, 28, 18, 0.3) 0%, rgba(9, 36, 23, 0.55) 30%, rgba(8, 28, 18, 0.9) 62%, rgba(7, 20, 14, 0.97) 100%);
+}
+
+/* Inner-page hero with a photo: text on the left, photo breathing on the right. */
+.site-pagehero-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 16, 12, 0.72) 0%, rgba(10, 16, 12, 0.82) 45%, rgba(10, 16, 12, 0.94) 100%);
+}
+
+@media (min-width: 1024px) {
+  .site-pagehero-scrim {
+    background:
+      linear-gradient(180deg, rgba(10, 16, 12, 0.55) 0%, rgba(10, 16, 12, 0) 26%, rgba(10, 16, 12, 0) 60%, rgba(10, 16, 12, 0.9) 100%),
+      linear-gradient(90deg, rgba(10, 16, 12, 0.96) 0%, rgba(10, 16, 12, 0.88) 38%, rgba(10, 16, 12, 0.5) 72%, rgba(10, 16, 12, 0.45) 100%);
+  }
+}
+
+/* Delta's panel: navy into cobalt, the "depth" colour of the site. */
+.site-delta-panel {
+  isolation: isolate;
+  overflow: clip;
+  color: #fff;
+  background:
+    radial-gradient(70% 90% at 100% 0%, rgba(47, 124, 240, 0.4) 0%, transparent 62%),
+    linear-gradient(135deg, #041a36 0%, var(--site-navy) 42%, #063889 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 40px 80px -40px rgba(0, 20, 50, 0.7);
+  --site-fg: #ffffff;
+  --site-fg-2: rgba(255, 255, 255, 0.82);
+  --site-fg-3: rgba(255, 255, 255, 0.7);
+  --site-accent: var(--site-sky);
+  --site-rule: rgba(255, 255, 255, 0.14);
+  --site-ring: var(--site-sky);
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+
+/* Phones: the photo is a band behind the headline that melts into the canvas.
+   lg and up: it fills the hero, with the left side held dark for the text. */
+.site-hero-photo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46rem;
+  z-index: -2;
+  overflow: clip;
+}
+
+.site-hero-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46.125rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 16, 12, 0.66) 0%,
+    rgba(10, 16, 12, 0.62) 16%,
+    rgba(10, 16, 12, 0.8) 46%,
+    rgba(10, 16, 12, 0.9) 72%,
+    #0a100c 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .site-hero-photo,
+  .site-hero-scrim {
+    height: auto;
+    bottom: 0;
+  }
+
+  .site-hero-scrim {
+    bottom: -1px;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(10, 16, 12, 0.6) 0%,
+        rgba(10, 16, 12, 0) 20%,
+        rgba(10, 16, 12, 0) 58%,
+        rgba(10, 16, 12, 0.82) 86%,
+        #0a100c 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(10, 16, 12, 0.92) 0%,
+        rgba(10, 16, 12, 0.8) 30%,
+        rgba(10, 16, 12, 0.48) 58%,
+        rgba(10, 16, 12, 0.42) 100%
+      );
+  }
+}
+
+/* ── Reduced motion, reduced transparency, more contrast ──────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .site-reveal[data-reveal],
+  [data-reveal] .site-reveal-item,
+  .site-tiers[data-reveal] .site-tier,
+  .site-tiers[data-reveal] .site-tier-bar,
+  .site-tiers[data-reveal] .site-tier-amount,
+  .site-tiers[data-reveal] .site-tier-meta,
+  .site-tiers[data-reveal] .site-tier-roles {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .site-tiers[data-reveal] .site-tier-fill {
+    transition: none;
+  }
+
+  .site-lift,
+  .site-zoom,
+  .site-btn,
+  .site-btn > svg,
+  .site-link > svg {
+    transition: none;
+  }
+
+  .site-lift:hover,
+  .site-lift:active,
+  .site-btn:active,
+  .site-zoom-host:hover .site-zoom {
+    transform: none;
+  }
+
+  /* The menu simply fades. */
+  .site-menu-panel,
+  .site-menu[data-state="open"] .site-menu-panel {
+    transform: none;
+    transition: opacity 160ms ease;
+  }
+
+  .site-menu-item,
+  .site-menu[data-state="open"] .site-menu-item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  /* A ticker that does not move is a wrapped list. */
+  .site-marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .site-marquee-track {
+    display: block;
+    width: auto;
+  }
+
+  .site-marquee-group {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.75rem;
+    padding-inline: 1.25rem;
+  }
+
+  .site-marquee-group[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-glass,
+  .site-glass-thin,
+  .site-glass-thick {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #131b17;
+  }
+
+  .site-glass-light {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #fff;
+  }
+
+  .site-header-bg {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #0a100c;
+  }
+
+  .site-btn-ghost {
+    background: #1b2620;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .site-tone-dark {
+    --site-fg-2: #ffffff;
+    --site-fg-3: rgba(255, 255, 255, 0.86);
+    --site-rule: rgba(255, 255, 255, 0.4);
+  }
+
+  .site-tone-light {
+    --site-fg-2: #1f2a24;
+    --site-fg-3: #1f2a24;
+    --site-rule: #6b7a72;
+  }
+
+  .site-glass,
+  .site-glass-thin,
+  .site-glass-thick {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #0a100c;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+  }
+
+  .site-glass-light {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #fff;
+    box-shadow: 0 0 0 1px #0f1612;
+  }
+
+  .site-header-bg {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #0a100c;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .site-btn-ghost {
+    background: #0a100c;
+    box-shadow: inset 0 0 0 1px #fff;
+  }
+
+  .site-card,
+  .site-tier {
+    box-shadow: 0 0 0 1px #0f1612;
+  }
+
+  .site-nav-link {
+    color: #fff;
+  }
+}
+
+/* ── Notes for whoever builds on this ──────────────────────────────────────
+   Backdrop root. A glass surface can only blur what is painted inside its
+   nearest ancestor that has opacity below 1, a filter, a mask, or an opacity
+   animation (running or filled). So never fade a wrapper around glass that
+   should blur something outside that wrapper: put site-enter or <Reveal> on
+   the glass element itself. Transforms on ancestors are fine.
+   ────────────────────────────────────────────────────────────────────── */

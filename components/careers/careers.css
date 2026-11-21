@@ -1,0 +1,179 @@
+/*
+ * Career pages and glossary (ROLES). Motion here is limited to hover and
+ * press states; scroll reveals are added site-wide by the SITE builder.
+ * Only transform, opacity and colour change. Hover sits behind a fine pointer.
+ */
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.career-card {
+  position: relative;
+  transition:
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+/* The lift shadow lives on a layer that only fades (no animated box-shadow). */
+.career-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 22px 44px -22px rgba(10, 16, 12, 0.3),
+    0 6px 14px -8px rgba(10, 16, 12, 0.14);
+  opacity: 0;
+  transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.career-card-arrow {
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .career-card:hover {
+    transform: translateY(-2px);
+    border-color: #16c172;
+  }
+  .career-card:hover::after {
+    opacity: 1;
+  }
+  .career-card:hover .career-card-arrow {
+    transform: translateX(3px);
+  }
+}
+.career-card:active {
+  transform: scale(0.97);
+}
+.career-card:focus-visible,
+.career-link:focus-visible {
+  outline: 2px solid #16c172;
+  outline-offset: 3px;
+}
+
+/* Text links and letter chips: press feedback, hover only on fine pointers. */
+.career-press {
+  transition:
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.career-press:active {
+  transform: scale(0.97);
+}
+.career-press:focus-visible {
+  outline: 2px solid #16c172;
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .career-press--chip:hover {
+    background-color: #d9f7e5;
+    border-color: #16c172;
+    color: #07653e;
+  }
+  .career-press--ink:hover {
+    color: #0f1612;
+  }
+  .career-press--toc:hover {
+    color: #07653e;
+  }
+}
+
+/* ── Materials ─────────────────────────────────────────────────────── */
+/* Frosted panel on the dark hero (the "short answer"). */
+.career-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.045));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 60px -30px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+}
+/* Small frosted label floating over a photo. */
+.career-chip {
+  background: rgba(10, 16, 12, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+/* White surface that reads as lifted off the paper. */
+.career-surface {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 2px rgba(10, 16, 12, 0.04),
+    0 18px 40px -28px rgba(10, 16, 12, 0.28);
+}
+/* Delta band: cobalt depth with a soft light from the top left. */
+.career-delta {
+  background:
+    radial-gradient(90% 140% at 0% 0%, rgba(188, 223, 255, 0.16), transparent 55%),
+    linear-gradient(110deg, #00244b, #063889 62%, #0655ce);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .career-glass {
+    background: #161f1b;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .career-chip {
+    background: #0a100c;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .career-glass {
+    background: #161f1b;
+    border-color: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .career-chip {
+    background: #0a100c;
+    border-color: rgba(255, 255, 255, 0.7);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ── Career path line (the "conduit" down the hub page) ────────────── */
+.career-path-line {
+  background: linear-gradient(180deg, #16c172 0%, #16c172 34%, #0655ce 100%);
+}
+
+/* ── Glossary ──────────────────────────────────────────────────────── */
+/*
+ * From lg up the letter bar is sticky under the site header, so anchors must
+ * clear both. The doubled class outranks the site-wide [id] scroll margin
+ * (app/(site)/site.css) without !important. Below lg the site default applies.
+ */
+@media (min-width: 1024px) {
+  .glossary-anchor.glossary-anchor {
+    scroll-margin-top: calc(var(--site-header-total, 4.5rem) + 6rem);
+  }
+}
+/* The term a link points at is marked, with no animation. */
+.glossary-term:target a {
+  color: #07653e;
+  text-decoration: underline;
+  text-decoration-color: #16c172;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .career-card,
+  .career-card::after,
+  .career-card-arrow,
+  .career-press {
+    transition: none;
+  }
+  .career-card:hover,
+  .career-card:active,
+  .career-press:active,
+  .career-card:hover .career-card-arrow {
+    transform: none;
+  }
+}

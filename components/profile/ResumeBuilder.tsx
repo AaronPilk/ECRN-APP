@@ -42,21 +42,34 @@ export function ResumeBuilder({ initial }: { initial: ResumeAnswers }) {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const first = useRef(true);
+  const initialAnswers = useRef(a);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saves = useRef<Promise<unknown>>(Promise.resolve());
+  const saveRevision = useRef(0);
+  const generationInProgress = useRef(false);
 
   // Debounced autosave.
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    // Skip the untouched draft, including React's development effect replay.
+    if (a === initialAnswers.current) return;
+    if (generationInProgress.current) return;
+    const revision = ++saveRevision.current;
     setSaving("saving");
-    const t = setTimeout(async () => {
-      const r = await saveResumeBuilderAction(a);
-      setSaving(r.ok ? "saved" : "idle");
-      if (!r.ok) setError(r.error ?? null);
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      const save = saves.current.catch(() => {}).then(() => saveResumeBuilderAction(a));
+      saves.current = save;
+      void save.then((r) => {
+        if (revision !== saveRevision.current || generationInProgress.current) return;
+        setSaving(r.ok ? "saved" : "idle");
+        setError(r.ok ? null : r.error ?? "Couldn't save your answers.");
+      }).catch(() => {
+        if (revision !== saveRevision.current || generationInProgress.current) return;
+        setSaving("idle");
+        setError("Couldn't save your answers. Check your connection and try again.");
+      });
     }, 700);
-    return () => clearTimeout(t);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [a]);
 
   const section = SECTIONS[idx].id;
@@ -68,16 +81,30 @@ export function ResumeBuilder({ initial }: { initial: ResumeAnswers }) {
     });
 
   async function generate() {
+    if (generationInProgress.current) return;
+    generationInProgress.current = true;
+    saveRevision.current += 1;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
     setGenerating(true);
     setError(null);
-    const r = await saveResumeBuilderAction(a, { generate: true });
-    setGenerating(false);
-    if (!r.ok) return setError(r.error ?? "Couldn't build it.");
-    router.push("/candidate/resume?built=1");
+    try {
+      // Complete queued autosaves before generation so an older answer snapshot
+      // cannot overwrite the generated resume after it has been saved.
+      await saves.current.catch(() => {});
+      const r = await saveResumeBuilderAction(a, { generate: true });
+      if (!r.ok) { setError(r.error ?? "Couldn't build it."); return; }
+      setSaving("saved");
+      router.push("/candidate/resume?built=1");
+    } catch {
+      setError("Couldn't build your resume. Check your connection and try again.");
+    } finally {
+      generationInProgress.current = false;
+      setGenerating(false);
+    }
   }
 
   return (
-    <div className="space-y-5 pb-32">
+    <fieldset disabled={generating} aria-label="Resume builder" className="min-w-0 space-y-5 pb-32">
       {/* Section tabs */}
       <div className="flex gap-1.5 overflow-x-auto -mx-[22px] px-[22px] pb-1">
         {SECTIONS.map((s, i) => (
@@ -192,7 +219,7 @@ export function ResumeBuilder({ initial }: { initial: ResumeAnswers }) {
 
       {error && <p className="text-[13.5px] text-red-700">{error}</p>}
 
-      <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+      <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper border-t border-ecrn-line lg:border-0">
         <div className="max-w-3xl mx-auto px-[22px] py-3 flex items-center gap-3">
           <span className="text-[12px] text-ecrn-secondary w-16">{saving === "saving" ? "Saving…" : saving === "saved" ? "Saved" : ""}</span>
           {idx < SECTIONS.length - 1 ? (
@@ -206,7 +233,7 @@ export function ResumeBuilder({ initial }: { initial: ResumeAnswers }) {
           )}
         </div>
       </div>
-    </div>
+    </fieldset>
   );
 }
 

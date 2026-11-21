@@ -25,8 +25,8 @@ export function AppSettings() {
     void BiometricAuth.checkBiometry()
       .then((r) => setLockAvailable(r.isAvailable || r.deviceIsSecure))
       .catch(() => {});
-    void Preferences.get({ key: APP_LOCK_KEY }).then(({ value }) => setLockOn(value === "on"));
-    void getPushState().then(setPush);
+    void Preferences.get({ key: APP_LOCK_KEY }).then(({ value }) => setLockOn(value === "on")).catch(() => {});
+    void getPushState().then(setPush).catch(() => {});
   }, []);
 
   if (!native) return null;
@@ -52,15 +52,20 @@ export function AppSettings() {
   async function turnOnPush() {
     setBusy(true);
     setPushMsg(null);
-    const res = await enablePush();
-    setBusy(false);
-    if (res.ok) {
-      setPush("on");
-      setPushMsg("You'll get updates when your referrals move or payouts change.");
-    } else if (res.error === "denied") {
-      setPush("denied");
-    } else {
+    try {
+      const res = await enablePush();
+      if (res.ok) {
+        setPush("on");
+        setPushMsg("You'll get updates when your referrals move or payouts change.");
+      } else if (res.error === "denied") {
+        setPush("denied");
+      } else {
+        setPushMsg("Notifications aren't available in this build yet.");
+      }
+    } catch {
       setPushMsg("Notifications aren't available in this build yet.");
+    } finally {
+      setBusy(false);
     }
   }
 

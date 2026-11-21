@@ -5,11 +5,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile, homeForRole } from "@/lib/auth/session";
+import { isDemoEmail, safeNext } from "@/lib/auth/redirect";
 import { setMyRole } from "@/lib/data/repository";
 
 /**
  * Supabase Auth server actions: password sign-up/sign-in, magic link,
- * password reset, onboarding role choice, and the demo-account shortcut.
+ * password reset, and onboarding role choice.
  *
  * Errors redirect back to the form with ?error=... so pages can show them
  * without client-side state.
@@ -28,11 +29,6 @@ async function siteOrigin(): Promise<string> {
 function back(path: string, params: Record<string, string>): never {
   const qs = new URLSearchParams(params).toString();
   redirect(`${path}${qs ? `?${qs}` : ""}`);
-}
-
-function safeNext(next: FormDataEntryValue | null): string | null {
-  const v = typeof next === "string" ? next : "";
-  return v.startsWith("/") && !v.startsWith("//") ? v : null;
 }
 
 /** Where the sign-up came from: the iOS or Android app (their web views add "ECRNApp"), or the website. */
@@ -138,6 +134,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     password: formData.get("password"),
   });
   if (!parsed.success) back("/login", { error: parsed.error.errors[0]?.message ?? "Invalid input", ...(next ? { next } : {}) });
+  if (isDemoEmail(parsed.data.email)) back("/login", { message: "Sign in with your own ECRN account." });
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -165,7 +162,7 @@ export async function magicLinkAction(formData: FormData): Promise<void> {
     email: email.data,
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next ?? "/dashboard")}`,
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next ?? "/start")}`,
     },
   });
 
@@ -208,8 +205,8 @@ export async function resetPasswordAction(formData: FormData): Promise<void> {
 
 export async function logoutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  redirect("/");
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/login");
 }
 
 // ─── Onboarding role choice ──────────────────────────────────────────
@@ -234,34 +231,4 @@ export async function setRoleAction(formData: FormData): Promise<void> {
     default:
       redirect("/dashboard?welcome=1");
   }
-}
-
-// ─── Demo accounts (only when NEXT_PUBLIC_DEMO_MODE=true) ────────────
-
-const DEMO_ACCOUNTS = {
-  referral_partner: "partner@demo.goecrn.com",
-  candidate: "candidate@demo.goecrn.com",
-} as const;
-
-export async function demoLoginAction(formData: FormData): Promise<void> {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") back("/login", { error: "Demo mode is off" });
-
-  const role = String(formData.get("role") ?? "");
-  if (role === "admin") {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.signOut();
-    back("/login", { next: "/admin" });
-  }
-
-  const email = DEMO_ACCOUNTS[role as keyof typeof DEMO_ACCOUNTS];
-  const password = process.env.DEMO_ACCOUNT_PASSWORD;
-  if (!email) back("/login", { error: "Unknown demo account" });
-  if (!password) back("/login", { error: "Demo password isn't configured on the server (DEMO_ACCOUNT_PASSWORD)" });
-
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) back("/login", { error: `Demo sign-in failed: ${error.message}` });
-
-  redirect("/dashboard");
 }

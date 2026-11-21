@@ -26,9 +26,11 @@ export default async function ApplicationDetailPage(props: PageProps) {
     redirect("/candidate/applications");
   }
 
-  const job = await getJobById(application.jobId);
+  const [job, activity] = await Promise.all([
+    getJobById(application.jobId),
+    listActivityForEntity("job_application", application.id),
+  ]);
   if (!job) notFound();
-  const activity = await listActivityForEntity("job_application", application.id);
 
   // Build the review history: activity log entries plus the submission itself.
   const history = [
@@ -38,7 +40,9 @@ export default async function ApplicationDetailPage(props: PageProps) {
       at: a.createdAt,
     })),
     { id: "submitted", label: "Application submitted", at: application.createdAt },
-  ].filter((h, i, arr) => arr.findIndex((x) => x.label === h.label && x.at === h.at) === i);
+  ]
+    .filter((h, i, arr) => arr.findIndex((x) => x.label === h.label && x.at === h.at) === i)
+    .sort((a, b) => b.at.localeCompare(a.at));
 
   return (
     <Page>

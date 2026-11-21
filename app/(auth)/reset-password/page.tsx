@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "../SubmitButton";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { FormMessage } from "@/components/ui/FormMessage";
@@ -33,9 +33,9 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           <Label htmlFor="confirm">Confirm password</Label>
           <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
         </div>
-        <Button type="submit" variant="dark" fullWidth size="lg">
+        <SubmitButton pendingLabel="Saving password…" variant="dark" fullWidth size="lg">
           Save password
-        </Button>
+        </SubmitButton>
       </form>
     </Card>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useLayoutEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Contacts } from "@capacitor-community/contacts";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
@@ -8,12 +8,8 @@ import { BookUser, Check, ChevronLeft, Search, ShieldCheck, TriangleAlert } from
 import { Button } from "@/components/ui/Button";
 import { isNativeApp } from "@/lib/native/platform";
 import { cn } from "@/lib/utils/cn";
-import { importContactsAction, type ImportedContact, type ImportSummary } from "@/app/(app)/referrals/actions";
-
-interface Row extends ImportedContact {
-  key: string;
-  display: string;
-}
+import { importContactsAction, type ImportSummary } from "@/app/(app)/referrals/actions";
+import { ContactList, type ContactRow as Row } from "./ContactList";
 
 type Stage = "intro" | "denied" | "unsupported" | "pick" | "review" | "done";
 
@@ -42,6 +38,14 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [pending, startTransition] = useTransition();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const searchQuery = useDeferredValue(query);
+
+  useLayoutEffect(() => {
+    // A review screen must start at its heading, not at the scroll offset of a
+    // long contacts list. Do this before paint to prevent a visible jump.
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [stage]);
 
   async function loadNative() {
     setLoading(true);
@@ -123,17 +127,17 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
   }
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
       [r.display, r.email, r.phone, r.company, r.currentJobTitle].some((v) => v?.toLowerCase().includes(q))
     );
-  }, [rows, query]);
+  }, [rows, searchQuery]);
 
-  const chosen = rows.filter((r) => selected.has(r.key));
+  const chosen = useMemo(() => rows.filter((r) => selected.has(r.key)), [rows, selected]);
   const notReady = chosen.filter((r) => !isReady(r));
 
-  function toggle(key: string) {
+  const toggle = useCallback((key: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -141,7 +145,7 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
       return next;
     });
     if (isNativeApp()) void Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
-  }
+  }, []);
 
   function edit(key: string, patch: Partial<Row>) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -149,10 +153,15 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
 
   function submit() {
     if (!chosen.length || notReady.length) return;
+    setSubmitError(null);
     startTransition(async () => {
-      const result = await importContactsAction(chosen.map(({ key: _k, display: _d, ...c }) => c));
-      setSummary(result);
-      setStage("done");
+      try {
+        const result = await importContactsAction(chosen.map(({ key: _k, display: _d, ...c }) => c));
+        setSummary(result);
+        setStage("done");
+      } catch {
+        setSubmitError("We couldn't send the referrals. Check your connection and try again.");
+      }
     });
   }
 
@@ -227,7 +236,8 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
           })}
         </ul>
 
-        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+        {submitError && <p role="alert" className="text-[14px] text-red-700">{submitError}</p>}
+        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper border-t border-ecrn-line lg:border-0">
           <div className="max-w-3xl mx-auto px-[22px] py-3">
             <Button fullWidth size="lg" disabled={!chosen.length || notReady.length > 0 || pending} loading={pending} onClick={submit}>
               {notReady.length > 0
@@ -251,7 +261,8 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${rows.length} contacts`}
-            className="flex-1 bg-transparent outline-none text-[16px]"
+            aria-label="Search contacts"
+            className="min-w-0 flex-1 bg-transparent outline-none text-[16px]"
           />
         </div>
         <div className="flex items-center justify-between text-[13.5px]">
@@ -274,28 +285,9 @@ export function ContactImporter({ welcome }: { welcome?: boolean }) {
           )}
         </div>
 
-        <div className="group-surface divide-y divide-ecrn-line">
-          {visible.length === 0 && <p className="p-5 text-[14px] text-ecrn-secondary">No contacts match.</p>}
-          {visible.map((r) => {
-            const on = selected.has(r.key);
-            return (
-              <button key={r.key} type="button" onClick={() => toggle(r.key)} className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-ecrn-paper">
-                <span className={cn("w-6 h-6 shrink-0 rounded-full border-2 grid place-items-center", on ? "bg-ecrn-green border-ecrn-green text-ecrn-action-ink" : "border-ecrn-line")}>
-                  {on && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15.5px] font-medium text-ecrn-ink truncate">{r.display}</span>
-                  <span className="block text-[12.5px] text-ecrn-secondary truncate">
-                    {[r.currentJobTitle, r.company].filter(Boolean).join(" · ") || r.phone || r.email}
-                  </span>
-                </span>
-                {!hasPhone(r) && <span className="text-[11px] text-amber-700 shrink-0">No phone</span>}
-              </button>
-            );
-          })}
-        </div>
+        <ContactList rows={visible} selected={selected} onToggle={toggle} />
 
-        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
+        <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper border-t border-ecrn-line lg:border-0">
           <div className="max-w-3xl mx-auto px-[22px] py-3">
             <Button fullWidth size="lg" disabled={!selected.size} onClick={() => setStage("review")}>
               Review {selected.size || ""} {selected.size === 1 ? "person" : "people"}
@@ -377,7 +369,7 @@ function ReviewField({
         onChange={(e) => onChange(e.target.value)}
         inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
         placeholder={missing ? "Required" : soft ? "Add if you know it" : ""}
-        className="min-w-0 flex-1 text-right bg-transparent outline-none text-[15.5px] text-ecrn-ink placeholder:text-ecrn-secondary/60"
+        className="min-w-0 flex-1 text-right bg-transparent outline-none text-[16px] text-ecrn-ink placeholder:text-ecrn-secondary/60"
       />
     </label>
   );

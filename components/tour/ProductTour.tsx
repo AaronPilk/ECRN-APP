@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -64,12 +63,11 @@ function findVisible(selector: string): HTMLElement | null {
 }
 
 export function ProductTour({ firstName }: { firstName: string | null }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const all = steps(firstName);
+  const all = useMemo(() => steps(firstName), [firstName]);
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Start after the page has painted.
   useEffect(() => {
@@ -82,8 +80,14 @@ export function ProductTour({ firstName }: { firstName: string | null }) {
   const measure = useCallback(() => {
     if (!step?.target) return setRect(null);
     const el = findVisible(step.target);
-    setRect(el ? el.getBoundingClientRect() : null);
-  }, [step]);
+    const next = el?.getBoundingClientRect() ?? null;
+    setRect((previous) => {
+      if (!next || !previous) return previous === next ? previous : next;
+      return previous.top === next.top && previous.left === next.left && previous.width === next.width && previous.height === next.height
+        ? previous
+        : next;
+    });
+  }, [step?.target]);
 
   // Skip steps whose element isn't on screen; scroll the target into view.
   useLayoutEffect(() => {
@@ -94,27 +98,52 @@ export function ProductTour({ firstName }: { firstName: string | null }) {
         setI((n) => Math.min(n + 1, all.length - 1));
         return;
       }
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
-      const t = setTimeout(measure, 380);
-      return () => clearTimeout(t);
+      // Move once per step. Repeating smooth scroll on every rect update made
+      // the page and tooltip chase each other while the user tried to tap Next.
+      const header = document.querySelector<HTMLElement>("[data-app-header]");
+      const top = Math.max(header?.getBoundingClientRect().bottom ?? 0, 16) + 12;
+      const bottom = cardRef.current?.getBoundingClientRect().top ?? window.innerHeight - 280;
+      const target = el.getBoundingClientRect();
+      const isTab = Boolean(el.closest("nav, aside"));
+      if (!isTab && (target.top < top || target.bottom > bottom - 12)) {
+        window.scrollBy({ top: target.top - top, behavior: "instant" });
+      }
+      measure();
+      return;
     }
     setRect(null);
-  }, [open, i, step, measure, all.length]);
+  }, [open, step, measure, all.length]);
 
   useEffect(() => {
     if (!open) return;
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, { passive: true });
-    return () => {
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure);
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => { frame = 0; measure(); });
     };
-  }, [open, measure]);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+    const observer = new ResizeObserver(schedule);
+    const target = step?.target ? findVisible(step.target) : null;
+    if (target) observer.observe(target);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
+    };
+  }, [open, measure, step?.target]);
 
   function finish() {
     setOpen(false);
-    void markTourDoneAction();
-    router.replace(pathname);
+    void markTourDoneAction().catch(() => {});
+    // Remove replay state without initiating a second navigation that can race
+    // the final "Browse jobs" / "Refer contacts" link.
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("tour")) {
+      url.searchParams.delete("tour");
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
   }
 
   if (!open || !step) return null;
@@ -123,33 +152,24 @@ export function ProductTour({ firstName }: { firstName: string | null }) {
   const spot = step.target && rect
     ? { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 }
     : null;
-  // Tooltip goes below the spotlight if there's room, otherwise above.
-  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-  const below = spot ? spot.top + spot.height + 220 < vh : true;
   const isLast = i === all.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="App tour">
+    <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="App tour" onKeyDown={(event) => { if (event.key === "Escape") finish(); }}>
       {spot ? (
         <div
-          className="absolute rounded-[18px] transition-all duration-300 ease-out pointer-events-none"
-          style={{ ...spot, boxShadow: "0 0 0 9999px rgba(5, 12, 9, 0.62)", outline: "2px solid #36DC86" }}
+          className="absolute rounded-[18px] pointer-events-none"
+          style={{ ...spot, boxShadow: "0 0 0 100vmax rgba(5, 12, 9, 0.62)", outline: "2px solid #36DC86" }}
         />
       ) : (
         <div className="absolute inset-0 bg-[rgba(5,12,9,0.62)]" />
       )}
 
       <div
-        className="absolute inset-x-4 mx-auto max-w-sm rounded-[20px] bg-white p-5 shadow-pass animate-slide-up"
-        style={
-          spot
-            ? below
-              ? { top: Math.min(spot.top + spot.height + 12, vh - 230) }
-              : { top: Math.max(spot.top - 212, 12) }
-            : { top: "50%", transform: "translateY(-50%)" }
-        }
+        ref={cardRef}
+        className="absolute inset-x-4 bottom-[calc(max(env(safe-area-inset-bottom),12px)+80px)] mx-auto max-w-sm max-h-[60dvh] overflow-y-auto rounded-[20px] bg-white p-5 shadow-pass"
       >
-        <button type="button" onClick={finish} aria-label="Skip tour" className="absolute right-3 top-3 p-1.5 text-ecrn-secondary">
+        <button type="button" onClick={finish} aria-label="Skip tour" className="absolute right-1 top-1 h-11 w-11 grid place-items-center text-ecrn-secondary">
           <X className="w-4 h-4" />
         </button>
         <p className="t-eyebrow">

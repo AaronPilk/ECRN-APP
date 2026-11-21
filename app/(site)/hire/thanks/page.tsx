@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 
 export const metadata = { title: "Thanks", robots: { index: false, follow: true } };
 
@@ -15,10 +14,8 @@ export default function HireThanksPage() {
             Your hiring need is in front of Delta&apos;s recruiting team. Someone will reach out
             shortly.
           </p>
-          <Link href="/" className="block mt-6">
-            <Button variant="secondary" fullWidth>
-              Back to home
-            </Button>
+          <Link href="/" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-[15px] border border-ecrn-line bg-white px-4 text-[15px] font-medium text-ecrn-ink hover:bg-ecrn-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-ecrn-green">
+            Back to home
           </Link>
         </Card>
       </div>

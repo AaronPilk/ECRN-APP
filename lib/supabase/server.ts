@@ -1,13 +1,15 @@
 import "server-only";
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, assertSupabaseEnv } from "./env";
 
 /**
  * Server-side Supabase client bound to the signed-in user's session cookie.
- * Every query runs as that user, so Row Level Security applies.
+ * Every query runs as that user, so Row Level Security applies. Reuse the
+ * client within one server render, never across users or requests.
  */
-export async function createSupabaseServerClient() {
+export const createSupabaseServerClient = cache(async () => {
   assertSupabaseEnv();
   const cookieStore = await cookies();
   return createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -26,4 +28,4 @@ export async function createSupabaseServerClient() {
       },
     },
   });
-}
+});

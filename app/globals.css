@@ -36,6 +36,14 @@
   select {
     font-size: 16px; /* prevents iOS zoom on focus */
   }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
 }
 
 @layer components {
@@ -71,6 +79,17 @@
   }
   .reward-panel {
     background: linear-gradient(104deg, #063889, #0655ce);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

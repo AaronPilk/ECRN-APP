@@ -175,8 +175,7 @@ export function DemoDataPanel({ counts, error }: { counts: DemoCounts | null; er
             <RemoveDemoDataForm hasDemoData={counts.total > 0} />
             {kept > 0 && (
               <p className="mt-3 text-[12.5px] leading-relaxed text-ecrn-secondary">
-                Not part of this: the {fmtNum(counts.kept.demoAccounts)} demo {counts.kept.demoAccounts === 1 ? "login" : "logins"} used by demo
-                mode, {fmtNum(counts.kept.sampleCandidates)} sample {counts.kept.sampleCandidates === 1 ? "candidate" : "candidates"} that belong
+                Not part of this: the {fmtNum(counts.kept.demoAccounts)} older demo {counts.kept.demoAccounts === 1 ? "account" : "accounts"}, {fmtNum(counts.kept.sampleCandidates)} sample {counts.kept.sampleCandidates === 1 ? "candidate" : "candidates"} that belong
                 to them, and the sample jobs. Those stay until you remove them yourself.
               </p>
             )}
@@ -235,13 +234,8 @@ export function LaunchChecklist({
 
   const steps: Step[] = [
     {
-      title: "Turn off demo mode",
-      body: (
-        <>
-          Set <span className={code}>NEXT_PUBLIC_DEMO_MODE</span> to <span className={code}>false</span> where the app is hosted, then
-          redeploy. That takes the demo sign-in shortcuts off the login screen.
-        </>
-      ),
+      title: "Use normal account sign-in",
+      body: "Members and owners use the same email and password login. Their account opens the member app or admin dashboard automatically.",
       status: c.demoMode ? "todo" : "done",
     },
     {
@@ -335,16 +329,11 @@ export function ConnectionsPanel({ connections: c }: { connections: Connections 
       detail: "Supabase: accounts, data and the access rules that keep members' information private.",
     },
     {
-      name: "Demo mode",
-      ok: c.demoMode,
-      okLabel: "On",
-      offLabel: "Off",
-      warnWhenOn: true,
-      detail: (
-        <>
-          Shows demo sign-in shortcuts on the login screen. <span className={code}>NEXT_PUBLIC_DEMO_MODE</span>
-        </>
-      ),
+      name: "Account sign-in",
+      ok: !c.demoMode,
+      okLabel: "Normal login",
+      offLabel: "Check configuration",
+      detail: "Sign in with your email and password. Your account determines whether you see the member app or the admin dashboard.",
     },
     {
       name: "Staffing Referrals delivery",

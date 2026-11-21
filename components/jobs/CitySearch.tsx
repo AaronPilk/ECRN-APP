@@ -27,24 +27,47 @@ export function CitySearch({
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const seq = useRef(0);
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) {
+    const mine = ++seq.current;
+    setError(null);
+    if (term.length < 2 || term === selectedLabel) {
       setResults([]);
+      setOpen(false);
       return;
     }
-    const mine = ++seq.current;
+    const controller = new AbortController();
     const t = setTimeout(async () => {
-      const { data } = await getSupabaseBrowserClient().rpc("search_places", { q: term, lim: 6 });
-      if (mine === seq.current) {
+      try {
+        const { data, error: queryError } = await getSupabaseBrowserClient()
+          .rpc("search_places", { q: term, lim: 6 })
+          .abortSignal(controller.signal);
+        if (controller.signal.aborted || mine !== seq.current) return;
+        if (queryError) throw queryError;
         setResults((data as Place[]) ?? []);
         setOpen(true);
+      } catch {
+        if (!controller.signal.aborted && mine === seq.current) {
+          setResults([]);
+          setError("City search couldn't connect. Please try again.");
+        }
       }
     }, 160);
-    return () => clearTimeout(t);
-  }, [q]);
+    return () => { clearTimeout(t); controller.abort(); };
+  }, [q, selectedLabel]);
+
+  function pick(place: Place) {
+    const label = `${place.name}, ${place.state}`;
+    seq.current += 1;
+    setSelectedLabel(label);
+    setQ(label);
+    setOpen(false);
+    onPick(place);
+  }
 
   return (
     <div className={cn("relative", className)}>
@@ -60,18 +83,17 @@ export function CitySearch({
           autoCapitalize="words"
           enterKeyHint="search"
           aria-label={placeholder}
-          className="flex-1 bg-transparent outline-none text-[16px] text-ecrn-ink placeholder:text-ecrn-secondary/70"
+          className="min-w-0 flex-1 bg-transparent outline-none text-[16px] text-ecrn-ink placeholder:text-ecrn-secondary/70"
           onKeyDown={(e) => {
             if (e.key === "Enter" && results[0]) {
               e.preventDefault();
-              onPick(results[0]);
-              setQ(`${results[0].name}, ${results[0].state}`);
-              setOpen(false);
+              pick(results[0]);
             }
+            if (e.key === "Escape") setOpen(false);
           }}
         />
         {q && (
-          <button type="button" aria-label="Clear" onClick={() => { setQ(""); setResults([]); }} className="p-1 -mr-1">
+          <button type="button" aria-label="Clear" onClick={() => { seq.current += 1; setQ(""); setSelectedLabel(""); setResults([]); setOpen(false); }} className="p-1 -mr-1">
             <X className="w-4 h-4 text-ecrn-secondary" />
           </button>
         )}
@@ -83,11 +105,7 @@ export function CitySearch({
               <button
                 type="button"
                 className="w-full text-left px-4 py-3 text-[15px] hover:bg-ecrn-paper border-b border-ecrn-line last:border-0"
-                onClick={() => {
-                  onPick(p);
-                  setQ(`${p.name}, ${p.state}`);
-                  setOpen(false);
-                }}
+                onClick={() => pick(p)}
               >
                 <span className="font-medium text-ecrn-ink">{p.name}</span>
                 <span className="text-ecrn-secondary">, {p.state}</span>
@@ -96,6 +114,7 @@ export function CitySearch({
           ))}
         </ul>
       )}
+      {error && <p role="status" className="mt-1 text-[13px] text-amber-700">{error}</p>}
     </div>
   );
 }

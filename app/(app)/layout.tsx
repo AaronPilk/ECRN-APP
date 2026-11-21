@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -25,17 +26,23 @@ function platformFromUserAgent(ua: string | null): "ios" | "android" | "web" {
  * This feeds the active-member numbers on the admin side and must never be
  * the reason a page fails to load.
  */
-async function touchLastSeen(profile: Profile): Promise<void> {
+async function scheduleLastSeen(profile: Profile): Promise<void> {
   const last = profile.lastSeenAt ? Date.parse(profile.lastSeenAt) : NaN;
   if (Number.isFinite(last) && Date.now() - last < LAST_SEEN_STALE_MS) return;
   try {
     const userAgent = (await headers()).get("user-agent");
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({ last_seen_at: new Date().toISOString(), last_platform: platformFromUserAgent(userAgent) })
-      .eq("id", profile.id);
-    if (error) console.error("[ECRN] last seen update failed:", error.message);
+    after(async () => {
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ last_seen_at: new Date().toISOString(), last_platform: platformFromUserAgent(userAgent) })
+          .eq("id", profile.id);
+        if (error) console.error("[ECRN] last seen update failed:", error.message);
+      } catch (e) {
+        console.error("[ECRN] last seen update failed:", e instanceof Error ? e.message : e);
+      }
+    });
   } catch (e) {
     console.error("[ECRN] last seen update failed:", e instanceof Error ? e.message : e);
   }
@@ -50,7 +57,8 @@ export default async function AuthedAppLayout({ children }: { children: React.Re
   if (!profile) redirect("/login");
   // An admin deactivated this account: no access to the app.
   if (!profile.isActive && profile.role !== "admin") redirect("/account-disabled");
-  await touchLastSeen(profile);
   if (!profile.onboarded && profile.role !== "admin") redirect("/onboarding");
+  // Activity bookkeeping must not hold up navigation or the first paint.
+  await scheduleLastSeen(profile);
   return <AppShell profile={profile}>{children}</AppShell>;
 }

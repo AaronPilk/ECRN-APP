@@ -3,7 +3,7 @@ import { LegalPage, SUPPORT_EMAIL } from "@/components/legal/LegalPage";
 import { pageMeta } from "@/lib/site";
 
 export const metadata: Metadata = pageMeta({
-  title: "Help & Support | ECRN",
+  title: "Account, Referral and Payout Support | ECRN",
   description:
     "Get help with ECRN: referral payouts, duplicate referrals, account access, deleting your account, and hiring through Delta Construction Partners.",
   path: "/support",

@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { toProfile } from "@/lib/data/mappers";
+import { isDemoEmail } from "./redirect";
 import type { Profile, UserRole } from "@/types";
 
 /**
@@ -11,12 +12,15 @@ import type { Profile, UserRole } from "@/types";
  */
 export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // Verify the signed token with Supabase's cached public keys instead of
+  // fetching the full Auth user for every page. Legacy signing keys still
+  // fall back to remote verification inside getClaims().
+  const { data: verified, error } = await supabase.auth.getClaims();
+  const userId = verified?.claims.sub;
+  if (error || !userId || isDemoEmail(verified?.claims.email)) return null;
 
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  // Roles and account status always come from the current database row.
+  const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
   return data ? toProfile(data) : null;
 });
 

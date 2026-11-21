@@ -1,8 +1,20 @@
+const { execFileSync } = require("node:child_process");
+
+function releaseId() {
+  if (process.env.WORKERS_CI_COMMIT_SHA) return process.env.WORKERS_CI_COMMIT_SHA;
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "development";
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Types are checked separately with `npm run type-check`.
-  typescript: { ignoreBuildErrors: true },
+  env: { NEXT_PUBLIC_ECRN_BUILD_ID: releaseId() },
+  // Cloudflare's production build must also pass TypeScript validation.
+  typescript: { ignoreBuildErrors: false },
   // Cloudflare Workers: serve images as-is (no Next image optimizer).
   images: { unoptimized: true },
   async headers() {

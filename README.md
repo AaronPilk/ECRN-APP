@@ -4,25 +4,23 @@ A Delta Construction Partners initiative. Mobile-first PWA where referral partne
 upload construction contacts, candidates apply to jobs, companies submit hiring needs,
 and the Delta team runs everything from an admin dashboard.
 
-**Stack:** Next.js 15 · Supabase (Postgres + Auth + Row Level Security) · Tailwind ·
+**Stack:** Next.js 16 · Supabase (Postgres + Auth + Row Level Security) · Tailwind ·
 Cloudflare Workers via OpenNext.
 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev          # http://localhost:3000
 ```
 
-`.env.local` (gitignored) holds the Supabase URL/publishable key and the demo password.
+`.env.local` (gitignored) holds the Supabase URL and publishable key.
 See `.env.example`.
 
 ## Deploy to Cloudflare
 
 ```bash
-npx wrangler login                              # first time only
-npm run deploy                                  # builds + deploys the "ecrn" Worker
-npx wrangler secret put DEMO_ACCOUNT_PASSWORD   # first time only
+git push origin main   # Cloudflare Workers Builds builds and deploys main
 ```
 
 Public config lives in `wrangler.jsonc` (`vars`) and `.env.production`. Secrets are only
@@ -33,12 +31,15 @@ Configuration (Site URL + Redirect URLs, plus `http://localhost:3000/**`).
 
 ## Accounts & roles
 
-- **Admin:** any email in the `admin_allowlist` table becomes admin on signup
-  (currently `aaron@skyway.media`).
+- **Admin:** existing owners sign in at `/login`; their database profile routes them to `/admin`.
+  The `admin_allowlist` controls which new signups may become administrators.
 - **Referral partner / candidate / company:** chosen during onboarding. Users can never
   promote themselves to admin (enforced in the database).
-- **Demo accounts** (only when `NEXT_PUBLIC_DEMO_MODE=true`):
-  `partner@demo.goecrn.com` and `candidate@demo.goecrn.com`. They only see sample data.
+- **Normal member login:** `/login` opens onboarding for a new member, then the shared
+  Home / Jobs / Referrals / Earnings / Profile app. Demo login and role switching are retired.
+- **Native apps:** iOS and Android load this same live website. Cold launches load the
+  current deployment. After a minute in the background, viewing screens reload when a
+  new release is available; forms show an update button so unfinished work is preserved.
 
 ## Database
 

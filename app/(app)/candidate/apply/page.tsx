@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CircleCheck, FileText, Lock } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Textarea } from "@/components/ui/Input";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { Page, BackLink } from "@/components/ui/Page";
@@ -118,15 +118,15 @@ export default async function ApplyPage(props: PageProps) {
             <Lock className="w-4 h-4 shrink-0 text-cobalt" /> Confidential: Delta won&apos;t contact your current employer.
           </p>
         )}
-      </form>
 
       <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
         <div className="max-w-3xl mx-auto px-[22px] py-3">
-          <Button form="apply-form" type="submit" fullWidth size="lg" variant="deep">
+          <SubmitButton pendingLabel="Submitting…" fullWidth size="lg" variant="deep">
             Submit application
-          </Button>
+          </SubmitButton>
         </div>
       </div>
+      </form>
     </Page>
   );
 }

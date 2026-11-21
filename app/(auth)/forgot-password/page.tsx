@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "../SubmitButton";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { FormMessage } from "@/components/ui/FormMessage";
@@ -24,9 +24,9 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" required autoComplete="email" inputMode="email" autoFocus />
         </div>
-        <Button type="submit" variant="dark" fullWidth size="lg">
+        <SubmitButton pendingLabel="Sending link…" variant="dark" fullWidth size="lg">
           Send reset link
-        </Button>
+        </SubmitButton>
       </form>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm">

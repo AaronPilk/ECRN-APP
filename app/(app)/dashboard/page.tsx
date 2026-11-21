@@ -50,6 +50,7 @@ export default async function MemberHome({ searchParams }: { searchParams: Promi
   const ranked = rankJobs(jobs, profile);
   const approved = payouts.filter((p) => p.status === "approved").reduce((s, p) => s + p.amountCents, 0);
   const paid = payouts.filter((p) => p.status === "paid").reduce((s, p) => s + p.amountCents, 0);
+  const displayedEarnings = approved > 0 ? approved : paid > 0 ? paid : stats.estimatedEarningsCents;
   const statusLine =
     approved > 0 ? "Approved for payout" : paid > 0 ? "Paid to date" : stats.totalReferrals > 0 ? "Estimated" : "Refer someone to start earning";
   const jobsFirst = profile.intent === "job" || profile.intent === "open";
@@ -60,7 +61,7 @@ export default async function MemberHome({ searchParams }: { searchParams: Promi
     <section key="earn" data-tour="earnings" className="space-y-2">
       <EarningsPass
         label="Referral earnings"
-        amount={formatCents(stats.estimatedEarningsCents)}
+        amount={formatCents(displayedEarnings)}
         status={statusLine}
         stats={[
           { label: "Referrals", value: stats.totalReferrals },

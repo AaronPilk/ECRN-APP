@@ -4,8 +4,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * ECRN native app (iOS + Android).
  *
  * The app loads the live ECRN site inside a native shell, so every web
- * deploy updates the app instantly — no App Store resubmission needed for
- * content or UI changes. Native features (contacts, push, share, Face ID)
+ * deploy is available on the next page load, with a release check on resume.
+ * Content and UI changes do not need a new native build. Native features
+ * (contacts, push, share, Face ID)
  * are exposed to the site through Capacitor plugins.
  */
 const APP_URL = "https://ecrn.aaron-9c3.workers.dev";

@@ -3,7 +3,7 @@ import { LegalPage, SUPPORT_EMAIL } from "@/components/legal/LegalPage";
 import { pageMeta } from "@/lib/site";
 
 export const metadata: Metadata = pageMeta({
-  title: "Privacy Policy | ECRN",
+  title: "Privacy Policy: Your Account and Personal Data | ECRN",
   description:
     "How ECRN collects, uses, and protects your information, including contacts you choose to refer, resumes, and location for nearby jobs.",
   path: "/privacy",

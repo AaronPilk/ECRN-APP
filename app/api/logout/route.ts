@@ -3,8 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function signOut(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  return NextResponse.redirect(new URL("/", request.url), { status: 303 });
+  await supabase.auth.signOut({ scope: "local" });
+  return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
 }
 
 export const GET = signOut;

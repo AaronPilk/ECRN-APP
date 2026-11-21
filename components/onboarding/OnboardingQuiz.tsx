@@ -93,7 +93,10 @@ export function OnboardingQuiz({ userId, firstName }: { userId: string; firstNam
   const [other, setOther] = useState("");
   const [showOther, setShowOther] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [restored, setRestored] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const submitting = useRef(false);
+  const locationRequest = useRef(0);
 
   // Resume where they left off if the app was closed mid-quiz.
   useEffect(() => {
@@ -104,12 +107,14 @@ export function OnboardingQuiz({ userId, firstName }: { userId: string; firstNam
         setStepIdx(Math.min(saved.stepIdx ?? 0, stepsFor(saved.a).length - 1));
       }
     } catch {}
+    setRestored(true);
   }, [userId]);
   useEffect(() => {
+    if (!restored) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ userId, a, stepIdx }));
     } catch {}
-  }, [a, stepIdx, userId]);
+  }, [a, stepIdx, userId, restored]);
 
   const steps = useMemo(() => stepsFor(a), [a]);
   const step = steps[stepIdx] ?? "intent";
@@ -117,48 +122,55 @@ export function OnboardingQuiz({ userId, firstName }: { userId: string; firstNam
   const progress = Math.round(((stepIdx + 1) / total) * 100);
 
   async function finish(final: QuizAnswers) {
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setError(null);
-    const res = await completeOnboardingAction(final);
-    if (res.error) {
-      setBusy(false);
-      setError(res.error);
-      return;
-    }
     try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
-    router.replace(res.home ?? "/");
+      const res = await completeOnboardingAction(final);
+      if (res.error) { setError(res.error); return; }
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      router.replace(res.home ?? "/");
+    } catch {
+      setError("Couldn't save your profile. Check your connection and try again.");
+    } finally {
+      submitting.current = false;
+      setBusy(false);
+    }
   }
 
-  /** Save an answer, flash the selection, then move on (or finish). */
-  function answer(patch: Partial<QuizAnswers>, flash?: string) {
+  /** Advance immediately; an artificial delay made rapid taps queue stale steps. */
+  function answer(patch: Partial<QuizAnswers>, _flash?: string) {
+    if (busy || submitting.current) return;
+    locationRequest.current += 1;
+    setLocating(false);
     const next = { ...a, ...patch };
     setA(next);
-    setPicked(flash ?? null);
+    setPicked(null);
     setShowOther(false);
     setOther("");
     const nextSteps = stepsFor(next);
     const nextIdx = nextSteps.indexOf(step) + 1;
-    setTimeout(() => {
-      setPicked(null);
-      if (nextIdx >= nextSteps.length) void finish(next);
-      else setStepIdx(nextIdx);
-    }, flash ? 220 : 0);
+    if (nextIdx >= nextSteps.length) void finish(next);
+    else setStepIdx(nextIdx);
   }
 
   function back() {
+    locationRequest.current += 1;
+    setLocating(false);
     setError(null);
     setShowOther(false);
     if (stepIdx > 0) setStepIdx(stepIdx - 1);
   }
 
   async function useLocation() {
+    const request = ++locationRequest.current;
     setError(null);
     setLocating(true);
     try {
       const pos = await getCurrentPosition();
       const city = await nearestCity(pos.lat, pos.lng).catch(() => null);
+      if (request !== locationRequest.current) return;
       answer({
         location_lat: pos.lat,
         location_lng: pos.lng,
@@ -166,9 +178,9 @@ export function OnboardingQuiz({ userId, firstName }: { userId: string; firstNam
         location_state: city?.state,
       });
     } catch (e) {
-      setError((e as Error).message);
+      if (request === locationRequest.current) setError((e as Error).message);
     } finally {
-      setLocating(false);
+      if (request === locationRequest.current) setLocating(false);
     }
   }
 
@@ -181,15 +193,21 @@ export function OnboardingQuiz({ userId, firstName }: { userId: string; firstNam
     setBusy(true);
     const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase().replace(/[^a-z0-9]/g, "");
     const path = `${userId}/resume-${Date.now()}.${ext || "pdf"}`;
-    const { error: upErr } = await getSupabaseBrowserClient()
-      .storage.from("resumes")
-      .upload(path, file, { contentType: file.type || undefined, upsert: false });
-    if (upErr) {
+    try {
+      const { error: upErr } = await getSupabaseBrowserClient()
+        .storage.from("resumes")
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (upErr) {
+        setError("Upload failed. You can skip and add it from your profile.");
+        return;
+      }
+      await finish({ ...a, resume_path: path, resume_choice: "upload" });
+    } catch {
+      setError("Upload failed. Check your connection, or skip and add it from your profile.");
+    } finally {
       setBusy(false);
-      setError("Upload failed. You can skip and add it from your profile.");
-      return;
+      if (fileRef.current) fileRef.current.value = "";
     }
-    await finish({ ...a, resume_path: path, resume_choice: "upload" });
   }
 
   const seg = Math.max(total, 1);
@@ -686,4 +704,3 @@ function TextAndGo({
     </form>
   );
 }
-

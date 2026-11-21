@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type {
   ActivityLog,
   ApplicationStatus,
@@ -116,31 +117,36 @@ const JOB_SELECT = "*, private:job_private(client_company, internal_notes)";
 /** The same, as an embed on a table that points at a job. */
 const JOB_EMBED = `job:jobs(${JOB_SELECT})`;
 
-/** The member job board: public columns only, the same for every viewer. */
-export async function listPublicJobs(): Promise<Job[]> {
+/**
+ * Public job cards, with only the fields used by lists and role matching.
+ * Descriptions, requirements and integration metadata load on the detail page.
+ * Request-scoped memoization shares reads with the dashboard summary and
+ * metadata; it never stores an authenticated response across requests.
+ */
+export const listPublicJobs = cache(async (): Promise<Job[]> => {
   const sb = await db();
   const { data, error } = await sb
     .from("jobs")
-    .select("*")
+    .select("id, title, company_name, is_company_public, location_city, location_state, job_type, trade, compensation_min, compensation_max, compensation_display, urgency, status, is_public, referral_payout_amount, referral_payout_display, location_lat, location_lng, created_at, updated_at")
     .eq("is_public", true)
     .in("status", ["open", "paused"])
     .order("created_at", { ascending: false });
   if (error) fail("listPublicJobs", error);
   return (data ?? []).map(toJob);
-}
+});
 
 /**
  * One job. Admins also get the confidential client name and internal notes
  * (in `companyName` / `internalNotes`); member screens must still check
  * `isCompanyPublic` before showing a client name.
  */
-export async function getJobById(id: string): Promise<Job | null> {
+export const getJobById = cache(async (id: string): Promise<Job | null> => {
   if (!isUuid(id)) return null;
   const sb = await db();
   const { data, error } = await sb.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle();
   if (error) fail("getJobById", error);
   return data ? toJob(data) : null;
-}
+});
 
 export async function listAllJobs(): Promise<Job[]> {
   const sb = await db();
@@ -393,7 +399,7 @@ export async function getApplicationById(id: string): Promise<JobApplication | n
 // Payouts
 // ─────────────────────────────────────────────────────────────────────
 
-export async function listPayoutsByReferrer(referrerUserId: string): Promise<Payout[]> {
+export const listPayoutsByReferrer = cache(async (referrerUserId: string): Promise<Payout[]> => {
   const sb = await db();
   const { data, error } = await sb
     .from("payouts")
@@ -402,7 +408,7 @@ export async function listPayoutsByReferrer(referrerUserId: string): Promise<Pay
     .order("created_at", { ascending: false });
   if (error) fail("listPayoutsByReferrer", error);
   return (data ?? []).map(toPayout);
-}
+});
 
 export interface PayoutEnriched {
   payout: Payout;
@@ -865,33 +871,16 @@ export async function listDuplicateReferralAttempts(): Promise<ReferralEnriched[
 export async function updateCandidateStatus(
   candidateId: string,
   status: ReferralStatus,
-  actorId: string,
+  _actorId: string,
   note?: string
 ): Promise<void> {
   const sb = await db();
-  const { data: before } = await sb.from("candidates").select("status").eq("id", candidateId).maybeSingle();
-  const { error } = await sb.from("candidates").update({ status }).eq("id", candidateId);
-  if (error) fail("updateCandidateStatus", error);
-
-  // Mirror onto the primary referral + job submissions so members see it.
-  // This is the only status a referrer can read once the person has joined
-  // ECRN (0009 hides the candidate record from them), so it must not be lost.
-  const mirror = await sb.from("referrals").update({ status }).eq("candidate_id", candidateId).eq("is_primary", true);
-  if (mirror.error) console.error("[ECRN] updateCandidateStatus: referral mirror failed:", mirror.error.message);
-  await sb
-    .from("job_referrals")
-    .update({ status })
-    .eq("candidate_id", candidateId)
-    .neq("status", "duplicate_review");
-
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "candidate",
-    entityId: candidateId,
-    action: "status_changed",
-    metadata: { from: before?.status ?? null, to: status },
+  const { error } = await sb.rpc("admin_update_candidate_status", {
+    p_candidate_id: candidateId,
+    p_status: status,
+    p_note: note?.trim() || null,
   });
-  if (note && note.trim()) await appendCandidateNote(candidateId, actorId, `Status → ${STATUS_LABEL[status]}: ${note.trim()}`);
+  if (error) fail("updateCandidateStatus", error);
 }
 
 export async function appendCandidateNote(candidateId: string, actorId: string, note: string): Promise<void> {
@@ -911,47 +900,16 @@ export async function appendCandidateNote(candidateId: string, actorId: string, 
 export async function reassignPrimaryReferrer(
   candidateId: string,
   newReferrerProfileId: string,
-  actorId: string
+  _actorId: string
 ): Promise<void> {
   const sb = await db();
-  const { data: before } = await sb
-    .from("candidates")
-    .select("primary_referrer_user_id, status")
-    .eq("id", candidateId)
-    .maybeSingle();
-
-  // Clear the old primary first (one-primary-per-candidate unique index).
-  let res = await sb.from("referrals").update({ is_primary: false }).eq("candidate_id", candidateId);
-  if (res.error) fail("reassignPrimaryReferrer", res.error);
-  // The new primary referral takes over the candidate's current status (it was
-  // sitting in "duplicate_review"); from here `updateCandidateStatus` keeps it
-  // in step, which is all the referrer sees once the person joins ECRN.
-  const promote: Record<string, unknown> = { is_primary: true, duplicate_status: "overridden_primary" };
-  if (before?.status) promote.status = before.status;
-  res = await sb
-    .from("referrals")
-    .update(promote)
-    .eq("candidate_id", candidateId)
-    .eq("referrer_user_id", newReferrerProfileId);
-  if (res.error) fail("reassignPrimaryReferrer", res.error);
-  res = await sb
-    .from("candidates")
-    .update({ primary_referrer_user_id: newReferrerProfileId })
-    .eq("id", candidateId);
-  if (res.error) fail("reassignPrimaryReferrer", res.error);
-  await sb
-    .from("payouts")
-    .update({ referrer_user_id: newReferrerProfileId })
-    .eq("candidate_id", candidateId)
-    .in("status", ["pending", "approved"]);
-
-  await logActivity({
-    actorUserId: actorId,
-    entityType: "candidate",
-    entityId: candidateId,
-    action: "primary_referrer_reassigned",
-    metadata: { from: before?.primary_referrer_user_id ?? null, to: newReferrerProfileId },
+  // The database checks the current administrator and records auth.uid(),
+  // so caller input cannot spoof the audit actor. Every write commits together.
+  const { error } = await sb.rpc("admin_reassign_primary_referrer", {
+    p_candidate_id: candidateId,
+    p_referrer_profile_id: newReferrerProfileId,
   });
+  if (error) fail("reassignPrimaryReferrer", error);
 }
 
 export async function updateApplicationStatus(

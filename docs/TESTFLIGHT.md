@@ -1,56 +1,49 @@
-# ECRN → TestFlight
+# ECRN releases and TestFlight
 
-The iOS app (bundle ID `com.goecrn.app`) is a native Capacitor shell that loads
-https://ecrn.aaron-9c3.workers.dev and adds native features: contacts import, push
-notifications, the native share sheet, and Face ID lock.
+The iOS app uses Capacitor 8, Swift Package Manager, and `ios/App/App.xcodeproj`,
+scheme `App`. Bundle ID: `com.goecrn.app`; team: `5F5C5G25Y6`; automatic signing.
+The Android app uses the same live website: https://ecrn.aaron-9c3.workers.dev.
 
-**Web changes go live in the app instantly** after `npm run deploy` — no new TestFlight
-build needed. You only need a new build when native code/config changes (plugins,
-icons, Info.plist, capacitor.config.ts).
+## Web releases
 
-## One-time setup
+Push the verified release to `origin/main`. Cloudflare Workers Builds deploys it.
+`/api/version` returns the deployed Git commit. Verify it matches the pushed commit,
+then check the affected pages and login.
 
-1. Install **Xcode** from the Mac App Store (open it once and let it install components).
-2. Terminal:
-   ```bash
-   cd "/Users/pilksclaes/ECRN App"
-   npm install
-   npm run deploy
-   npx cap sync ios
-   npx cap open ios
-   ```
-3. In Xcode, left sidebar → click **App** (blue icon) → target **App** →
-   **Signing & Capabilities** tab:
-   - Check **Automatically manage signing**
-   - **Team:** pick your Apple Developer team
-   - Bundle Identifier should already read `com.goecrn.app`
-4. Create the app record: https://appstoreconnect.apple.com → **Apps** → **+** → **New App**
-   - Platform: iOS · Name: `ECRN – Construction Referrals` (the store name must be unique)
-   - Language: English (U.S.) · Bundle ID: `com.goecrn.app` · SKU: `ecrn-ios`
-   - User Access: Full Access
+Native cold launches load the current website. An app already open checks for new
+web releases on resume and periodically. After at least a minute in the background,
+viewing screens reload automatically. Editing screens offer a reload button so
+unfinished work is preserved. Native plugins, permissions, icons, and bundled assets
+need a new store build. Native apps do not use the browser PWA service worker.
 
-## Upload a build
+## Archive and upload
 
-1. Xcode top bar device menu → **Any iOS Device (arm64)**
-2. Menu **Product → Archive** (a few minutes)
-3. Organizer window → **Distribute App** → **App Store Connect** → **Upload** → keep defaults → **Upload**
-4. App Store Connect → ECRN → **TestFlight**. The build shows "Processing" for ~10–30 minutes.
-5. **Internal Testing → +** → create a group (e.g. "Delta team") → add testers (they must be
-   users in App Store Connect → Users and Access) → add the build.
-6. Testers install the **TestFlight** app from the App Store and accept the invite.
+For this release the native configuration is already synced. **Do not run cap sync.**
+Use the existing project; there is no CocoaPods workspace.
 
-Each later upload needs a higher build number: Xcode → target App → **General** →
-**Build** (1 → 2 → 3…).
+1. Ensure the working tree contains the intended release and the Xcode project has
+   the next build number in both configurations. Marketing version remains `1.0`.
+2. From `ios/App`, archive with `xcodebuild -project App.xcodeproj -scheme App
+   -configuration Release -destination "generic/platform=iOS" -archivePath
+   "$HOME/Desktop/ECRN-1.0-build3.xcarchive" -allowProvisioningUpdates archive`.
+3. Inspect the archive's `Info.plist` ApplicationProperties and confirm version/build.
+4. Export with an options plist containing `method=app-store-connect`,
+   `destination=upload`, `teamID=5F5C5G25Y6`, `signingStyle=automatic`,
+   `uploadSymbols=true`, and `manageAppVersionAndBuildNumber=false`.
+5. Run `xcodebuild -exportArchive -archivePath "$HOME/Desktop/ECRN-1.0-build3.xcarchive"
+   -exportOptionsPlist /tmp/ECRN-ExportOptions.plist -exportPath /tmp/ECRN-export-build3
+   -allowProvisioningUpdates`.
+6. Confirm **Upload succeeded / EXPORT SUCCEEDED**. Apple processing is a separate
+   step before the build is available in TestFlight.
 
-## Before external testers / App Store review
+Xcode uses the Apple account signed in under Settings → Accounts. If authentication
+is requested, the account owner signs in directly; credentials and two-factor codes
+must not be placed in scripts or logs. Existing tester groups and signing settings
+remain managed by the account owner.
 
-- External TestFlight testers require Apple's Beta App Review (usually under a day).
-- Needed in App Store Connect: Privacy Policy URL
-  `https://ecrn.aaron-9c3.workers.dev/privacy`, Support URL
-  `https://ecrn.aaron-9c3.workers.dev/support`, and a demo login for the reviewer
-  (`partner@demo.goecrn.com` + the demo password).
-- **Push notifications:** in Xcode → Signing & Capabilities → **+ Capability** →
-  **Push Notifications**, then create an APNs key in the Apple Developer portal.
-  Until then the app's "Turn on notifications" button reports it isn't available.
-- Real-user emails (signup confirmation, magic links) need a custom SMTP provider in
-  Supabase — the built-in one only emails your Supabase team members.
+## Account access
+
+Use the same `/login` for administrators and ordinary members. The profile's database
+role determines the landing page. Shared demo shortcuts have been retired. Review
+credentials, if needed for Apple review, should be a normal dedicated account provided
+through App Store Connect by the account owner; do not use retired demo accounts.

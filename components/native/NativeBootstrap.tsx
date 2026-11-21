@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { App } from "@capacitor/app";
 import { Preferences } from "@capacitor/preferences";
 import { SplashScreen } from "@capacitor/splash-screen";
@@ -62,7 +63,7 @@ export function NativeBootstrap() {
     }
     void SplashScreen.hide().catch(() => {});
     void BiometricAuth.checkBiometry().catch(() => {});
-    void lockIfEnabled();
+    void lockIfEnabled().catch(() => {});
     void refreshPushRegistration().catch(() => {});
 
     const subs = [
@@ -76,7 +77,7 @@ export function NativeBootstrap() {
       App.addListener("resume", () => {
         const away = backgroundedAt.current ? Date.now() - backgroundedAt.current : 0;
         backgroundedAt.current = null;
-        if (away > RELOCK_AFTER_MS) void lockIfEnabled();
+        if (away > RELOCK_AFTER_MS) void lockIfEnabled().catch(() => {});
       }),
     ];
     return () => {
@@ -88,10 +89,7 @@ export function NativeBootstrap() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-ecrn-black flex flex-col items-center justify-center text-white px-8 text-center">
-      <svg width="64" height="64" viewBox="0 0 32 32" fill="none" aria-hidden>
-        <path d="M16 4 L29 27 L3 27 Z" stroke="#16C172" strokeWidth="2.5" strokeLinejoin="round" />
-        <path d="M16 12 L24 26 L8 26 Z" fill="#FFFFFF" />
-      </svg>
+      <Image src="/brand/ecrn-horizontal-white.png" alt="ECRN" width={240} height={94} className="w-60 h-auto" priority />
       <h1 className="mt-6 text-xl font-semibold">ECRN is locked</h1>
       <p className="mt-2 text-sm text-white/60">Unlock to see your referrals and earnings.</p>
       <button

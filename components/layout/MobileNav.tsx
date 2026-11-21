@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import type { NavItem } from "./nav-config";
@@ -21,7 +21,7 @@ export function MobileNav({ items }: MobileNavProps) {
   return (
     <nav
       aria-label="Primary"
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-ecrn-line pb-safe"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-ecrn-line pb-safe"
     >
       <ul
         className={cn(
@@ -31,7 +31,6 @@ export function MobileNav({ items }: MobileNavProps) {
         )}
       >
         {items.map((item) => {
-          const Icon = iconMap[item.icon];
           const active = item.href === activeHref;
           return (
             <li key={item.href}>
@@ -44,20 +43,36 @@ export function MobileNav({ items }: MobileNavProps) {
                   active ? "text-ecrn-green-text font-semibold" : "text-ecrn-secondary"
                 )}
               >
-                <span
-                  className={cn(
-                    "h-[26px] w-[44px] rounded-full grid place-items-center transition-colors",
-                    active && "bg-ecrn-selected"
-                  )}
-                >
-                  <Icon className={cn("w-[19px] h-[19px]", active ? "stroke-[2.1]" : "stroke-[1.7]")} />
-                </span>
-                <span>{item.label}</span>
+                <TabContent item={item} active={active} />
               </Link>
             </li>
           );
         })}
       </ul>
     </nav>
+  );
+}
+
+function TabContent({ item, active }: { item: NavItem; active: boolean }) {
+  const { pending } = useLinkStatus();
+  const Icon = iconMap[item.icon];
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "h-[26px] w-[44px] rounded-full grid place-items-center transition-colors",
+          (active || pending) && "bg-ecrn-selected"
+        )}
+      >
+        {pending ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-ecrn-green-text border-t-transparent" />
+        ) : (
+          <Icon className={cn("w-[19px] h-[19px]", active ? "stroke-[2.1]" : "stroke-[1.7]")} />
+        )}
+      </span>
+      <span>{item.label}</span>
+      {pending && <span className="sr-only" role="status">Loading {item.label}…</span>}
+    </>
   );
 }

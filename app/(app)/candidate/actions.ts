@@ -74,5 +74,7 @@ export async function applyAction(formData: FormData): Promise<void> {
   }).catch(() => {});
 
   revalidatePath("/candidate/applications");
+  revalidatePath("/dashboard");
+  revalidatePath("/profile");
   redirect(`/candidate/applications/${result.applicationId}?welcome=1`);
 }

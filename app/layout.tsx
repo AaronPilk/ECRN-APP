@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
 import { NativeBootstrap } from "@/components/native/NativeBootstrap";
+import { NativeUpdates } from "@/components/native/NativeUpdates";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -52,11 +53,19 @@ export default function RootLayout({
       <body className="font-sans antialiased text-ecrn-ink">
         {children}
         <NativeBootstrap />
+        <NativeUpdates />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               // The native app loads pages live; skip the PWA service worker there.
-              if ('serviceWorker' in navigator && navigator.userAgent.indexOf('ECRNApp') === -1) {
+              if ('serviceWorker' in navigator && navigator.userAgent.indexOf('ECRNApp') !== -1) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                  registrations.forEach(function (registration) {
+                    var worker = registration.active || registration.waiting || registration.installing;
+                    if (worker && new URL(worker.scriptURL).pathname === '/sw.js') registration.unregister();
+                  });
+                }).catch(function () {});
+              } else if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
                   navigator.serviceWorker.register('/sw.js').catch(function (e) {
                     console.warn('[ECRN] SW registration failed:', e);

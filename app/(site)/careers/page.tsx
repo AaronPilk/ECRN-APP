@@ -113,7 +113,7 @@ const itemListJsonLd = {
 const REVIEWED = ROLES.map((r) => r.updatedAt).sort().slice(-1)[0] ?? "2026-11-20";
 
 export default async function CareersHubPage() {
-  const allJobs = await listPublicJobs().catch(() => []);
+  const allJobs = (await listPublicJobs().catch(() => [])).filter((job) => job.status === "open");
   const openCount = new Map(ROLES.map((r) => [r.slug, jobsForRole(allJobs, r.jobKeywords).length]));
   const stages = TIERS.map((tier, i) => ({ tier, note: STAGE_NOTES[i], roles: ROLES.filter((r) => r.tierIndex === i) }));
 

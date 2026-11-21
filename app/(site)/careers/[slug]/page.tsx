@@ -70,7 +70,7 @@ export default async function CareerRolePage({ params }: Params) {
 
   const tier = TIERS[role.tierIndex];
   const name = role.title.toLowerCase();
-  const jobs = jobsForRole(await listPublicJobs().catch(() => []), role.jobKeywords);
+  const jobs = jobsForRole((await listPublicJobs().catch(() => [])).filter((job) => job.status === "open"), role.jobKeywords);
   const posts = role.relatedPosts
     .map((s) => getPost(s))
     .filter((p): p is BlogPost => Boolean(p))

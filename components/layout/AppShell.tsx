@@ -4,9 +4,7 @@ import { MobileNav } from "./MobileNav";
 import Link from "next/link";
 import { DeltaLockup } from "@/components/ui/DeltaLockup";
 import { getNavForRole } from "./nav-config";
-import { RoleSwitcher } from "@/components/dev/RoleSwitcher";
 import type { Profile } from "@/types";
-import { DEMO_MODE } from "@/lib/supabase/env";
 
 interface AppShellProps {
   profile: Profile;
@@ -16,12 +14,11 @@ interface AppShellProps {
 /**
  * The single logged-in app shell. Picks navigation based on role:
  *   - desktop: left sidebar
- *   - mobile: floating glass-blur bottom nav
+ *   - mobile: persistent bottom navigation
  *
  * The page content is rendered into the middle column with safe-area
  * padding for iOS home-bar.
  *
- * RoleSwitcher only renders when NEXT_PUBLIC_DEMO_MODE=true.
  */
 function initials(p: Profile): string {
   const s = `${p.firstName?.[0] ?? ""}${p.lastName?.[0] ?? ""}`.trim();
@@ -30,9 +27,6 @@ function initials(p: Profile): string {
 
 export function AppShell({ profile, children }: AppShellProps) {
   const items = getNavForRole(profile.role);
-  // Only the shared demo accounts see the demo role switcher.
-  const isMockMode = DEMO_MODE && profile.email.endsWith("@demo.goecrn.com");
-
   return (
     <div className="min-h-screen flex bg-ecrn-paper">
       <Sidebar
@@ -47,7 +41,7 @@ export function AppShell({ profile, children }: AppShellProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-30 bg-ecrn-paper/90 backdrop-blur-xl pt-safe">
+        <header data-app-header className="lg:hidden sticky top-0 z-30 bg-ecrn-paper pt-safe">
           <div className="h-[60px] mx-[22px] flex items-center justify-between border-b border-ecrn-line">
             <DeltaLockup />
             <Link
@@ -64,10 +58,6 @@ export function AppShell({ profile, children }: AppShellProps) {
 
         <MobileNav items={items} />
       </div>
-
-      {isMockMode && (
-        <RoleSwitcher currentRole={profile.role} currentEmail={profile.email} />
-      )}
     </div>
   );
 }

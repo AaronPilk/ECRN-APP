@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "ECRN",
     description:
       "Refer construction industry talent. Earn when Delta places them. A Delta Construction Partners initiative.",
-    start_url: "/dashboard",
+    start_url: "/start",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

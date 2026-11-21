@@ -62,7 +62,7 @@ export function AddToHomeScreenGuide({ persistent = false }: { persistent?: bool
             Add ECRN to your home screen
           </h3>
           <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-            Get app-like access with one tap. Works offline for browsing.
+            Open ECRN with one tap. An internet connection is needed to load your account.
           </p>
 
           <div className="mt-4 grid sm:grid-cols-2 gap-4">

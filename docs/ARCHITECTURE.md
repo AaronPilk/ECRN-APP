@@ -5,7 +5,7 @@ _Last updated Nov 20, 2026 (admin side, team routing, Next.js 16)._
 ## One source of truth: the website
 
 - ECRN is a Next.js web app. It will live under **ecrn.com** (domains get mapped when Cloudflare is wired up).
-- The **iOS and Google Play apps are native shells** (Capacitor) that load the live site, so web deploys update the apps instantly with no store resubmission.
+- The **iOS and Google Play apps are native shells** (Capacitor) that load the live site. Web releases are available on the next load. A release check on resume automatically reloads viewing screens after a minute in the background; editing screens offer a reload button to preserve unfinished work. Native plugin/configuration changes still require a store build.
   A new store build is only needed when native config changes: permissions, plugins, icons.
 - Admins mainly use the dashboard on desktop at the same URL.
 

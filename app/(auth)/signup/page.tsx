@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "../SubmitButton";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { GroupField } from "@/components/ui/GroupField";
 import { getReferrerDisplayName } from "@/lib/data/repository";
@@ -111,9 +111,9 @@ export default async function SignupPage({ searchParams }: PageProps) {
           </details>
         )}
 
-        <Button type="submit" fullWidth size="lg">
+        <SubmitButton pendingLabel="Creating account…" fullWidth size="lg">
           Continue
-        </Button>
+        </SubmitButton>
       </form>
 
       <p className="mt-5 text-[12px] text-ecrn-secondary text-center leading-relaxed">

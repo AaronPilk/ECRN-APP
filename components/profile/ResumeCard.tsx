@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { FileText, FileUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { resumeLinkAction, setResumePathAction } from "@/app/(app)/candidate/resume/actions";
+import { setResumePathAction } from "@/app/(app)/candidate/resume/actions";
 
 /** Upload / replace / view the member's resume, or jump into the builder. */
 export function ResumeCard({
@@ -31,22 +31,20 @@ export function ResumeCard({
     setBusy(true);
     const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase().replace(/[^a-z0-9]/g, "") || "pdf";
     const path = `${userId}/resume-${Date.now()}.${ext}`;
-    const { error: upErr } = await getSupabaseBrowserClient()
-      .storage.from("resumes")
-      .upload(path, file, { contentType: file.type || undefined });
-    if (upErr) {
+    try {
+      const { error: upErr } = await getSupabaseBrowserClient()
+        .storage.from("resumes")
+        .upload(path, file, { contentType: file.type || undefined });
+      if (upErr) { setError("Upload failed. Try a PDF."); return; }
+      const r = await setResumePathAction(path);
+      if (!r.ok) { setError(r.error ?? "Couldn't save."); return; }
+      router.refresh();
+    } catch {
+      setError("Couldn't upload your resume. Check your connection and try again.");
+    } finally {
       setBusy(false);
-      return setError("Upload failed. Try a PDF.");
+      if (fileRef.current) fileRef.current.value = "";
     }
-    const r = await setResumePathAction(path);
-    setBusy(false);
-    if (!r.ok) return setError(r.error ?? "Couldn't save.");
-    router.refresh();
-  }
-
-  async function view() {
-    const url = await resumeLinkAction();
-    if (url) window.open(url, "_blank", "noopener");
   }
 
   return (
@@ -86,9 +84,9 @@ export function ResumeCard({
       </div>
       <div className="mt-2 flex gap-4 text-[13.5px]">
         {resumePath && (
-          <button type="button" onClick={view} className="font-medium text-ecrn-green-text">
+          <a href="/api/resume/view" target="_blank" rel="noopener noreferrer" className="font-medium text-ecrn-green-text">
             View file
-          </button>
+          </a>
         )}
         {hasBuilt && (
           <Link href="/candidate/resume" className="font-medium text-ecrn-green-text">

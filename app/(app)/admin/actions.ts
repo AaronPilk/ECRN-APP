@@ -20,7 +20,6 @@ import {
   getJobOwnership,
   setJobExternalCrmId,
   setJobOwnership,
-  setJobPrivate,
   type JobOwnershipChange,
 } from "@/lib/admin/jobs";
 import { listStaff } from "@/lib/admin/staff";
@@ -54,9 +53,9 @@ async function requireAdmin() {
 // ─── Candidate mutations ─────────────────────────────────────────
 
 const CandidateStatusSchema = z.object({
-  candidateId: z.string().min(1),
-  status: z.string().min(1),
-  notes: z.string().optional(),
+  candidateId: z.string().uuid(),
+  status: z.enum(["submitted", "duplicate_review", "new", "contacted", "qualified", "not_qualified", "submitted_to_job", "interviewing", "offer_stage", "placed", "payout_pending", "payout_approved", "payout_paid", "rejected", "inactive"]),
+  notes: z.string().max(10000, "Keep the note under 10000 characters").optional(),
 });
 
 export async function updateCandidateStatusAction(formData: FormData): Promise<void> {
@@ -78,8 +77,8 @@ export async function updateCandidateStatusAction(formData: FormData): Promise<v
 }
 
 const CandidateNoteSchema = z.object({
-  candidateId: z.string().min(1),
-  note: z.string().min(1, "Add a note first"),
+  candidateId: z.string().uuid(),
+  note: z.string().trim().min(1, "Add a note first").max(10000),
 });
 
 export async function appendCandidateNoteAction(formData: FormData): Promise<void> {
@@ -93,8 +92,8 @@ export async function appendCandidateNoteAction(formData: FormData): Promise<voi
 }
 
 const ReassignSchema = z.object({
-  candidateId: z.string().min(1),
-  referrerProfileId: z.string().min(1),
+  candidateId: z.string().uuid(),
+  referrerProfileId: z.string().uuid(),
 });
 
 export async function reassignPrimaryReferrerAction(formData: FormData): Promise<void> {
@@ -111,8 +110,8 @@ export async function reassignPrimaryReferrerAction(formData: FormData): Promise
 // ─── Application mutations ─────────────────────────────────────────
 
 const ApplicationStatusSchema = z.object({
-  applicationId: z.string().min(1),
-  status: z.string().min(1),
+  applicationId: z.string().uuid(),
+  status: z.enum(["submitted", "reviewing", "interviewing", "offer", "hired", "rejected", "withdrawn"]),
 });
 
 export async function updateApplicationStatusAction(formData: FormData): Promise<void> {
@@ -126,14 +125,17 @@ export async function updateApplicationStatusAction(formData: FormData): Promise
     parsed.status as ApplicationStatus,
     admin.id
   );
+  revalidatePath("/admin/applications");
+  revalidatePath(`/candidate/applications/${parsed.applicationId}`);
+  revalidatePath("/candidate/applications");
   revalidatePath("/admin");
 }
 
 // ─── Payout mutations ─────────────────────────────────────────
 
 const PayoutStatusSchema = z.object({
-  payoutId: z.string().min(1),
-  status: z.string().min(1),
+  payoutId: z.string().uuid(),
+  status: z.enum(["pending", "approved", "paid", "denied", "disputed"]),
   notes: z.string().optional(),
   amountDollars: z.string().optional(),
 });
@@ -158,8 +160,8 @@ export async function updatePayoutStatusAction(formData: FormData): Promise<void
 // ─── Job mutations ─────────────────────────────────────────
 
 const JobStatusSchema = z.object({
-  jobId: z.string().min(1),
-  status: z.string().min(1),
+  jobId: z.string().uuid(),
+  status: z.enum(["draft", "open", "paused", "filled", "archived"]),
 });
 
 export async function updateJobStatusAction(formData: FormData): Promise<void> {
@@ -171,11 +173,13 @@ export async function updateJobStatusAction(formData: FormData): Promise<void> {
   await updateJobStatus(parsed.jobId, parsed.status as JobStatus, admin.id);
   revalidatePath("/admin/jobs");
   revalidatePath("/jobs");
+  revalidatePath(`/jobs/${parsed.jobId}`);
+  revalidatePath("/dashboard");
 }
 
 const JobInputSchema = z.object({
-  jobId: z.string().optional(),
-  title: z.string().min(1, "Title required"),
+  jobId: z.union([z.literal(""), z.string().uuid()]).optional(),
+  title: z.string().trim().min(1, "Title required").max(300),
   companyName: z.string().optional(),
   isCompanyPublic: z.string().optional(),
   locationCity: z.string().optional(),
@@ -187,8 +191,8 @@ const JobInputSchema = z.object({
   compensationMin: z.string().optional(),
   compensationMax: z.string().optional(),
   compensationDisplay: z.string().optional(),
-  urgency: z.string().optional(),
-  status: z.string().optional(),
+  urgency: z.enum(["low", "normal", "high", "critical"]).optional(),
+  status: z.enum(["draft", "open", "paused", "filled", "archived"]).optional(),
   isPublic: z.string().optional(),
   referralPayoutAmount: z.string().optional(),
   referralPayoutDisplay: z.string().optional(),
@@ -275,9 +279,7 @@ export async function saveJobAction(formData: FormData): Promise<void> {
 
   let jobId = parsed.jobId;
   if (jobId) {
-    // The real client name and notes live in job_private. Write them first so a
-    // cleared field stays cleared (the trigger on jobs only ever adds values).
-    await setJobPrivate(jobId, { clientCompany: data.companyName, internalNotes: data.internalNotes });
+    // updateJob writes job_private before the public row, including cleared fields.
     await updateJob(jobId, data, admin.id);
   } else {
     const created = await createJob(data, admin.id);
@@ -298,6 +300,8 @@ export async function saveJobAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/jobs");
   revalidatePath("/admin/routing");
   revalidatePath("/jobs");
+  revalidatePath(`/jobs/${jobId}`);
+  revalidatePath("/dashboard");
   if (ownershipError) {
     redirect(`/admin/jobs/${jobId}/edit?error=${encodeURIComponent(ownershipError)}`);
   }
@@ -335,8 +339,8 @@ export async function setJobOwnerAction(formData: FormData): Promise<void> {
 // ─── Company lead mutations ─────────────────────────────────────────
 
 const CompanyLeadStatusSchema = z.object({
-  leadId: z.string().min(1),
-  status: z.string().min(1),
+  leadId: z.string().uuid(),
+  status: z.enum(["new", "contacted", "qualified", "engaged", "won", "lost", "archived"]),
   notes: z.string().optional(),
 });
 

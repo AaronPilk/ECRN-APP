@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowRight, ArrowUpRight, BadgeCheck, BookUser, Briefcase, CircleDollarSign, Lock, MapPin, Zap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatDay } from "@/components/content/ContentBlocks";
@@ -96,8 +97,7 @@ function WhyTile({ item, sizes, className, large = false }: { item: (typeof WHY)
   );
 }
 
-export default async function HomePage() {
-  const jobs = (await listPublicJobs().catch(() => [])).slice(0, 4);
+export default function HomePage() {
   const posts = allPosts.slice(0, 3);
 
   return (
@@ -271,50 +271,19 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* Open jobs */}
-      {jobs.length > 0 && (
-        <Section tone="paper">
-          <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-            <SectionHeading eyebrow="Open roles" title="Electrical construction jobs hiring now" />
-            <ArrowLink href="/jobs" className="shrink-0">
-              All open jobs
-            </ArrowLink>
-          </Reveal>
-          <Reveal group as="ul" className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-14">
-            {jobs.map((j, i) => {
-              const salary = jobSalary(j);
-              const payout = jobPayout(j);
-              return (
-                <li key={j.id} className="site-reveal-item" style={siteVars({ i })}>
-                  <Link href={`/jobs/${j.id}`} className="site-card site-lift flex h-full items-start justify-between gap-4 rounded-[20px] p-6">
-                    <span className="block min-w-0">
-                      <h3 className="site-display-5 text-ecrn-ink">{j.title}</h3>
-                      <span className="mt-2 flex items-start gap-1.5 text-[14.5px] leading-snug text-ecrn-secondary">
-                        <MapPin aria-hidden className="mt-px h-4 w-4 shrink-0" />
-                        <span>
-                          {jobLocation(j)}
-                          {salary ? ` · ${salary}` : ""}
-                        </span>
-                      </span>
-                      {payout ? (
-                        <span className="mt-4 inline-flex rounded-full bg-delta-surface px-3 py-1.5 font-display text-[13.5px] font-medium text-cobalt">
-                          Refer and earn up to {payout}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ecrn-paper text-ecrn-ink shadow-[inset_0_0_0_1px_#D9DFD8]">
-                      <ArrowUpRight className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </Reveal>
-        </Section>
-      )}
+      {/* The hero renders immediately while current openings load below it. */}
+      <Section tone="paper">
+        <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+          <SectionHeading eyebrow="Open roles" title="Electrical construction jobs hiring now" />
+          <ArrowLink href="/jobs" className="shrink-0">All open jobs</ArrowLink>
+        </Reveal>
+        <Suspense fallback={<p role="status" className="mt-10 min-h-[180px] text-ecrn-secondary">Loading current openings…</p>}>
+          <CurrentOpenings />
+        </Suspense>
+      </Section>
 
       {/* Why ECRN */}
-      <Section tone="paper" className={jobs.length > 0 ? "pt-0 sm:pt-0 lg:pt-0" : undefined}>
+      <Section tone="paper" className="pt-0 sm:pt-0 lg:pt-0">
         <Reveal>
           <SectionHeading eyebrow="Why ECRN" title="Built for electrical construction, backed by Delta." />
         </Reveal>
@@ -410,5 +379,45 @@ export default async function HomePage() {
 
       <FinalCta />
     </>
+  );
+}
+
+/** The remote job query does not delay the static landing-page content. */
+async function CurrentOpenings() {
+  const jobs = (await listPublicJobs().catch(() => [])).filter((job) => job.status === "open").slice(0, 4);
+  if (!jobs.length) {
+    return <p className="mt-8 text-ecrn-secondary">No open roles are listed right now. Check the job board for new opportunities.</p>;
+  }
+  return (
+    <Reveal group as="ul" className="mt-10 grid gap-4 md:grid-cols-2 lg:mt-14">
+      {jobs.map((j, i) => {
+        const salary = jobSalary(j);
+        const payout = jobPayout(j);
+        return (
+          <li key={j.id} className="site-reveal-item" style={siteVars({ i })}>
+            <Link href={`/jobs/${j.id}`} className="site-card site-lift flex h-full items-start justify-between gap-4 rounded-[20px] p-6">
+              <span className="block min-w-0">
+                <h3 className="site-display-5 text-ecrn-ink">{j.title}</h3>
+                <span className="mt-2 flex items-start gap-1.5 text-[14.5px] leading-snug text-ecrn-secondary">
+                  <MapPin aria-hidden className="mt-px h-4 w-4 shrink-0" />
+                  <span>
+                    {jobLocation(j)}
+                    {salary ? ` · ${salary}` : ""}
+                  </span>
+                </span>
+                {payout ? (
+                  <span className="mt-4 inline-flex rounded-full bg-delta-surface px-3 py-1.5 font-display text-[13.5px] font-medium text-cobalt">
+                    Refer and earn up to {payout}
+                  </span>
+                ) : null}
+              </span>
+              <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ecrn-paper text-ecrn-ink shadow-[inset_0_0_0_1px_#D9DFD8]">
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </Reveal>
   );
 }

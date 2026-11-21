@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowUpRight, LocateFixed, MapPin, X } from "lucide-react";
 import type { Job } from "@/types";
 import { cn } from "@/lib/utils/cn";
@@ -38,6 +38,7 @@ export function JobsBrowser({
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
+  const locationRequest = useRef(0);
 
   const rows = useMemo(() => {
     const withDist = jobs.map((j) => ({
@@ -56,18 +57,28 @@ export function JobsBrowser({
   const rest = rows.filter((r) => r !== featured);
 
   async function useMyLocation() {
+    const request = ++locationRequest.current;
     setError(null);
     setLocating(true);
     try {
       const pos = await getCurrentPosition();
-      const city = await nearestCity(pos.lat, pos.lng).catch(() => null);
-      setOrigin({ ...pos, label: city ? `${city.name}, ${city.state}` : "your location", source: "gps" });
-      setSearching(false);
-    } catch (e) {
-      setError((e as Error).message);
-      setSearching(true);
-    } finally {
+      if (request !== locationRequest.current) return;
+      // Sorting needs coordinates only; don't hold up the results while the
+      // optional city-name lookup makes another network round trip.
+      setOrigin({ ...pos, label: "your location", source: "gps" });
       setLocating(false);
+      setSearching(false);
+      const city = await nearestCity(pos.lat, pos.lng).catch(() => null);
+      if (city && request === locationRequest.current) {
+        setOrigin({ ...pos, label: `${city.name}, ${city.state}`, source: "gps" });
+      }
+    } catch (e) {
+      if (request === locationRequest.current) {
+        setError((e as Error).message);
+        setSearching(true);
+      }
+    } finally {
+      if (request === locationRequest.current) setLocating(false);
     }
   }
 
@@ -87,7 +98,7 @@ export function JobsBrowser({
 
       {/* Location controls */}
       <div className="space-y-2">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={useMyLocation}
@@ -117,7 +128,7 @@ export function JobsBrowser({
             <button
               type="button"
               aria-label="Clear location"
-              onClick={() => { setOrigin(null); setError(null); }}
+              onClick={() => { locationRequest.current += 1; setLocating(false); setOrigin(null); setError(null); }}
               className="h-[40px] w-[40px] rounded-full grid place-items-center border border-ecrn-line bg-white"
             >
               <X className="w-4 h-4 text-ecrn-secondary" />
@@ -129,6 +140,8 @@ export function JobsBrowser({
             autoFocus
             placeholder="City you live in or want to move to"
             onPick={(p) => {
+              locationRequest.current += 1;
+              setLocating(false);
               setOrigin({ lat: p.lat, lng: p.lng, label: `${p.name}, ${p.state}`, source: "city" });
               setSearching(false);
               setError(null);

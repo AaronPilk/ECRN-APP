@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookUser } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Textarea } from "@/components/ui/Input";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { Page, BackLink } from "@/components/ui/Page";
@@ -83,16 +83,16 @@ export default async function NewReferralPage(props: PageProps) {
         <p className="text-[12.5px] text-ecrn-secondary leading-relaxed">
           If someone already referred this person, the first referrer keeps ownership and Delta reviews your submission.
         </p>
-      </form>
 
       {/* Submit docked above the tab bar */}
       <div className="fixed lg:static inset-x-0 bottom-[calc(64px+max(env(safe-area-inset-bottom),0.75rem))] z-30 bg-ecrn-paper/95 backdrop-blur border-t border-ecrn-line lg:border-0">
         <div className="max-w-3xl mx-auto px-[22px] py-3">
-          <Button form="referral-form" type="submit" fullWidth size="lg">
+          <SubmitButton pendingLabel="Sending…" fullWidth size="lg">
             Submit referral
-          </Button>
+          </SubmitButton>
         </div>
       </div>
+      </form>
     </Page>
   );
 }

@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/app/(auth)/SubmitButton";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { JsonLd } from "@/components/site/SiteChrome";
@@ -15,6 +14,10 @@ async function submitHiringNeed(formData: FormData) {
   if (!get("companyName") || !get("contactName") || !/^\S+@\S+\.\S+$/.test(get("email"))) {
     redirect(`/hire?error=${encodeURIComponent("Company, contact name, and a valid email are required.")}`);
   }
+  const count = get("numberOfCandidates") ? Number(get("numberOfCandidates")) : null;
+  if (count !== null && (!Number.isInteger(count) || count < 1 || count > 2147483647)) {
+    redirect(`/hire?error=${encodeURIComponent("Enter a whole number of candidates, at least 1.")}`);
+  }
   try {
     await createCompanyLead({
       companyName: get("companyName"),
@@ -23,7 +26,7 @@ async function submitHiringNeed(formData: FormData) {
       phone: get("phone") || null,
       location: get("location") || null,
       roleNeeded: get("roleNeeded") || null,
-      numberOfCandidates: get("numberOfCandidates") ? Number(get("numberOfCandidates")) : null,
+      numberOfCandidates: count,
       compensationRange: get("compensationRange") || null,
       jobDescription: get("jobDescription") || null,
       notes: get("notes") || null,
@@ -77,22 +80,22 @@ export default async function HirePage(props: PageProps) {
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="companyName">Company name *</Label>
-                <Input id="companyName" name="companyName" required />
+                <Input id="companyName" name="companyName" required autoComplete="organization" />
               </div>
               <div>
                 <Label htmlFor="contactName">Contact name *</Label>
-                <Input id="contactName" name="contactName" required />
+                <Input id="contactName" name="contactName" required autoComplete="name" />
               </div>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="email">Email *</Label>
-                <Input id="email" name="email" type="email" required />
+                <Input id="email" name="email" type="email" required autoComplete="email" inputMode="email" autoCapitalize="none" />
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" name="phone" type="tel" />
+                <Input id="phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" />
               </div>
             </div>
 
@@ -115,6 +118,7 @@ export default async function HirePage(props: PageProps) {
                   name="numberOfCandidates"
                   type="number"
                   min="1"
+                  step="1"
                   defaultValue="1"
                 />
               </div>
@@ -134,9 +138,9 @@ export default async function HirePage(props: PageProps) {
               <Textarea id="notes" name="notes" rows={3} />
             </div>
 
-            <Button type="submit" fullWidth size="lg">
+            <SubmitButton fullWidth size="lg" pendingLabel="Submitting…">
               Submit hiring need
-            </Button>
+            </SubmitButton>
           </form>
         </Card>
       </div>

@@ -1,6 +1,72 @@
 # ECRN website build: shared contract for parallel builders
 
-## PASS 2 (read this first): mobile-first, Delta co-branding, no "AI look"
+## PASS 3 (blog writers read this first): 38 more posts, to 50
+
+The owner asked for 50 blog posts in total, "fully schema markups, everything you possibly need", following his SEO SOP (`docs/seo/PILK-AI-SEO-SOP.txt`, Phases 3 and 5 and the "Added 16 Nov 2026" plays). Twelve exist. Eight writers add 38 more, at the same time.
+
+**Everything in "Content rules" further down still applies** (answer first, question H2s, every number sourced and cited inline, honest downsides, FAQs that match word for word, no em dashes, no exclamation marks, no invented facts, `author: "ecrn-team"`, no `reviewedBy`). Additions for this pass:
+
+- **The platform renders everything else.** The blog page template already outputs BlogPosting, BreadcrumbList and FAQPage JSON-LD, Open Graph article tags, the table of contents, sources, related posts and the Delta "About ECRN" box from your data. Your job is excellent data in `lib/blog/types.ts`'s `BlogPost` shape. Look at two finished posts first: `content/blog/posts/electrician-salary-by-state.ts` and `content/blog/posts/is-ecrn-legit.ts`.
+- **Reuse the ledger.** `docs/blog/VERIFIED-FACTS.md` lists figures already read off primary pages today, with URLs, plus the sites that block the fetch tool. Reuse those (cite the URL, `accessed: "2026-11-20"`), and keep numbers consistent with them. Research only what is not there.
+- **No cannibalising.** Each post owns its target query. Where an existing post already covers part of your topic (see the twelve below), link to it in one sentence and go deeper on your own angle instead of repeating it.
+- **Internal links (SOP: every new page gets 3+ links in and links out to its money page).** Link your `moneyPage`, link at least three other posts or career pages inline (at least one from another batch), and set `related` to 3 or 4 slugs. The lead adds links into your posts from older posts at the end.
+- **Length:** 1,200–1,800 words by `wordCount()`. Useful beats long.
+- **Dates:** `publishedAt` and `updatedAt` = `2026-11-21`. Source `accessed` = the day you actually read it (run `date +%F`).
+- **Covers:** use the cover name in the table. The image builder is generating them now; `SiteImage` shows a placeholder until each is ready.
+- **Licensing posts:** state licensing rules must come from that state's licensing board or statute, opened by you, with the exact requirement (hours, exams, fees only if the page states them) and the date. If the board page cannot be read, say less, not more. Florida licenses electrical contractors at state level while journeyman licensing is handled locally in many places: verify how it actually works before you write it.
+- **Employer posts:** no claims about Delta's fees, guarantees or results (we have none).
+- **No "AI" tells in the writing:** no "In today's…", no "Whether you're X or Y", no "navigating", "landscape", "unlock", "leverage", "robust", "seamless", "game-changer", no rhetorical questions as openers, no three-adjective lists. Specific, plain, practical, like a senior recruiter talking to a foreman.
+
+**Existing twelve** (link to them, don't repeat them): `how-construction-referral-bonuses-work`, `is-ecrn-legit`, `how-to-refer-someone-for-a-construction-job`, `recruiter-vs-job-board-vs-referral-network`, `electrical-project-manager-salary`, `electrician-salary-by-state`, `electrical-foreman-vs-superintendent`, `electrician-shortage-statistics`, `data-center-construction-electrical-jobs`, `how-to-job-search-confidentially`, `electrical-construction-resume-guide`, `are-construction-recruiters-worth-it`. Career pages: `/careers/journeyman-electrician`, `/careers/electrical-foreman`, `/careers/electrical-superintendent`, `/careers/electrical-estimator`, `/careers/electrical-project-manager`, `/careers/electrical-construction-executive`, plus `/careers`, `/glossary`, `/referral-rewards`, `/how-it-works`, `/jobs`, `/hire`, `/signup`.
+
+**The 38 new posts** (category `licensing` is new: "Licensing & safety"):
+
+| # | Slug | Category | Batch | Cover | Target query | Money page |
+|---|---|---|---|---|---|---|
+| 13 | `electrical-estimator-salary` | pay | D | `cover-estimator-salary` | electrical estimator salary | `/careers/electrical-estimator` |
+| 14 | `electrical-superintendent-salary` | pay | D | `cover-superintendent-salary` | electrical superintendent salary | `/careers/electrical-superintendent` |
+| 15 | `electrical-foreman-salary` | pay | D | `cover-foreman-salary` | electrical foreman salary | `/careers/electrical-foreman` |
+| 16 | `apprentice-electrician-pay-by-year` | pay | D | `cover-apprentice-pay` | how much do apprentice electricians make | `/careers/journeyman-electrician` |
+| 17 | `union-vs-non-union-electrician-pay` | pay | D | `cover-union-vs-open-shop` | union vs non union electrician pay | `/careers/journeyman-electrician` |
+| 18 | `traveling-electrician-per-diem` | pay | E | `cover-travel-per-diem` | traveling electrician per diem | `/jobs` |
+| 19 | `relocating-for-a-construction-job` | job-search | E | `cover-relocation` | relocating for a construction job | `/jobs` |
+| 20 | `how-to-negotiate-salary-in-construction` | job-search | E | `cover-negotiate-salary` | how to negotiate salary in construction | `/signup` |
+| 21 | `should-you-accept-a-counteroffer` | job-search | E | `cover-counteroffer` | should I accept a counteroffer | `/signup` |
+| 22 | `are-referral-bonuses-taxable` | referrals | E | `cover-referral-taxes` | are referral bonuses taxable | `/referral-rewards` |
+| 23 | `how-to-become-an-electrical-estimator` | careers | F | `cover-become-estimator` | how to become an electrical estimator | `/careers/electrical-estimator` |
+| 24 | `how-to-become-an-electrical-project-manager` | careers | F | `cover-become-pm` | how to become an electrical project manager | `/careers/electrical-project-manager` |
+| 25 | `how-to-become-an-electrical-foreman` | careers | F | `cover-become-foreman` | how to become an electrical foreman | `/careers/electrical-foreman` |
+| 26 | `electrical-superintendent-job-description` | careers | F | `cover-superintendent-duties` | electrical superintendent job description | `/careers/electrical-superintendent` |
+| 27 | `assistant-project-manager-electrical` | careers | F | `cover-assistant-pm` | assistant project manager electrical | `/careers/electrical-project-manager` |
+| 28 | `project-engineer-vs-project-manager` | careers | G | `cover-pe-vs-pm` | project engineer vs project manager construction | `/careers/electrical-project-manager` |
+| 29 | `electrical-construction-career-path` | careers | G | `cover-career-path` | electrical construction career path | `/careers` |
+| 30 | `electrical-construction-jobs-for-veterans` | careers | G | `cover-veterans` | electrical construction jobs for veterans | `/jobs` |
+| 31 | `how-to-work-with-a-construction-recruiter` | job-search | G | `cover-working-with-recruiter` | how to work with a construction recruiter | `/signup` |
+| 32 | `who-to-refer-for-construction-jobs` | referrals | G | `cover-who-to-refer` | who to refer for a construction job | `/referral-rewards` |
+| 33 | `journeyman-vs-master-electrician` | licensing | H | `cover-journeyman-vs-master` | journeyman vs master electrician | `/careers/journeyman-electrician` |
+| 34 | `how-to-get-an-electrician-license-in-florida` | licensing | H | `cover-license-florida` | how to get an electrician license in Florida | `/careers/journeyman-electrician` |
+| 35 | `how-to-get-an-electrician-license-in-texas` | licensing | H | `cover-license-texas` | how to get an electrician license in Texas | `/careers/journeyman-electrician` |
+| 36 | `how-to-get-an-electrician-license-in-california` | licensing | H | `cover-license-california` | how to get an electrician license in California | `/careers/journeyman-electrician` |
+| 37 | `electrician-license-reciprocity` | licensing | H | `cover-license-reciprocity` | electrician license reciprocity | `/jobs` |
+| 38 | `osha-10-vs-osha-30` | licensing | I | `cover-osha-cards` | OSHA 10 vs OSHA 30 | `/careers/electrical-foreman` |
+| 39 | `electrical-foreman-interview-questions` | job-search | I | `cover-foreman-interview` | electrical foreman interview questions | `/careers/electrical-foreman` |
+| 40 | `electrical-project-manager-interview-questions` | job-search | I | `cover-pm-interview` | electrical project manager interview questions | `/careers/electrical-project-manager` |
+| 41 | `how-to-ask-someone-if-theyre-open-to-a-new-job` | referrals | I | `cover-ask-open-to-move` | how to ask someone if they want a new job | `/referral-rewards` |
+| 42 | `ev-charging-electrician-jobs` | industry | J | `cover-ev-charging` | EV charging installation jobs | `/jobs` |
+| 43 | `solar-and-battery-storage-electrician-jobs` | industry | J | `cover-solar-storage` | solar and battery storage electrician jobs | `/jobs` |
+| 44 | `grid-and-transmission-construction-jobs` | industry | J | `cover-grid-transmission` | transmission line construction jobs | `/jobs` |
+| 45 | `manufacturing-plant-electrical-construction-jobs` | industry | J | `cover-manufacturing-plants` | manufacturing plant electrical construction jobs | `/jobs` |
+| 46 | `electrical-construction-industry-outlook-2027` | industry | J | `cover-outlook-2027` | electrical construction industry outlook 2027 | `/jobs` |
+| 47 | `how-to-hire-an-electrical-project-manager` | employers | K | `cover-hire-pm` | how to hire an electrical project manager | `/hire` |
+| 48 | `how-to-find-and-hire-electricians` | employers | K | `cover-hire-electricians` | how to hire electricians | `/hire` |
+| 49 | `how-to-retain-electricians` | employers | K | `cover-retain-electricians` | how to retain electricians | `/hire` |
+| 50 | `electrical-project-manager-job-description` | employers | K | `cover-pm-job-description` | electrical project manager job description | `/hire` |
+
+**File ownership, pass 3:** writer for batch X owns `content/blog/batch-x.ts` and `content/blog/posts/<slug>.ts` for its slugs only. The image builder owns `public/img/**` and `lib/site-images.ts`. Nobody else edits anything. Type-check with `/tmp/agent-check.sh <name> '<regex of your files>'` (`timeout_ms: 600000`). No dev servers in this pass.
+
+---
+
+## PASS 2: mobile-first, Delta co-branding, no "AI look"
 
 _Added after pass 1. Where this section and the rest of the file disagree, this section wins. Everything below it (facts, stack, hard rules, content rules, design rules, tools) still applies._
 

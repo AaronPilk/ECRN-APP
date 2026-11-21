@@ -2,13 +2,21 @@ import type { BlogCategory, BlogPost } from "@/lib/blog/types";
 import { POSTS_A } from "./batch-a";
 import { POSTS_B } from "./batch-b";
 import { POSTS_C } from "./batch-c";
+import { POSTS_D } from "./batch-d";
+import { POSTS_E } from "./batch-e";
+import { POSTS_F } from "./batch-f";
+import { POSTS_G } from "./batch-g";
+import { POSTS_H } from "./batch-h";
+import { POSTS_I } from "./batch-i";
+import { POSTS_J } from "./batch-j";
+import { POSTS_K } from "./batch-k";
 
 /**
  * Every published post, newest first. Posts are static data, so this list is
  * the single source for /blog, the sitemap, RSS, llms.txt and related links.
  * To add a post: create content/blog/posts/<slug>.ts and add it to a batch file.
  */
-export const allPosts: BlogPost[] = [...POSTS_A, ...POSTS_B, ...POSTS_C].sort(
+export const allPosts: BlogPost[] = [...POSTS_A, ...POSTS_B, ...POSTS_C, ...POSTS_D, ...POSTS_E, ...POSTS_F, ...POSTS_G, ...POSTS_H, ...POSTS_I, ...POSTS_J, ...POSTS_K].sort(
   (a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.title.localeCompare(b.title)
 );
 

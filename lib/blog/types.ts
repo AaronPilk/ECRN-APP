@@ -48,6 +48,7 @@ export const BLOG_CATEGORIES = {
   "job-search": { label: "Job search", description: "Finding and landing your next electrical construction role." },
   industry: { label: "Industry", description: "Where the work is and what is driving demand." },
   employers: { label: "For employers", description: "Hiring and keeping electrical construction talent." },
+  licensing: { label: "Licensing & safety", description: "Electrician licensing, reciprocity and safety training, with sources." },
 } as const;
 
 export type BlogCategory = keyof typeof BLOG_CATEGORIES;

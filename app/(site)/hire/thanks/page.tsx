@@ -1,24 +1,44 @@
-import Link from "next/link";
-import { Card } from "@/components/ui/Card";
+import "@/components/site/inner/inner.css";
+import { ArrowRight } from "lucide-react";
+import { CtaLink, PageHero } from "@/components/site/Blocks";
+import { Band, DeltaNote, Heading, StepList } from "@/components/site/inner/Kit";
 
 export const metadata = { title: "Thanks", robots: { index: false, follow: true } };
 
+const NEXT_STEPS = [
+  { title: "Delta's recruiting team reads it", body: "Your request is with Delta Construction Partners' recruiters now." },
+  { title: "A recruiter reaches out", body: "A Delta recruiter contacts you to talk through the role." },
+  { title: "You meet vetted candidates", body: "You interview people Delta's recruiters have already vetted, sourced through industry referrals." },
+];
+
 export default function HireThanksPage() {
   return (
-    <div className="flex flex-col py-16">
-      <div className="flex-1 flex items-center justify-center px-5 sm:px-8">
-        <Card className="max-w-md w-full p-8 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center text-2xl">✓</div>
-          <h1 className="mt-5 text-2xl font-bold text-ecrn-ink">We&apos;ve got it.</h1>
-          <p className="mt-2 text-slate-600">
-            Your hiring need is in front of Delta&apos;s recruiting team. Someone will reach out
-            shortly.
+    <>
+      <PageHero
+        eyebrow="Request sent"
+        title="We've got it."
+        image="office-overlook-night"
+        intro={
+          <p>
+            Your hiring need is in front of Delta Construction Partners&apos; recruiting team. Someone will reach out shortly.
           </p>
-          <Link href="/" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-[15px] border border-ecrn-line bg-white px-4 text-[15px] font-medium text-ecrn-ink hover:bg-ecrn-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-ecrn-green">
-            Back to home
-          </Link>
-        </Card>
-      </div>
-    </div>
+        }
+      >
+        <CtaLink href="/" className="w-full sm:w-auto">
+          Back to home <ArrowRight aria-hidden className="h-4 w-4" />
+        </CtaLink>
+        <CtaLink href="/about" variant="ghost" className="w-full sm:w-auto">
+          About ECRN and Delta
+        </CtaLink>
+      </PageHero>
+
+      <Band labelledBy="next-title">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+          <Heading id="next-title" title="What happens next" />
+          <StepList steps={NEXT_STEPS} />
+        </div>
+        <DeltaNote className="mt-14 sm:mt-20" />
+      </Band>
+    </>
   );
 }

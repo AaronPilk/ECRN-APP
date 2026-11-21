@@ -15,10 +15,14 @@ const START_HERE = [
   { href: "/jobs", label: "Open electrical construction jobs" },
 ];
 
+/** Breadcrumb row under a hero (the crumb links are 44 px targets in Breadcrumbs itself). */
+export const CRUMB_ROW = "pt-5 sm:pt-6";
+
 /**
- * The blog index: hero, topic links, the latest post as the lead story, then
- * every other post as a card. `posts` is newest first (allPosts). With no
- * posts it shows a short holding message instead of an empty grid.
+ * The blog index: hero, topics, the latest post as the lead story, then every
+ * other post (a list on phones, cards from 640 px). `posts` is newest first
+ * (allPosts). With no posts it shows a short holding message instead of an
+ * empty grid.
  */
 export function BlogIndexView({ posts }: { posts: BlogPost[] }) {
   const [latest, ...rest] = posts;
@@ -39,35 +43,35 @@ export function BlogIndexView({ posts }: { posts: BlogPost[] }) {
         }
       />
 
-      <Container className="py-6">
+      <Container className={CRUMB_ROW}>
         <Breadcrumbs items={BLOG_CRUMBS} />
       </Container>
 
       {latest ? (
         <>
-          <Container>
+          <Container className="mt-3 sm:mt-4">
             <CategoryNav categories={categoriesWithPosts(posts)} />
           </Container>
 
-          <section aria-labelledby="latest-heading" className="pt-10 sm:pt-12">
+          <section aria-labelledby="latest-heading" className="pt-8 sm:pt-12">
             <Container>
-              <h2 id="latest-heading" className="font-mono text-[12px] uppercase tracking-[0.16em] text-ecrn-green-text">
+              <h2 id="latest-heading" className="font-display text-[17px] font-semibold tracking-[-0.01em] text-ecrn-ink">
                 Latest guide
               </h2>
-              <PostCard post={latest} featured priority className="mt-4" />
+              <PostCard post={latest} featured priority className="mt-3 sm:mt-4" />
             </Container>
           </section>
 
           {rest.length > 0 && (
-            <section aria-label="More guides" className="pt-16 sm:pt-24">
+            <section aria-labelledby="more-guides-heading" className="pt-14 sm:pt-24">
               <Container>
-                <SectionHeading title="More guides" />
-                <PostGrid posts={rest} className="mt-8 sm:mt-10" />
+                <SectionHeading title={<span id="more-guides-heading">More guides</span>} />
+                <PostGrid posts={rest} className="mt-6 sm:mt-10" />
               </Container>
             </section>
           )}
 
-          <Container className="pb-4 pt-6 sm:pb-8">
+          <Container className="pb-2 pt-6 sm:pb-6 sm:pt-8">
             <a
               href={BLOG_RSS_PATH}
               className="inline-flex min-h-[44px] items-center gap-2 text-[15px] font-medium text-ecrn-secondary [@media(hover:hover)_and_(pointer:fine)]:hover:text-ecrn-ink"
@@ -78,11 +82,10 @@ export function BlogIndexView({ posts }: { posts: BlogPost[] }) {
           </Container>
         </>
       ) : (
-        <section aria-label="Coming soon" className="pb-4 sm:pb-8">
+        <section aria-label="Coming soon" className="pb-4 pt-8 sm:pb-8 sm:pt-12">
           <Container>
-            <div className="rounded-[28px] border border-ecrn-line bg-white px-6 py-12 sm:px-12 sm:py-16">
+            <div className="rounded-[28px] border border-ecrn-line bg-white px-5 py-10 sm:px-12 sm:py-16">
               <SectionHeading
-                eyebrow="Coming soon"
                 title="The first guides are on the way"
                 intro={
                   <p>

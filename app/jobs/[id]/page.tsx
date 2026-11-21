@@ -1,3 +1,4 @@
+import "@/components/site/inner/inner.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, MapPin, UserPlus, Users } from "lucide-react";
@@ -9,6 +10,7 @@ import { JsonLd } from "@/components/site/SiteChrome";
 import { absoluteUrl, breadcrumbJsonLd, pageMeta } from "@/lib/site";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { isHighPriority, jobLocation, jobPayout, jobSalary } from "@/lib/jobs";
+import { PublicJobView } from "@/components/jobs/PublicJobView";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -79,6 +81,17 @@ export default async function JobDetailPage(props: PageProps) {
   const salaryMain = salary?.replace(/\s*\+.*$/, "");
 
   const signedIn = Boolean(profile);
+
+  // Visitors get the public website layout; members keep the app layout below.
+  if (!signedIn) {
+    return (
+      <>
+        <JsonLd data={jobPostingJsonLd(job)} />
+        <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Jobs", path: "/jobs" }, { name: job.title, path: `/jobs/${job.id}` }])} />
+        <PublicJobView job={job} payout={payout} salaryMain={salaryMain} salaryExtra={salaryExtra} />
+      </>
+    );
+  }
 
   return (
     <div className={signedIn ? "pb-40 lg:pb-10" : "pb-28 lg:pb-0"}>

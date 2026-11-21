@@ -1,14 +1,11 @@
 import { cn } from "@/lib/utils/cn";
+import { EcrnLogo } from "./Delta";
 
 /**
- * The white ECRN wordmark, for dark surfaces. A plain <img> on purpose: the
- * site serves images as-is, the intrinsic size reserves the space, and it
- * stays out of the hero photo's way (no preload). This is a resized copy of
- * the supplied artwork, with no redrawing or recoloring.
+ * The white ECRN artwork on its own, for dark surfaces (pass-1 API, kept).
+ * The header, menu and footer now use <CoBrandLockup> from ./Delta, which
+ * pairs it with Delta's mark and name.
  */
 export function SiteLogo({ className }: { className?: string }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src="/brand/ecrn-horizontal-white-512.png" alt="ECRN, Power Your Connections" width={512} height={129} decoding="async" className={cn("h-[26px] w-auto sm:h-[30px]", className)} />
-  );
+  return <EcrnLogo tone="dark" className={cn("h-[26px] sm:h-[30px]", className)} />;
 }

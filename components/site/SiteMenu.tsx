@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronRight, Menu, X } from "lucide-react";
-import { DELTA, PoweredByDelta } from "./Delta";
-import { SiteLogo } from "./SiteLogo";
+import { ArrowRight, ArrowUpRight, ChevronRight, Menu, X } from "lucide-react";
+import { CoBrandLockup, DELTA, DeltaLogo } from "./Delta";
 import { isCurrentPath, type NavItem } from "./SiteNav";
 import { siteVars } from "./motion/vars";
 
 const MORE: NavItem[] = [
   { href: "/faq", label: "FAQ" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "About ECRN" },
   { href: "/glossary", label: "Glossary" },
   { href: "/support", label: "Support" },
 ];
@@ -20,9 +19,15 @@ const MORE: NavItem[] = [
 const EXIT_MS = 230;
 
 /**
- * Menu for phones and tablets: a full-height sheet from the right edge.
- * It is a modal <dialog>, so focus is trapped, Escape closes it and the page
- * behind is inert without any extra code. Enter and exit are CSS transitions
+ * Menu for phones and tablets: a sheet that covers the screen on phones (a
+ * side sheet from 420 px). Its top bar repeats the header exactly, lockup
+ * and all, with the close button where the menu button was, so nothing
+ * jumps when it opens. Below: every page as a large row, Delta's card with
+ * one line and a link to its site, and the account actions pinned to the
+ * bottom edge within thumb reach (above the iOS home bar).
+ *
+ * It is a modal <dialog>: focus is trapped, Escape closes it and the page
+ * behind is inert without extra code. Enter and exit are CSS transitions
  * (interruptible); leaving is quicker than arriving.
  */
 export function SiteMenu({ items, signedIn }: { items: NavItem[]; signedIn: boolean }) {
@@ -70,17 +75,11 @@ export function SiteMenu({ items, signedIn }: { items: NavItem[]; signedIn: bool
 
   useEffect(() => finish, [finish]);
 
+  const stagger = (i: number) => siteVars({ i });
+
   return (
     <div className="xl:hidden">
-      <button
-        type="button"
-        aria-label="Open menu"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls="site-menu"
-        onClick={show}
-        className="-mr-2.5 grid h-11 w-11 place-items-center rounded-full text-white transition-transform duration-150 ease-out active:scale-90"
-      >
+      <button type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded={open} aria-controls="site-menu" onClick={show} className="site-menu-btn">
         <Menu aria-hidden className="h-6 w-6" strokeWidth={1.75} />
       </button>
 
@@ -98,69 +97,71 @@ export function SiteMenu({ items, signedIn }: { items: NavItem[]; signedIn: bool
           document.documentElement.style.overflow = "";
         }}
         onClick={(e) => {
-          if (e.target === e.currentTarget) hide();
+          // The backdrop is the dialog itself; any link inside closes the sheet too
+          // (a link to the page you are on would not change the pathname).
+          if (e.target === e.currentTarget || (e.target as Element).closest("a")) hide();
         }}
       >
         <div className="site-menu-panel">
-          <div className="flex h-[var(--site-header-h)] shrink-0 items-center justify-between pl-4 pr-4 pt-[env(safe-area-inset-top)] sm:pl-7 sm:pr-8" style={{ boxSizing: "content-box" }}>
-            <Link href="/" aria-label="ECRN home" onClick={() => hide()} className="flex h-11 items-center">
-              <SiteLogo />
-            </Link>
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={() => hide()}
-              className="-mr-2.5 grid h-11 w-11 place-items-center rounded-full text-white transition-transform duration-150 ease-out active:scale-90"
-            >
+          <div className="site-menu-top">
+            <CoBrandLockup ecrnHref="/" deltaHref="/about" />
+            <button type="button" aria-label="Close menu" onClick={() => hide()} className="site-menu-btn">
               <X aria-hidden className="h-6 w-6" strokeWidth={1.75} />
             </button>
           </div>
 
-          <nav aria-label="Menu" className="px-4 pt-3 sm:px-7">
-            <ul>
-              {items.map((n, i) => (
-                <li key={n.href} className="site-menu-item" style={siteVars({ i })}>
-                  <Link href={n.href} onClick={() => hide()} aria-current={isCurrentPath(pathname, n.href) ? "page" : undefined} className="site-menu-link">
-                    {n.label}
-                    <ChevronRight aria-hidden className="h-5 w-5" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className="site-menu-item mt-5 flex flex-wrap gap-x-6" style={siteVars({ i: items.length })}>
-              {MORE.map((n) => (
-                <li key={n.href}>
-                  <Link href={n.href} onClick={() => hide()} className="inline-flex min-h-[44px] items-center font-display text-[15px] text-white/[0.78] active:opacity-60">
-                    {n.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div className="site-menu-scroll">
+            <nav aria-label="Site">
+              <ul>
+                {items.map((n, i) => (
+                  <li key={n.href} className="site-menu-item" style={stagger(i)}>
+                    <Link href={n.href} aria-current={isCurrentPath(pathname, n.href) ? "page" : undefined} className="site-menu-link">
+                      {n.label}
+                      <ChevronRight aria-hidden className="h-5 w-5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <ul className="site-menu-item site-menu-more" style={stagger(items.length)}>
+                {MORE.map((n) => (
+                  <li key={n.href}>
+                    <Link href={n.href} aria-current={isCurrentPath(pathname, n.href) ? "page" : undefined} className="site-menu-more-link">
+                      {n.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          <div className="site-menu-item mt-auto px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-8 sm:px-7" style={siteVars({ i: items.length + 1 })}>
-            <div className="rounded-[18px] bg-white/[0.05] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-              <PoweredByDelta variant="lockup" href="/about" />
-              <p className="mt-2.5 text-[13.5px] leading-relaxed text-white/[0.74]">
-                A construction recruiting firm, recruiting since {DELTA.since}, with {DELTA.recruiters} recruiters working every referral.
+            <section aria-label="Who is behind ECRN" className="site-menu-item site-menu-delta" style={stagger(items.length + 1)}>
+              <p className="font-display text-[13px] font-medium text-white/[0.66]">ECRN is an initiative of</p>
+              <DeltaLogo size={30} className="mt-3" />
+              <p className="mt-4 text-[15px] leading-[1.55] text-white/[0.8]">
+                Construction recruiting since {DELTA.since}, with {DELTA.recruiters} recruiters and national contractor relationships.
               </p>
-            </div>
-            <div className="mt-4 grid gap-2.5">
-              {signedIn ? (
-                <Link href="/start" onClick={() => hide()} className="site-btn site-btn-primary flex">
-                  Open dashboard <ArrowRight aria-hidden className="h-4 w-4" />
+              <a href={DELTA.url} target="_blank" rel="noopener" className="site-menu-delta-link">
+                {DELTA.domain}
+                <span className="sr-only"> (opens in a new tab)</span>
+                <ArrowUpRight aria-hidden className="h-4 w-4 shrink-0" />
+              </a>
+            </section>
+          </div>
+
+          <div className="site-menu-actions">
+            {signedIn ? (
+              <Link href="/start" className="site-btn site-btn-primary flex">
+                Open dashboard <ArrowRight aria-hidden className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="site-btn site-btn-ghost flex">
+                  Log in
                 </Link>
-              ) : (
-                <>
-                  <Link href="/signup" onClick={() => hide()} className="site-btn site-btn-primary flex">
-                    Sign up free <ArrowRight aria-hidden className="h-4 w-4" />
-                  </Link>
-                  <Link href="/login" onClick={() => hide()} className="site-btn site-btn-ghost flex">
-                    Log in
-                  </Link>
-                </>
-              )}
-            </div>
+                <Link href="/signup" className="site-btn site-btn-primary flex">
+                  Sign up free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </dialog>

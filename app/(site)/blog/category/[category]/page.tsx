@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CRUMB_ROW } from "@/components/blog/BlogIndexView";
 import { CategoryNav } from "@/components/blog/CategoryNav";
 import { PostCard, PostGrid } from "@/components/blog/PostCard";
 import { Breadcrumbs, Container, DeltaBand, FinalCta, PageHero } from "@/components/site/Blocks";
@@ -51,23 +52,28 @@ export default async function BlogCategoryPage(props: PageProps) {
         intro={<p>{BLOG_CATEGORIES[category].description} Each guide opens with the short answer, then shows the detail and its sources.</p>}
       />
 
-      <Container className="py-6">
+      <Container className={CRUMB_ROW}>
         <Breadcrumbs items={crumbs} />
       </Container>
 
-      <Container>
+      <Container className="mt-3 sm:mt-4">
         <CategoryNav categories={categoriesWithPosts(allPosts)} current={category} />
       </Container>
 
-      <section aria-labelledby="category-posts-heading" className="pb-6 pt-10 sm:pb-10 sm:pt-12">
+      <section aria-labelledby="category-posts-heading" className="pb-4 pt-8 sm:pb-10 sm:pt-12">
         <Container>
-          <h2 id="category-posts-heading" className="font-mono text-[12px] uppercase tracking-[0.16em] text-ecrn-green-text">
+          <h2 id="category-posts-heading" className="font-display text-[17px] font-semibold tracking-[-0.01em] text-ecrn-ink">
             {posts.length === 1 ? "1 guide" : `${posts.length} guides, newest first`}
           </h2>
           {/* Fill the row whatever the count: a lead story when one card would sit alone, two columns for two posts. */}
-          {leadFirst && <PostCard post={posts[0]} featured priority className="mt-4" />}
+          {leadFirst && <PostCard post={posts[0]} featured priority className="mt-3 sm:mt-4" />}
           {gridPosts.length > 0 && (
-            <PostGrid posts={gridPosts} columns={gridPosts.length === 2 ? 2 : 3} priorityFirst={!leadFirst} className={leadFirst ? "mt-6" : "mt-4"} />
+            <PostGrid
+              posts={gridPosts}
+              columns={gridPosts.length === 2 ? 2 : 3}
+              priorityFirst={!leadFirst}
+              className={leadFirst ? "mt-4 sm:mt-6" : "mt-3 sm:mt-4"}
+            />
           )}
         </Container>
       </section>

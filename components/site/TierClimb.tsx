@@ -30,7 +30,7 @@ export function TierClimb({ className }: { className?: string }) {
             <p className="site-tier-amount">
               {t.value ? (
                 <>
-                  <span className="block font-display text-[12.5px] font-medium tracking-[0.01em] text-[color:var(--site-fg-2,#506158)] md:text-[13.5px]">{t.label || "Up to"}</span>
+                  <span className="block font-display text-[13px] font-medium tracking-[0.01em] text-[color:var(--site-fg-2,#506158)] md:text-[13.5px]">{t.label || "Up to"}</span>
                   <span className="site-num mt-0.5 block text-[28px] font-semibold leading-none md:mt-1 md:text-[clamp(1.75rem,3.1vw,2.75rem)]">
                     <CountUp value={t.value} prefix="$" delay={i * 90} />
                   </span>

@@ -1,5 +1,64 @@
 # ECRN website build: shared contract for parallel builders
 
+## PASS 2 (read this first): mobile-first, Delta co-branding, no "AI look"
+
+_Added after pass 1. Where this section and the rest of the file disagree, this section wins. Everything below it (facts, stack, hard rules, content rules, design rules, tools) still applies._
+
+**What the owner said:** "On certain areas like rewards, we need to fix the UI and make it more encompassing so it doesn't look so AI generated. We need to add Delta Construction's branding to go alongside ECRN, so everybody knows it is Delta Construction in all areas. All of the spacing and alignment must be correct. The entire site needs to be mobile optimized: 99% of people going to this site will be on a phone."
+
+### The phone is the product
+
+Design and verify at **390×844 first**, then 360×740, then check 768 and 1440 still look right. Desktop is the afterthought now.
+
+- **Gutters:** 20 px left and right on phones (`px-5`), 32 px from `sm`. Every section on a page uses the same gutter, so all left edges line up on one line. No element pokes out of the gutter except deliberate full-bleed photos.
+- **Vertical rhythm:** sections are 56 px top and bottom on phones (64 for hero-adjacent), 96 px on desktop. Inside a section: eyebrow → 12 px → heading → 16 px → intro → 32 px → content. Use the same steps everywhere; never eyeball a one-off margin.
+- **Type on phones:** H1 34–40 px, line-height 1.05, tracking −0.03em; H2 26–30 px, line-height 1.12; H3 19–20 px; body 16–17 px, line-height 1.6; small text no smaller than 13 px. Long headings must not leave a single word on the last line if you can avoid it (`text-wrap: balance` on headings, `text-wrap: pretty` on paragraphs).
+- **One column.** Grids collapse to one column below 640 px unless the items are tiny (two-up stat tiles are fine if each value fits without wrapping at 360 px).
+- **No wide tables on phones.** Below 640 px every table becomes stacked cards or a definition list. Nothing scrolls sideways, nothing is cut off. (Pass 1 left the rewards table cut off at "Up t": that is the kind of thing that must never ship.)
+- **Thumbs:** every tap target is at least 44×44 px with 8 px between targets, including breadcrumb links, footer links, FAQ toggles and inline "Read more" links. Primary CTAs are full width on phones. Sticky elements never cover content or the iOS home bar (`env(safe-area-inset-bottom)`).
+- **Alignment:** left-align text on phones. Center only short closing headings. Icons align to the first line of the text they belong to. Numbers in lists align on the right edge and use tabular figures.
+- **Images on phones:** crop to 4:3 or 16:10, keep the subject in frame (`focal` in the manifest), `sizes` that match the real rendered width so phones download the small files.
+- **Performance on a phone:** no layout shift, one priority image per page, motion only on `transform`/`opacity`, and the page must be usable before any JavaScript runs.
+
+### Delta Construction Partners branding next to ECRN, everywhere
+
+ECRN is "powered by" / "an initiative of" **Delta Construction Partners** (use only those phrasings; never "a Delta company", never "owned by"). The owner wants a visitor to know it is Delta on every screen, on a phone, without scrolling.
+
+- **The co-brand lockup** (`components/site/Delta.tsx`, owned by BRAND): ECRN logo, a thin divider, then Delta's mark (`/brand/delta-mark.png`, the only Delta artwork we have) beside a typeset wordmark: "DELTA" large and bold on the first line, "CONSTRUCTION PARTNERS" small, uppercase, widely tracked on the second. It must stay legible at 360 px in the header. Delta's colours are cobalt `#0655CE` and navy `#00244B` (already Tailwind tokens). We do not have Delta's official logo file, so do not draw, trace or imitate one: the mark plus typeset name is the lockup until the owner supplies the file.
+- **Where it appears:** the header on every page (including phones), the mobile menu, every page hero, the footer, the final call to action, and once in the body of every major page as a short statement of who Delta is (recruiting since 2008, 30+ recruiters, national contractor relationships, link to https://deltaconstructionpartners.com). Blog posts and career pages show it in their hero and in the "About ECRN" box.
+- **The member app header** (`components/ui/DeltaLockup.tsx`) uses the same lockup so the app and the site match.
+
+### What makes a page look "AI generated" (do not do these)
+
+- The same block repeated down the page: eyebrow, centred heading, paragraph, three identical icon cards.
+- Mono uppercase eyebrows on every section, gradient blobs, glows behind everything, emoji, icons in circles as decoration.
+- Filler copy ("Unlock your potential", "Seamless", "Empower") and restating the heading in the paragraph.
+- Everything centred; everything the same card; every card the same height with the same shadow.
+- Big tables or lists dumped onto a phone.
+
+**Instead:** show the real thing. A rewards page shows the ladder of four tiers as a designed object with the roles inside each step, the payout timeline as a real sequence with the 90-day guarantee drawn to scale, and an "example payout" card that reads like a statement. A how-it-works page walks one referral from "you send a name" to "you get paid". Use photography with purpose, vary section layouts, and write specific sentences a Delta recruiter would say.
+
+### Primitives from pass 1 (use these; names and props are stable)
+
+From `@/components/site/Blocks`: `Container`, `Eyebrow`, `CtaLink` (variants `primary | ghost | dark | light`), `ArrowLink`, `Section` (`tone: paper | white | dark`, `sheet`, `bare`, `id`), `Island` (dark rounded panel), `SectionHeading` (`eyebrow, title, intro, as, align`), `GlassCard` (`weight: thin | regular | thick`, `tone`), `PhotoTile` (`image, sizes, tint, accent`), `DeltaBand` (`image, tone, id, title`), `PageHero` (`eyebrow, title, intro, image?`, children = CTAs), `Breadcrumbs`, `FaqList`, `FinalCta` (`image, eyebrow, title, body, primary, secondary`), `PoweredByDelta` (`variant: pill | lockup | inline, tone, href, compact`), `DeltaMark`, `DELTA`.
+From `@/components/site/motion`: `Reveal` (`as, index, y, group`), `Parallax` (`speed, from, cover`), `ScrollLine` + `ScrollLineStep`, `CountUp` (`value, prefix, suffix`), `Marquee`, `Float`, `Tilt` + `TiltLayer`, `siteVars`.
+Also `TierClimb` (`components/site/TierClimb.tsx`), `SiteImage`, and CSS classes in `app/(site)/site.css` (`site-display-1…5`, `site-lede`, `site-eyebrow`, `site-num`, `site-glass*`, `site-card`, `site-lift`, `site-btn-*`, `site-link`). Do not put a Tailwind utility for the same property on an element that has a `site-*` class (the `site-*` class wins). Use `overflow-clip`, not `overflow-hidden`, around anything sticky or scroll-animated.
+
+### Pass 2 file ownership (replaces the table further down)
+
+| Builder | Owns |
+|---|---|
+| **BRAND** | `components/site/**` except `components/site/inner/**`; `app/(site)/site.css`; `app/(site)/layout.tsx`; `app/(site)/page.tsx` (home); `app/jobs/layout.tsx`; `app/not-found.tsx`; `components/ui/DeltaLockup.tsx` |
+| **INNER** | `app/(site)/{referral-rewards,how-it-works,hire,about,faq,support,terms,privacy}/**`; `app/jobs/page.tsx`, `app/jobs/[id]/page.tsx` (look only, keep data logic and JSON-LD); `components/jobs/**` (look only); new folder `components/site/inner/**` |
+| **CONTENT** | `app/(site)/blog/**`, `components/blog/**`, `app/(site)/careers/**`, `app/(site)/glossary/**`, `components/careers/**`, `components/content/ContentBlocks.tsx` |
+| **Lead** | everything else |
+
+BRAND changes the shared primitives while INNER and CONTENT use them. BRAND: keep every existing export name and prop working (add, don't break). INNER and CONTENT: if a primitive is missing something, build it locally in your own folder and say so in your report.
+
+Only one heavy job runs at a time. `/tmp/site-preview.sh` now clears the stale dev cache itself, so use it directly. Use a phone context in Playwright: `viewport={"width":390,"height":844}, device_scale_factor=2, is_mobile=True, has_touch=True` with an iPhone Safari user agent, and downscale screenshots to 390 px wide before reading them to save time. Scroll through the page before a full-page screenshot so reveals have fired. Budget: at most **six** preview runs each, so batch every page you need into one script.
+
+---
+
 _Nov 20, 2026._ Read this whole file before you write anything. Several builders work in this repo **at the same time**. The file-ownership rules are strict because nobody can see anyone else's unfinished work.
 
 ## What we are building

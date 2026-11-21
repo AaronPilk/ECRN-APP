@@ -1,7 +1,12 @@
+import "@/components/site/inner/inner.css";
 import Link from "next/link";
-import { Breadcrumbs, Container, CtaLink, FaqList, FinalCta, PageHero } from "@/components/site/Blocks";
+import { ArrowRight } from "lucide-react";
+import { ArrowLink, CtaLink, FaqList, FinalCta, Island, PageHero } from "@/components/site/Blocks";
 import { JsonLd } from "@/components/site/SiteChrome";
-import { FAQS, TIERS, breadcrumbJsonLd, faqJsonLd, pageMeta } from "@/lib/site";
+import { Reveal } from "@/components/site/motion";
+import { Band, Crumbs, DeltaNote, Heading, IslandBody } from "@/components/site/inner/Kit";
+import { ExampleStatement, PayoutTimeline, RewardLadder } from "@/components/site/inner/Rewards";
+import { FAQS, breadcrumbJsonLd, faqJsonLd, pageMeta } from "@/lib/site";
 
 export const metadata = pageMeta({
   title: "Referral Rewards: Up to $10,000 per Hire | ECRN",
@@ -16,6 +21,16 @@ const CRUMBS = [
 ];
 const PAGE_FAQS = [FAQS[1], FAQS[2], FAQS[9], FAQS[7]];
 
+/** The conditions that sit under the ladder (program terms, April 2026). */
+const CONDITIONS = [
+  {
+    title: "Estimates, confirmed in writing",
+    body: "Every figure is an estimate of up to that amount, not a guarantee. Delta Construction Partners decides the final amount and confirms it in writing before your payout is processed.",
+  },
+  { title: "No cap", body: "There is no limit on how many people you can refer." },
+  { title: "First referral keeps it", body: "If two people refer the same person, the first verified referral on record keeps ownership." },
+];
+
 export default function RewardsPage() {
   return (
     <>
@@ -24,6 +39,7 @@ export default function RewardsPage() {
       <PageHero
         eyebrow="Referral compensation"
         title="Referral rewards: up to $10,000 per hire"
+        image="handshake-site"
         intro={
           <p>
             ECRN pays up to $10,000 when someone you refer is placed with a Delta Construction Partners client and completes the
@@ -32,72 +48,102 @@ export default function RewardsPage() {
           </p>
         }
       >
-        <CtaLink href="/signup">Start referring</CtaLink>
+        <CtaLink href="/signup" className="w-full sm:w-auto">
+          Start referring <ArrowRight aria-hidden className="h-4 w-4" />
+        </CtaLink>
+        <CtaLink href="#when" variant="ghost" className="w-full sm:w-auto">
+          When you get paid
+        </CtaLink>
       </PageHero>
 
-      <Container className="py-6">
-        <Breadcrumbs items={CRUMBS} />
-      </Container>
+      <Crumbs items={CRUMBS} />
 
-      <section className="pb-16">
-        <Container>
-          <h2 className="font-display text-[32px] font-semibold tracking-[-0.03em] text-ecrn-ink">Payout tiers by role</h2>
-          <div className="mt-6 overflow-x-auto rounded-[18px] border border-ecrn-line bg-white">
-            <table className="w-full text-left text-[15px]">
-              <caption className="sr-only">ECRN referral payout tiers</caption>
-              <thead className="bg-ecrn-paper text-[13px] uppercase tracking-wide text-ecrn-secondary">
-                <tr>
-                  <th scope="col" className="px-5 py-3 font-medium">Tier</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Roles</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Estimated payout</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ecrn-line">
-                {TIERS.map((t) => (
-                  <tr key={t.tier}>
-                    <td className="px-5 py-4 align-top">
-                      <div className="font-semibold text-ecrn-ink">{t.tier}: {t.name}</div>
-                      <div className="text-[13.5px] text-ecrn-secondary">{t.summary}</div>
-                    </td>
-                    <td className="px-5 py-4 align-top text-ecrn-ink">{t.roles.join(", ")}</td>
-                    <td className="px-5 py-4 align-top font-display text-[20px] font-semibold text-cobalt whitespace-nowrap">{t.amount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* The ladder: heading and conditions on the left, the four rungs on the right (phones: heading, rungs, conditions). */}
+      <Band first labelledBy="tiers-title">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-12">
+          <Reveal className="lg:col-start-1 lg:row-start-1">
+            <Heading
+              id="tiers-title"
+              title="Payout tiers by role"
+              intro="Find the job your referral would be hired into. Its tier sets the most that referral can pay you."
+            />
+          </Reveal>
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <RewardLadder />
           </div>
-          <p className="mt-3 text-[13.5px] text-ecrn-secondary">
-            Elite candidates may yield a higher reward. All amounts are estimates; ECRN management makes the final payout decision.
-          </p>
-        </Container>
-      </section>
-
-      <section className="py-16 bg-white border-y border-ecrn-line">
-        <Container className="max-w-4xl">
-          <h2 className="font-display text-[32px] font-semibold tracking-[-0.03em] text-ecrn-ink">When do I get paid?</h2>
-          <ol className="mt-5 space-y-4 text-[16.5px] leading-relaxed text-ecrn-secondary list-decimal pl-5">
-            <li>You refer someone through ECRN (from your contacts, by hand, or with your invite link).</li>
-            <li>Delta Construction Partners vets them and places them with a client.</li>
-            <li>They complete the guarantee period, typically 90 days from their start date.</li>
-            <li>Delta confirms the amount in writing and processes your payout.</li>
-          </ol>
-          <p className="mt-5 text-[15.5px] text-ecrn-secondary">
-            Payouts may be taxable income; Delta issues a Form 1099 for $600 or more in a calendar year where required. Full details are in
-            the{" "}
-            <Link href="/terms#program" className="text-ecrn-green-text font-medium">
-              referral program terms
+          <Reveal className="lg:col-start-1 lg:row-start-2">
+            <ul className="border-t border-[color:var(--site-rule)]">
+              {CONDITIONS.map((c) => (
+                <li key={c.title} className="border-b border-[color:var(--site-rule)] py-4">
+                  <p className="font-display text-[15.5px] font-semibold tracking-[-0.01em] text-ecrn-ink">{c.title}</p>
+                  <p className="mt-1 text-pretty text-[15px] leading-[1.55] text-ecrn-secondary">{c.body}</p>
+                </li>
+              ))}
+            </ul>
+            <Link href="/terms#program" className="inner-tlink mt-2 text-[15px]">
+              Read the program terms
             </Link>
-            .
-          </p>
-        </Container>
-      </section>
+          </Reveal>
+        </div>
+      </Band>
 
-      <section className="py-16">
-        <Container className="max-w-4xl">
-          <h2 className="mb-8 font-display text-[32px] font-semibold tracking-[-0.03em] text-ecrn-ink">Payout questions</h2>
-          <FaqList faqs={PAGE_FAQS} />
-        </Container>
-      </section>
+      {/* When you get paid: the timeline, with the guarantee period drawn to scale. */}
+      <Island id="when">
+        <IslandBody>
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-8">
+            <Reveal className="lg:col-start-1 lg:row-start-1">
+              <Heading
+                id="when-title"
+                title="When do I get paid?"
+                intro="After your referral is placed with a Delta client and completes the guarantee period, typically 90 days from their start date. That period is most of the wait."
+              />
+            </Reveal>
+            <Reveal className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+              <PayoutTimeline />
+            </Reveal>
+            <Reveal className="lg:col-start-1 lg:row-start-2">
+              <div className="rounded-[18px] bg-white/[0.06] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
+                <p className="font-display text-[15.5px] font-semibold text-white">Taxes</p>
+                <p className="mt-1 text-pretty text-[15px] leading-[1.55] text-white/[0.78]">
+                  Referral rewards may be taxable income. Delta issues a Form 1099 where required by law.
+                </p>
+                <Link href="/terms#program" className="inner-tlink text-[15px]">
+                  Program terms
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+        </IslandBody>
+      </Island>
+
+      {/* What a payout looks like, then who pays it. */}
+      <Band labelledBy="example-title">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
+          <Reveal>
+            <Heading
+              id="example-title"
+              title="What a payout looks like"
+              intro="Say you refer a foreman you've worked with and Delta places them. Once the guarantee period is complete, your reward reads like this."
+            />
+          </Reveal>
+          <Reveal index={1}>
+            <ExampleStatement className="max-w-[34rem]" />
+          </Reveal>
+        </div>
+        <Reveal className="mt-14 sm:mt-20">
+          <DeltaNote />
+        </Reveal>
+      </Band>
+
+      <Band tone="white" labelledBy="payout-faq" className="border-t border-ecrn-line">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-4">
+          <Heading id="payout-faq" title="Payout questions" className="lg:col-start-1 lg:row-start-1" />
+          <FaqList faqs={PAGE_FAQS} className="lg:col-start-2 lg:row-span-2 lg:row-start-1" />
+          <ArrowLink href="/faq" className="-mt-4 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-start">
+            All questions
+          </ArrowLink>
+        </div>
+      </Band>
 
       <FinalCta />
     </>

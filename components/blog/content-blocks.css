@@ -1,0 +1,425 @@
+/*
+ * Content blocks: the article body of blog posts and career pages.
+ * Imported by components/content/ContentBlocks.tsx (it lives here because the
+ * CONTENT builder owns components/blog; move it next to ContentBlocks.tsx any
+ * time). Phone first. Every selector starts with .cb so nothing here reaches
+ * the rest of the site. Nothing animates.
+ */
+
+/* ── Rhythm: one set of steps between blocks ───────────────────────────────
+   Flat specificity (:where), so the order below decides. */
+
+.cb > :where(*) {
+  margin-block: 0;
+}
+
+.cb > :where(* + *) {
+  margin-top: 1.25rem;
+}
+
+.cb > :where(* + .cb-box, .cb-box + *) {
+  margin-top: 1.75rem;
+}
+
+.cb > :where(* + h2) {
+  margin-top: 3rem;
+}
+
+.cb > :where(* + h3) {
+  margin-top: 2rem;
+}
+
+.cb > :where(h2 + *) {
+  margin-top: 1rem;
+}
+
+.cb > :where(h3 + *) {
+  margin-top: 0.625rem;
+}
+
+.cb > :where(h2 + .cb-box, h3 + .cb-box) {
+  margin-top: 1.25rem;
+}
+
+/* ── Source marks [n] ──────────────────────────────────────────────────────
+   The link carries invisible padding (cancelled by negative margins), so it is
+   a 44 px target while the mark looks exactly the same. The focus ring is
+   pulled back to the glyphs. Doubled class: outranks the site-wide ring. */
+
+.cb-mark.cb-mark:focus-visible {
+  outline-offset: -13px;
+}
+
+/* ── Tables ────────────────────────────────────────────────────────────────
+   One <table> for every screen, so search engines and screen readers always
+   get a real table. Mobile first: by default each row is a compact card. The
+   first cell is its title and every other cell is labelled with its column
+   heading (data-label, drawn with generated content that screen readers
+   skip). Cells sit on a twelve-track grid: ContentBlocks gives short values a
+   half or a third of the row (data-span), medium ones a row of their own with
+   the label beside them (data-inline) and long ones the full width. Nothing
+   scrolls sideways.
+   From 640 px it is an ordinary table, except text-heavy tables (three or more
+   columns of sentences, data-stack), which stay as cards because they cannot
+   read well as columns in an article. */
+
+.cb-table {
+  display: block;
+  width: 100%;
+}
+
+.cb-table > caption {
+  display: block;
+  padding: 0 0 0.625rem;
+  text-align: left;
+  font-family: var(--site-display, ui-sans-serif, system-ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #0f1612;
+  text-wrap: balance;
+}
+
+/* The column headings stay in the table for screen readers. */
+.cb-table > thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.cb-table > tbody {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cb-table > tbody > tr {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.75rem;
+  row-gap: 0.75rem;
+  padding: 0.875rem 1rem 0.9375rem;
+  border-radius: 14px;
+  background: #f7f8f5;
+  box-shadow: inset 0 0 0 1px rgba(15, 22, 18, 0.07);
+}
+
+.cb-table > tbody > tr > th,
+.cb-table > tbody > tr > td {
+  display: block;
+  grid-column: span 12;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.cb-table > tbody > tr > th {
+  font-family: var(--site-display, ui-sans-serif, system-ui);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #0f1612;
+  text-wrap: balance;
+}
+
+.cb-table > tbody > tr > td {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #2b3a32;
+  overflow-wrap: break-word;
+}
+
+/* Column label above the value. The second declaration hides the label from
+   screen readers (they already announce the column heading); browsers that do
+   not understand it keep the first. */
+.cb-table > tbody > tr > td[data-label]::before,
+.cb-table > tbody > tr > th[data-label]::before {
+  content: attr(data-label);
+  content: attr(data-label) / "";
+  display: block;
+  margin-bottom: 0.1875rem;
+  font-family: var(--site-display, ui-sans-serif, system-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: #506158;
+  text-wrap: balance;
+}
+
+/* Short values share the row. They sit on the bottom line of their slot, so a
+   label that wraps never knocks its value out of line with its neighbours. */
+.cb-table > tbody > tr > td[data-span] {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-weight: 600;
+  color: #0f1612;
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-table > tbody > tr > td[data-span="4"] {
+  grid-column: span 4;
+}
+
+.cb-table > tbody > tr > td[data-span="6"] {
+  grid-column: span 6;
+}
+
+/* A value on a row of its own: label left, value on the right edge. When the
+   two do not fit on one line, the value drops under the label and stays on
+   the right. */
+.cb-table > tbody > tr > td[data-inline] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1rem;
+  row-gap: 0.125rem;
+  font-weight: 600;
+  color: #0f1612;
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-table > tbody > tr > td[data-inline]::before {
+  margin-bottom: 0;
+}
+
+.cb-table > tbody > tr > td[data-inline] > span {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* An ordinary table from 640 px (every rule above is undone here). */
+@media (min-width: 640px) {
+  .cb-table-frame:not([data-stack]) {
+    overflow-x: auto;
+    border: 1px solid #d9dfd8;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table {
+    display: table;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > caption {
+    display: table-caption;
+    caption-side: top;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #d9dfd8;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > thead {
+    display: table-header-group;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > thead th {
+    padding: 0.75rem 1rem;
+    background: #f7f8f5;
+    vertical-align: bottom;
+    text-align: left;
+    font-family: var(--site-display, ui-sans-serif, system-ui);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #506158;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody {
+    display: table-row-group;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr {
+    display: table-row;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr > th,
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr > td {
+    display: table-cell;
+    padding: 0.8125rem 1rem;
+    vertical-align: top;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 400;
+    color: #2b3a32;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr > th {
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: #0f1612;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr > td::before,
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr > th::before {
+    content: none;
+    display: none;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody > tr + tr > * {
+    border-top: 1px solid #d9dfd8;
+  }
+
+  /* Numbers line up on the right edge, in tabular figures; short values never
+     break across lines (the headings above them may). */
+  .cb-table-frame:not([data-stack]) > .cb-table [data-num] {
+    padding-inline: 0.75rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table tr > [data-num]:last-child {
+    padding-right: 1rem;
+  }
+
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody td[data-short],
+  .cb-table-frame:not([data-stack]) > .cb-table > tbody th[data-short] {
+    white-space: nowrap;
+  }
+
+  /* An occupation name beside a row of numbers gets a third of the width,
+     instead of being squeezed into a narrow column by the figures. */
+  .cb-table-frame[data-first]:not([data-stack]) > .cb-table > tbody > tr > th {
+    width: 34%;
+  }
+}
+
+/* Cards that stay cards on wide screens get a little more room. */
+@media (min-width: 640px) {
+  .cb-table-frame[data-stack] > .cb-table > tbody > tr {
+    padding: 1rem 1.25rem 1.0625rem;
+    row-gap: 0.875rem;
+  }
+}
+
+/* ── Stats ─────────────────────────────────────────────────────────────────
+   Laid out by the width of the column they sit in (a container query), not
+   the screen, so they behave the same in a narrow article and a wide page.
+   Narrow: one row per figure (value, then its label), or two-up tiles when
+   there are two or four figures and every value is eight characters or fewer
+   (data-fit), which still fits at 360 px. */
+
+.cb-stats-wrap {
+  container-type: inline-size;
+}
+
+.cb-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.cb-stat {
+  display: grid;
+  grid-template-columns: 7.25rem minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: 14px;
+  background: #f7f8f5;
+  box-shadow: inset 0 0 0 1px rgba(15, 22, 18, 0.07);
+}
+
+.cb-stat > dd {
+  grid-row: 1;
+  grid-column: 1;
+  margin: 0;
+  font-family: var(--site-display, ui-sans-serif, system-ui);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #0f1612;
+}
+
+.cb-stat > dt {
+  grid-row: 1;
+  grid-column: 2;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #506158;
+}
+
+.cb-stats[data-fit][data-count="2"],
+.cb-stats[data-fit][data-count="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cb-stats[data-fit][data-count="2"] > .cb-stat,
+.cb-stats[data-fit][data-count="4"] > .cb-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-stats[data-fit][data-count="2"] > .cb-stat > dd,
+.cb-stats[data-fit][data-count="4"] > .cb-stat > dd {
+  order: -1;
+}
+
+.cb-stats[data-fit][data-count="2"] > .cb-stat > dt,
+.cb-stats[data-fit][data-count="4"] > .cb-stat > dt {
+  margin-top: 0.5rem;
+  font-size: 13.5px;
+}
+
+@container (min-width: 34rem) {
+  .cb-stats[data-count="2"],
+  .cb-stats[data-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cb-stats[data-count="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cb-stats > .cb-stat {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.25rem 1.0625rem;
+  }
+
+  .cb-stats > .cb-stat > dd {
+    order: -1;
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .cb-stats > .cb-stat > dt {
+    margin-top: 0.5625rem;
+    font-size: 14px;
+  }
+}
+
+@container (min-width: 46rem) {
+  .cb-stats[data-count="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-contrast: more) {
+  .cb-table > tbody > tr,
+  .cb-stat {
+    box-shadow: inset 0 0 0 1px #0f1612;
+  }
+}

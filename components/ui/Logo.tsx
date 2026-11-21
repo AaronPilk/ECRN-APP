@@ -2,32 +2,23 @@ import { cn } from "@/lib/utils/cn";
 
 interface LogoProps {
   className?: string;
+  /** "light" = white type for dark backgrounds; "default" = ink type for light backgrounds. */
   variant?: "default" | "light";
-  /** The official asset includes the tagline. Retained for older callers. */
+  /** Kept for older call sites; the official artwork already includes the tagline. */
   showTagline?: boolean;
-  /** Retained for older callers; every placement now uses the official wordmark. */
+  /** Kept for older call sites; the official artwork is always used. */
   useWordmark?: boolean;
 }
 
 /**
- * Aaron's official ECRN wordmark, including its original triangle and tagline.
- * The default places the white artwork on a dark tile for light app headers.
- * `light` is for a surface that is already dark.
+ * The official ECRN logo (green triangle + ECRN + "Power your connections"),
+ * from the artwork supplied by Aaron. Two files: white type for dark
+ * backgrounds, ink type for light backgrounds. Size it with a height class.
  */
-export function Logo({
-  className,
-  variant = "default",
-}: LogoProps) {
+export function Logo({ className, variant = "default" }: LogoProps) {
+  const src = variant === "light" ? "/brand/ecrn-logo-white.webp" : "/brand/ecrn-logo-ink.webp";
   return (
-    <div className={cn("inline-flex shrink-0 items-center", variant === "default" && "rounded-lg bg-ecrn-black px-2 py-2", className)}>
-      <img
-        src="/brand/ecrn-horizontal-white-512.png"
-        alt="ECRN, Power Your Connections"
-        width={512}
-        height={129}
-        decoding="async"
-        className="h-[22px] w-auto object-contain"
-      />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="ECRN" width={800} height={203} decoding="async" className={cn("block h-7 w-auto shrink-0", className)} />
   );
 }

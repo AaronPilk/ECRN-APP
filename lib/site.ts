@@ -21,7 +21,8 @@ export const BRAND = {
       "https://www.facebook.com/DeltaConstructionPartners",
     ],
   },
-  logo: `${SITE_URL}/brand/ecrn-horizontal-white.png`,
+  /** Ink-type version: Google shows logos on white, where the white-type file disappears. */
+  logo: `${SITE_URL}/brand/ecrn-logo-ink.png`,
   ogImage: `${SITE_URL}/og.jpg`,
   /** Add social/LinkedIn/Crunchbase profile URLs here as they're claimed. */
   sameAs: [] as string[],

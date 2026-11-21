@@ -49,6 +49,28 @@
   outline-offset: 3px;
 }
 
+/* Row links (a list with hairlines instead of a row of look-alike cards):
+   the title takes the accent and the arrow nudges on hover; the row dims a
+   little on press. */
+.career-row {
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.career-row:active {
+  opacity: 0.66;
+}
+.career-row-title {
+  transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .career-row:hover .career-row-title {
+    color: #07653e;
+  }
+  .career-row:hover .career-card-arrow {
+    transform: translateX(3px);
+  }
+}
+
 /* Text links and letter chips: press feedback, hover only on fine pointers. */
 .career-press {
   transition:
@@ -145,10 +167,14 @@
 
 /* ── Glossary ──────────────────────────────────────────────────────── */
 /*
- * From lg up the letter bar is sticky under the site header, so anchors must
- * clear both. The doubled class outranks the site-wide [id] scroll margin
- * (app/(site)/site.css) without !important. Below lg the site default applies.
+ * Anchors land just under the sticky site header on phones and tablets (the
+ * letter keys are not sticky there). From lg up the letter bar is sticky under
+ * the header too, so anchors clear both. The doubled class outranks the
+ * site-wide [id] scroll margin (app/(site)/site.css) without !important.
  */
+.glossary-anchor.glossary-anchor {
+  scroll-margin-top: calc(var(--site-header-total, 4rem) + 1.25rem);
+}
 @media (min-width: 1024px) {
   .glossary-anchor.glossary-anchor {
     scroll-margin-top: calc(var(--site-header-total, 4.5rem) + 6rem);
@@ -167,13 +193,16 @@
   .career-card,
   .career-card::after,
   .career-card-arrow,
-  .career-press {
+  .career-press,
+  .career-row,
+  .career-row-title {
     transition: none;
   }
   .career-card:hover,
   .career-card:active,
   .career-press:active,
-  .career-card:hover .career-card-arrow {
+  .career-card:hover .career-card-arrow,
+  .career-row:hover .career-card-arrow {
     transform: none;
   }
 }

@@ -1,21 +1,15 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
-import { Logo } from "./Logo";
+import { CoBrandLockup } from "@/components/site/Delta";
 
-/** "ECRN | Powered by Delta Construction Partners" — the rev 03 app header lockup. */
+/**
+ * ECRN | Delta Construction Partners: the same lockup as the website header
+ * (components/site/Delta.tsx), at the member app's size. It fits beside a
+ * 36 px avatar in the app's top bar from a 320 px phone up (about 243 px
+ * wide at 360, 261 px at 390). `light` = the version for dark surfaces.
+ */
 export function DeltaLockup({ className, light }: { className?: string; light?: boolean }) {
-  return (
-    <div className={cn("inline-flex items-center gap-3 min-w-0", className)}>
-      <Logo variant={light ? "light" : "default"} />
-      <span className={cn("h-7 w-px", light ? "bg-white/25" : "bg-ecrn-line")} aria-hidden />
-      <div className="leading-[1.15] min-w-0">
-        <div className={cn("text-[10px]", light ? "text-white/60" : "text-ecrn-secondary")}>Powered by</div>
-        <div className={cn("text-[11.5px] font-medium truncate", light ? "text-[#C5DEFF]" : "text-cobalt")}>
-          Delta Construction Partners
-        </div>
-      </div>
-    </div>
-  );
+  return <CoBrandLockup size="app" tone={light ? "dark" : "light"} className={cn("min-w-0", className)} />;
 }
 
 /** Delta's mark on its own (for "Recruiting for…" panels). */

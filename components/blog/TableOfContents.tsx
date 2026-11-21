@@ -8,8 +8,10 @@ export interface TocItem {
 }
 
 /**
- * Table of contents for phones and tablets: a native disclosure, closed by
- * default, with plain anchor links. No script. The desktop version is TocRail.
+ * Table of contents for phones and tablets: a native disclosure in the flow
+ * of the page (it pushes the article down when open and never floats over
+ * it), closed by default, with plain anchor links. No script. The desktop
+ * version is TocRail.
  */
 export function TocDisclosure({ items, className }: { items: TocItem[]; className?: string }) {
   if (items.length < 2) return null;
@@ -21,16 +23,25 @@ export function TocDisclosure({ items, className }: { items: TocItem[]; classNam
             <List className="h-[18px] w-[18px] text-ecrn-green-text" aria-hidden />
             On this page
           </span>
-          <span className="flex items-center gap-2 text-[13.5px] text-ecrn-secondary">
+          <span className="flex items-center gap-2 text-[13.5px] tabular-nums text-ecrn-secondary">
             {items.length} sections
-            <ChevronDown className={cn("h-5 w-5 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none")} aria-hidden />
+            <ChevronDown
+              className={cn("h-5 w-5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-open:rotate-180 motion-reduce:transition-none")}
+              aria-hidden
+            />
           </span>
         </summary>
-        <ol className="border-t border-ecrn-line p-2">
-          {items.map((it) => (
+        <ol role="list" className="border-t border-ecrn-line px-2 py-1.5">
+          {items.map((it, i) => (
             <li key={it.id}>
-              <a href={`#${it.id}`} className="flex min-h-[44px] items-center rounded-[10px] px-2 py-2 text-[15.5px] leading-snug text-ecrn-ink active:bg-white">
-                {it.text}
+              <a
+                href={`#${it.id}`}
+                className="grid min-h-[44px] grid-cols-[1.25rem_minmax(0,1fr)] items-baseline gap-x-2.5 rounded-[10px] px-2 py-2.5 text-[15.5px] leading-snug text-ecrn-ink transition-colors duration-150 active:bg-white"
+              >
+                <span aria-hidden className="text-right text-[13px] tabular-nums text-ecrn-secondary">
+                  {i + 1}
+                </span>
+                <span>{it.text}</span>
               </a>
             </li>
           ))}

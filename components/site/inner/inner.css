@@ -1,0 +1,1000 @@
+/* =============================================================================
+   Inner pages: referral rewards, how it works, employers, about, FAQ, support,
+   terms, privacy and the public job board. Every class is prefixed inner-.
+   Imported by those pages; reads the tone variables and easing tokens that
+   app/(site)/site.css sets (--site-fg, --site-fg-2, --site-fg-3,
+   --site-accent, --site-rule, --ease-out, --site-display).
+
+   House rules (same as site.css)
+   - Phones first: 20 px gutters, one column, 44 px tap targets.
+   - Only transform and opacity animate. The default state is the finished
+     state, so nothing depends on JavaScript or motion to be readable.
+   - Hover lives behind (hover: hover) and (pointer: fine).
+   ========================================================================== */
+
+/* ── Type ──────────────────────────────────────────────────────────────── */
+
+/* Section heading: 28 px on a 390 px phone, 44 px on desktop. */
+.inner-h2 {
+  font-family: var(--site-display);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 2.2vw + 1.25rem, 2.75rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: var(--site-fg);
+}
+
+/* Group heading inside a page (FAQ topics, support groups): 26 → 32 px. */
+.inner-h2-sm {
+  font-family: var(--site-display);
+  font-weight: 600;
+  font-size: clamp(1.625rem, 1.1vw + 1.35rem, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  color: var(--site-fg);
+}
+
+.inner-h3 {
+  font-family: var(--site-display);
+  font-weight: 600;
+  font-size: 1.1875rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--site-fg);
+}
+
+.inner-intro {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+  color: var(--site-fg-2);
+}
+
+.inner-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+  color: var(--site-fg-2);
+}
+
+/* A short label above a heading. Sentence case, used sparingly. */
+.inner-kicker {
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: var(--site-accent);
+}
+
+@media (min-width: 1024px) {
+  .inner-h2 {
+    line-height: 1.07;
+    letter-spacing: -0.035em;
+  }
+  .inner-h3 {
+    font-size: 1.3125rem;
+  }
+  .inner-intro {
+    font-size: 1.1875rem;
+    line-height: 1.55;
+  }
+}
+
+/* ── Text link that is a real 44 px target, inside a sentence or on its own ── */
+
+.inner-tlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.75rem;
+  font-weight: 600;
+  color: var(--site-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.inner-tlink:active {
+  opacity: 0.6;
+}
+
+/* ── Reward ladder ─────────────────────────────────────────────────────── */
+
+/* Four rungs in one object. Colour deepens with the reward, from white
+   through Delta's cobalt to its navy. */
+.inner-ladder {
+  border-radius: 1.75rem;
+  overflow: clip;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.07),
+    0 1px 2px rgba(15, 22, 18, 0.04),
+    0 28px 56px -32px rgba(0, 36, 75, 0.38);
+}
+
+.inner-rung {
+  --rung-fg: #0f1612;
+  --rung-fg-2: #4b5b53;
+  --rung-amount: #0655ce;
+  --rung-chip-bg: rgba(6, 85, 206, 0.08);
+  --rung-chip-fg: #00244b;
+  --rung-meter: #0655ce;
+  --rung-meter-off: rgba(6, 85, 206, 0.16);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head amount"
+    "roles roles"
+    "summary summary";
+  column-gap: 1rem;
+  padding: 1.25rem 1.25rem 1.375rem;
+  color: var(--rung-fg);
+}
+
+.inner-rung + .inner-rung {
+  box-shadow: inset 0 1px 0 rgba(15, 22, 18, 0.06);
+}
+
+.inner-rung[data-tier="2"] {
+  background: #eaf2fe;
+}
+
+.inner-rung[data-tier="3"] {
+  --rung-fg: #fff;
+  --rung-fg-2: rgba(255, 255, 255, 0.86);
+  --rung-amount: #fff;
+  --rung-chip-bg: rgba(255, 255, 255, 0.15);
+  --rung-chip-fg: #fff;
+  --rung-meter: #fff;
+  --rung-meter-off: rgba(255, 255, 255, 0.3);
+  background: linear-gradient(180deg, #0a5ed6 0%, #0655ce 100%);
+}
+
+.inner-rung[data-tier="4"] {
+  --rung-fg: #fff;
+  --rung-fg-2: rgba(255, 255, 255, 0.8);
+  --rung-amount: #bcdfff;
+  --rung-chip-bg: rgba(188, 223, 255, 0.13);
+  --rung-chip-fg: #e6f1ff;
+  --rung-meter: #bcdfff;
+  --rung-meter-off: rgba(188, 223, 255, 0.24);
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgba(47, 124, 240, 0.32) 0%, transparent 60%),
+    linear-gradient(160deg, #00244b 0%, #021a38 100%);
+}
+
+.inner-rung + .inner-rung[data-tier="3"],
+.inner-rung + .inner-rung[data-tier="4"] {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.inner-rung-head {
+  grid-area: head;
+  min-width: 0;
+}
+
+.inner-rung-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--rung-fg-2);
+}
+
+/* Four segments, one per tier: Tier 2 lights two of four. Each is $2,500 of
+   the top reward, so the meter is the amount drawn to scale. */
+.inner-meter {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.inner-meter > span {
+  position: relative;
+  width: 0.875rem;
+  height: 0.3125rem;
+  border-radius: 2px;
+  background: var(--rung-meter-off);
+}
+
+.inner-meter > span[data-on]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--rung-meter);
+  transform-origin: 0 50%;
+}
+
+.inner-rung-name {
+  margin-top: 0.375rem;
+  font-family: var(--site-display);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.inner-rung-amount {
+  grid-area: amount;
+  text-align: right;
+  color: var(--rung-amount);
+}
+
+.inner-rung-upto {
+  display: block;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--rung-fg-2);
+}
+
+.inner-rung-figure {
+  display: block;
+  margin-top: 0.125rem;
+  font-family: var(--site-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.inner-rung-roles {
+  grid-area: roles;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 1rem;
+}
+
+.inner-rung-roles > li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--rung-chip-bg);
+  color: var(--rung-chip-fg);
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.inner-rung-summary {
+  grid-area: summary;
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+  color: var(--rung-fg-2);
+}
+
+@media (min-width: 640px) {
+  .inner-rung {
+    column-gap: 2rem;
+    padding: 1.75rem 2rem 1.875rem;
+  }
+  .inner-rung-name {
+    font-size: 1.3125rem;
+  }
+  .inner-rung-figure {
+    font-size: 2.5rem;
+  }
+}
+
+/* The meter lights up, segment by segment, when the ladder scrolls in. */
+[data-reveal="pending"] .inner-meter > span[data-on]::after {
+  opacity: 0;
+  transform: scaleX(0.3);
+}
+
+[data-reveal="in"] .inner-meter > span[data-on]::after {
+  transition:
+    opacity 360ms var(--ease-out),
+    transform 560ms var(--ease-out);
+  transition-delay: calc(320ms + var(--site-n, 1) * 80ms);
+}
+
+/* ── Payout timeline ───────────────────────────────────────────────────── */
+
+/* A vertical run: events are short; the guarantee period is a long bar with
+   a mark every 30 days. Lives on a dark surface. */
+.inner-tl {
+  --tl-col: 1.5rem;
+  --tl-gap: 1rem;
+  --tl-wire: rgba(255, 255, 255, 0.16);
+  --tl-dot: 0.75rem;
+  --tl-dot-y: 0.375rem;
+  position: relative;
+}
+
+.inner-tl > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--tl-col) minmax(0, 1fr);
+  column-gap: var(--tl-gap);
+}
+
+.inner-tl > li[data-when] {
+  --tl-dot-y: 0.1875rem;
+}
+
+.inner-tl-event {
+  padding-bottom: 2rem;
+}
+
+.inner-tl-event:last-child {
+  padding-bottom: 0;
+}
+
+/* Wire above and below each dot. */
+.inner-tl-event::before,
+.inner-tl-event::after,
+.inner-tl-span::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--tl-col) / 2 - 1px);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--tl-wire);
+}
+
+.inner-tl-event::before {
+  top: 0;
+  height: var(--tl-dot-y);
+}
+
+.inner-tl-event::after {
+  top: calc(var(--tl-dot-y) + var(--tl-dot));
+  bottom: 0;
+}
+
+.inner-tl > li:first-child::before,
+.inner-tl > li:last-child::after {
+  display: none;
+}
+
+.inner-tl-dot {
+  position: absolute;
+  z-index: 1;
+  top: var(--tl-dot-y);
+  left: calc(var(--tl-col) / 2 - var(--tl-dot) / 2);
+  width: var(--tl-dot);
+  height: var(--tl-dot);
+  border-radius: 9999px;
+  background: #0a100c;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+.inner-tl-event[data-final] .inner-tl-dot {
+  background: var(--site-bright, #36dc86);
+  box-shadow:
+    0 0 0 4px rgba(54, 220, 134, 0.2),
+    0 0 18px rgba(54, 220, 134, 0.6);
+}
+
+.inner-tl-body {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.inner-tl-when {
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-accent);
+}
+
+.inner-tl-text {
+  margin-top: 0.375rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+  color: var(--site-fg-2);
+}
+
+/* The guarantee period: three equal thirds, each as tall as the tallest one
+   needs, so the bar stays to scale whatever the text does. */
+.inner-tl-span {
+  grid-template-rows: repeat(3, minmax(6.5rem, 1fr));
+  padding-bottom: 2rem;
+}
+
+.inner-tl-span::after {
+  bottom: 0;
+  height: 2rem;
+}
+
+.inner-tl-bar {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  justify-self: center;
+  width: 0.625rem;
+  border-radius: 9999px;
+  overflow: clip;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.inner-tl-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: 50% 0;
+  background: linear-gradient(180deg, #16c172 0%, #36dc86 55%, #91f9b3 100%);
+}
+
+/* Bottom padding keeps the text clear of the Day 30 mark, which is centred
+   on the boundary between the first and second thirds. */
+.inner-tl-third {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  padding-top: 1.5rem;
+  padding-bottom: 1.75rem;
+}
+
+/* Day marks: a hairline across the bar and a label beside it, centred on
+   the boundary between thirds. */
+.inner-tl-tick {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  align-self: start;
+  justify-self: start;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-fg-3);
+  transform: translateY(-50%);
+}
+
+.inner-tl-tick[data-end] {
+  align-self: end;
+  transform: translateY(50%);
+  color: var(--site-fg);
+}
+
+.inner-tl-tick::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.5rem);
+  width: calc(var(--tl-gap) + var(--tl-col) / 2);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+@media (min-width: 1024px) {
+  .inner-tl {
+    --tl-dot-y: 0.4375rem;
+  }
+  .inner-tl-span {
+    grid-template-rows: repeat(3, minmax(6rem, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* The current fills the 90 days as the bar passes the reading line. */
+    html:not([data-site-scroll="js"]) .inner-tl-fill {
+      animation: inner-tl-fill linear both;
+      animation-timeline: view();
+      animation-range: cover 42vh cover calc(100% - 58vh);
+    }
+  }
+}
+
+@keyframes inner-tl-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ── Example statement ─────────────────────────────────────────────────── */
+
+.inner-stmt {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: 1.5rem;
+  background: #fff;
+  color: #0f1612;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.08),
+    0 2px 4px rgba(15, 22, 18, 0.04),
+    0 32px 64px -34px rgba(15, 22, 18, 0.34);
+}
+
+.inner-stmt-example {
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding: 0 0.75rem;
+  border: 1.5px dashed #b45309;
+  border-radius: 9999px;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.inner-stmt-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8125rem 0;
+  box-shadow: inset 0 -1px 0 #e8ece7;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.inner-stmt-row > dt {
+  color: #56655d;
+}
+
+.inner-stmt-row > dd {
+  font-weight: 500;
+  color: #0f1612;
+}
+
+.inner-stmt-figure {
+  font-family: var(--site-display);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #0655ce;
+}
+
+@media (min-width: 640px) {
+  .inner-stmt {
+    padding: 1.75rem 2rem 2rem;
+  }
+  .inner-stmt-row {
+    grid-template-columns: 10rem minmax(0, 1fr);
+  }
+  .inner-stmt-figure {
+    font-size: 2.75rem;
+  }
+}
+
+/* ── Delta note: who is behind ECRN, in one card ───────────────────────── */
+
+.inner-delta {
+  isolation: isolate;
+  overflow: clip;
+  color: #fff;
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(47, 124, 240, 0.34) 0%, transparent 62%),
+    linear-gradient(135deg, #041a36 0%, #00244b 45%, #063889 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 30px 60px -36px rgba(0, 20, 50, 0.7);
+  --site-fg: #fff;
+  --site-fg-2: rgba(255, 255, 255, 0.84);
+  --site-fg-3: rgba(255, 255, 255, 0.7);
+  --site-accent: #bcdfff;
+  --site-rule: rgba(255, 255, 255, 0.14);
+  --site-ring: #bcdfff;
+}
+
+/* ── Light numbered steps ──────────────────────────────────────────────── */
+
+.inner-steps > li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  padding: 1.25rem 0;
+  box-shadow: inset 0 -1px 0 var(--site-rule);
+}
+
+.inner-steps > li:first-child {
+  box-shadow:
+    inset 0 1px 0 var(--site-rule),
+    inset 0 -1px 0 var(--site-rule);
+}
+
+.inner-steps-n {
+  font-family: var(--site-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-step-n, #0655ce);
+}
+
+/* ── Spec sheet (definition rows) ──────────────────────────────────────── */
+
+.inner-spec > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.125rem 0;
+  box-shadow: inset 0 -1px 0 var(--site-rule);
+}
+
+.inner-spec > div:first-child {
+  box-shadow:
+    inset 0 1px 0 var(--site-rule),
+    inset 0 -1px 0 var(--site-rule);
+}
+
+.inner-spec dt {
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--site-fg-3);
+}
+
+.inner-spec dd {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+  color: var(--site-fg);
+}
+
+@media (min-width: 768px) {
+  .inner-spec > div {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: 2rem;
+    padding: 1.375rem 0;
+  }
+  .inner-spec dt {
+    padding-top: 0.25rem;
+  }
+}
+
+/* ── Legal reading ─────────────────────────────────────────────────────── */
+
+/* 17 px body, about 68 characters a line, headings that separate clearly. */
+.inner-legal {
+  max-width: 40rem;
+  font-size: 1.0625rem;
+  line-height: 1.68;
+  color: #3a4841;
+}
+
+.inner-legal > * + * {
+  margin-top: 1.1em;
+}
+
+.inner-legal h2 {
+  margin-top: 2.75rem;
+  padding-top: 2.25rem;
+  box-shadow: inset 0 1px 0 #e1e6e0;
+  font-family: var(--site-display);
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: #0f1612;
+}
+
+.inner-legal h3 {
+  margin-top: 2rem;
+  font-family: var(--site-display);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: #0f1612;
+}
+
+.inner-legal h2 + *,
+.inner-legal h3 + * {
+  margin-top: 0.75em;
+}
+
+.inner-legal ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.inner-legal li + li {
+  margin-top: 0.6em;
+}
+
+.inner-legal li::marker {
+  color: #07653e;
+}
+
+.inner-legal strong {
+  font-weight: 600;
+  color: #0f1612;
+}
+
+/* Inline links: vertical padding on an inline box grows the tap area to
+   44 px without changing the line height. */
+.inner-legal a {
+  padding-block: 0.75rem;
+  font-weight: 500;
+  color: #07653e;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* The program terms: set apart as their own document. */
+.inner-legal h2#program {
+  margin-top: 3.5rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: 1.25rem;
+  box-shadow: none;
+  background: #e9f2ff;
+  color: #00244b;
+}
+
+@media (min-width: 1024px) {
+  .inner-legal h2 {
+    font-size: 1.875rem;
+  }
+}
+
+/* Table of contents: a disclosure on phones, a sticky list on desktop. */
+.inner-toc-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 0 1.125rem;
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--site-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f1612;
+}
+
+.inner-toc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.inner-toc-summary::marker {
+  content: "";
+}
+
+.inner-toc-summary > svg {
+  flex: none;
+  transition: transform 220ms var(--ease-out);
+}
+
+details[open] > .inner-toc-summary > svg {
+  transform: rotate(180deg);
+}
+
+.inner-toc-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-block: 0.375rem;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: #3a4841;
+}
+
+.inner-toc-link:active {
+  opacity: 0.6;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .inner-toc-link:hover {
+    color: #07653e;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner-toc-summary > svg {
+    transition: none;
+  }
+}
+
+/* ── Form fields (employer request) ────────────────────────────────────── */
+
+.inner-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--site-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #0f1612;
+}
+
+.inner-input {
+  display: block;
+  width: 100%;
+  height: 3.25rem;
+  padding: 0 1rem;
+  border: 1px solid #cfd7ce;
+  border-radius: 0.875rem;
+  background: #fff;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #0f1612;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 160ms ease;
+}
+
+textarea.inner-input {
+  height: auto;
+  min-height: 7.5rem;
+  padding: 0.875rem 1rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.inner-input::placeholder {
+  color: #7a877f;
+}
+
+.inner-input:focus {
+  outline: none;
+  border-color: #0655ce;
+  box-shadow: 0 0 0 3px rgba(6, 85, 206, 0.18);
+}
+
+.inner-input:user-invalid {
+  border-color: #b42318;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+/* Zero specificity, so spacing and border utilities on the fieldset win.
+   border-width only: the shorthand would also reset border-style. */
+:where(.inner-fieldset) {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+}
+
+.inner-legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0;
+  font-family: var(--site-display);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #0f1612;
+}
+
+.inner-legend + * {
+  clear: both;
+}
+
+/* ── Jobs (public view) ────────────────────────────────────────────────── */
+
+.inner-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #d4dbd3;
+  font-family: var(--site-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f1612;
+  transition: transform 140ms var(--ease-out);
+}
+
+.inner-pill-btn[aria-pressed="true"] {
+  background: #0f1612;
+  box-shadow: none;
+  color: #fff;
+}
+
+.inner-pill-btn:active {
+  transform: scale(0.97);
+}
+
+.inner-pill-btn:disabled {
+  opacity: 0.7;
+}
+
+.inner-pill-btn-icon {
+  justify-content: center;
+  width: 2.75rem;
+  padding: 0;
+}
+
+/* Job page actions: two side by side on a 360 px phone, so tighter than site-btn. */
+.inner-action {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 3.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.9375rem;
+  font-family: var(--site-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 160ms var(--ease-out);
+}
+
+.inner-action:active {
+  transform: scale(0.97);
+}
+
+.inner-action-dark {
+  color: #fff;
+  background: #0f1612;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px rgba(10, 16, 12, 0.3);
+}
+
+.inner-action-green {
+  color: #052b1a;
+  background: linear-gradient(180deg, #4ee79a 0%, #16c172 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(5, 43, 26, 0.16),
+    0 1px 2px rgba(5, 43, 26, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner-action {
+    transition: none;
+  }
+  .inner-action:active {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner-pill-btn {
+    transition: none;
+  }
+  .inner-pill-btn:active {
+    transform: none;
+  }
+}

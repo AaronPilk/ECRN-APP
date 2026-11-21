@@ -19,11 +19,13 @@ const STAGES: { label: string; state: "done" | "now" | "next" }[] = [
  * taken from the tiers in lib/site.ts (superintendent = field leadership =
  * up to $5,000).
  *
- * Each card sits at its own depth: it scrolls at its own speed (Parallax),
- * drifts on its own clock (Float) and follows the pointer by its own amount
- * (TiltLayer). The cards higher up move faster, so they spread apart as the
- * page scrolls and never slide over one another. Glass is never stacked on
- * glass.
+ * Each card sits at its own depth: from lg it scrolls at its own speed
+ * (Parallax), drifts on its own clock (Float) and follows the pointer by its
+ * own amount (TiltLayer). The cards higher up move faster, so they spread
+ * apart as the page scrolls and never slide over one another. Below lg the
+ * cards sit in the flow, one under the other, so scroll-linked movement is
+ * off there (it would push them into each other); only the slow idle drift
+ * remains. Glass is never stacked on glass.
  *
  * Phones show two cards, tablets three, desktops four.
  */
@@ -33,16 +35,16 @@ export function HeroStage({ className }: { className?: string }) {
       <div
         role="img"
         aria-label="Illustration of the ECRN app: an example job that pays a referral reward, a referral tracker, a payout and a privacy setting."
-        className="grid gap-5 sm:grid-cols-2 sm:items-start md:grid-cols-3 lg:relative lg:block lg:h-[35rem] lg:w-[30rem] lg:shrink-0 lg:origin-top-right lg:scale-[0.85] xl:scale-100"
+        className="grid gap-4 sm:grid-cols-2 sm:items-start sm:gap-5 md:grid-cols-3 lg:relative lg:block lg:h-[35rem] lg:w-[30rem] lg:shrink-0 lg:origin-top-right lg:scale-[0.85] xl:scale-100"
       >
         {/* Example job (nearest, thickest glass) */}
-        <Parallax speed={-0.12} className="mr-8 sm:mr-0 lg:absolute lg:right-0 lg:top-[1.75rem] lg:w-[21rem]">
+        <Parallax speed={-0.12} above="lg" className="mr-8 sm:mr-0 lg:absolute lg:right-0 lg:top-[1.75rem] lg:w-[21rem]">
           <TiltLayer depth={1.5}>
             <Float amplitude={5} duration={9} delay={-2}>
               <GlassCard weight="thick" className="site-enter p-[18px]" style={siteVars({ i: 5, y: "26px" })}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="site-eyebrow text-[#91F9B3]">Example job</p>
-                  <span className="flex items-center gap-1.5 font-display text-[12px] font-medium text-white/90">
+                  <span className="flex items-center gap-1.5 font-display text-[13px] font-medium text-white/90">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#36DC86]" />
                     Open
                   </span>
@@ -62,7 +64,7 @@ export function HeroStage({ className }: { className?: string }) {
         </Parallax>
 
         {/* Example referral tracker, with the live "current" dot */}
-        <Parallax speed={-0.06} className="ml-10 sm:ml-0 lg:absolute lg:left-0 lg:top-[13rem] lg:w-[16rem]">
+        <Parallax speed={-0.06} above="lg" className="ml-10 sm:ml-0 lg:absolute lg:left-0 lg:top-[13rem] lg:w-[16rem]">
           <TiltLayer depth={0.8}>
             <Float amplitude={6} duration={11} delay={-5}>
               <GlassCard className="site-enter p-[18px]" style={siteVars({ i: 6, y: "26px" })}>
@@ -80,25 +82,25 @@ export function HeroStage({ className }: { className?: string }) {
                       )}
                       <span className={cn("flex-1 text-[13.5px]", s.state === "now" ? "font-medium text-white" : s.state === "done" ? "text-white/90" : "text-white/[0.78]")}>{s.label}</span>
                       {s.state === "done" ? <Check className="h-3.5 w-3.5 text-[#91F9B3]" /> : null}
-                      {s.state === "now" ? <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-[#91F9B3]">Now</span> : null}
+                      {s.state === "now" ? <span className="font-display text-[13px] font-semibold text-[#91F9B3]">Now</span> : null}
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 border-t border-white/[0.12] pt-3 text-[12.5px] leading-snug text-white/[0.84]">Guarantee period: typically 90 days.</p>
+                <p className="mt-3 border-t border-white/[0.12] pt-3 text-[13px] leading-snug text-white/[0.84]">Guarantee period: typically 90 days.</p>
               </GlassCard>
             </Float>
           </TiltLayer>
         </Parallax>
 
         {/* Example payout */}
-        <Parallax speed={-0.09} className="hidden md:block lg:absolute lg:right-0 lg:top-[14.5rem] lg:w-[12.5rem]">
+        <Parallax speed={-0.09} above="lg" className="hidden md:block lg:absolute lg:right-0 lg:top-[14.5rem] lg:w-[12.5rem]">
           <TiltLayer depth={1.1}>
             <Float amplitude={4} duration={8} delay={-1}>
               <GlassCard className="site-enter p-[18px]" style={siteVars({ i: 7, y: "26px" })}>
                 <p className="site-eyebrow text-[#91F9B3]">Example payout</p>
                 <p className="site-num mt-3 text-[40px] font-semibold leading-none text-[#BCDFFF]">$5,000</p>
                 <p className="mt-2 text-[13px] leading-snug text-white/[0.84]">Field leadership tier</p>
-                <p className="mt-3 flex items-center gap-1.5 border-t border-white/[0.12] pt-3 text-[12.5px] text-white/90">
+                <p className="mt-3 flex items-center gap-1.5 border-t border-white/[0.12] pt-3 text-[13px] text-white/90">
                   <Check className="h-3.5 w-3.5 shrink-0 text-[#91F9B3]" />
                   Confirmed in writing
                 </p>
@@ -108,7 +110,7 @@ export function HeroStage({ className }: { className?: string }) {
         </Parallax>
 
         {/* Example privacy setting (furthest, thinnest glass) */}
-        <Parallax speed={-0.03} className="hidden lg:absolute lg:right-0 lg:top-[26.5rem] lg:block lg:w-[12.5rem]">
+        <Parallax speed={-0.03} above="lg" className="hidden lg:absolute lg:right-0 lg:top-[26.5rem] lg:block lg:w-[12.5rem]">
           <TiltLayer depth={0.5}>
             <Float amplitude={4} duration={10} delay={-7}>
               <GlassCard weight="thin" className="site-enter rounded-[18px] p-4" style={siteVars({ i: 8, y: "26px" })}>
@@ -119,7 +121,7 @@ export function HeroStage({ className }: { className?: string }) {
                     <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]" />
                   </span>
                 </div>
-                <p className="mt-2.5 flex items-start gap-1.5 text-[12.5px] leading-snug text-white/[0.84]">
+                <p className="mt-2.5 flex items-start gap-1.5 text-[13px] leading-snug text-white/[0.84]">
                   <Lock className="mt-px h-3.5 w-3.5 shrink-0" />
                   Only Delta&apos;s recruiters see this.
                 </p>

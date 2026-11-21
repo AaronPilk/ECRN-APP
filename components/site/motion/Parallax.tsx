@@ -33,12 +33,15 @@ export function Parallax({
   speed = 0.1,
   from,
   cover = false,
+  above,
   className,
 }: {
   children: ReactNode;
   speed?: number;
   from?: "top";
   cover?: boolean;
+  /** Only move from this width up (md = 768 px, lg = 1024 px); still below it. */
+  above?: "md" | "lg";
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -46,6 +49,7 @@ export function Parallax({
   useEffect(() => {
     const el = ref.current;
     if (!el || reducedMotion() || cssScrollDriven()) return;
+    if (above && !window.matchMedia(`(min-width: ${above === "lg" ? 1024 : 768}px)`).matches) return;
     const anchor = cover ? el.parentElement : el;
     if (!anchor) return;
 
@@ -81,12 +85,13 @@ export function Parallax({
       el.style.transform = "";
       el.style.willChange = "";
     };
-  }, [speed, from, cover]);
+  }, [speed, from, cover, above]);
 
   return (
     <div
       ref={ref}
       data-from={from}
+      data-above={above}
       className={cn(cover ? "site-plx-cover" : "site-plx", className)}
       style={cover ? undefined : siteVars({ speed })}
     >

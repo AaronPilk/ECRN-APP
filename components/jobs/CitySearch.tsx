@@ -93,7 +93,12 @@ export function CitySearch({
           }}
         />
         {q && (
-          <button type="button" aria-label="Clear" onClick={() => { seq.current += 1; setQ(""); setSelectedLabel(""); setResults([]); setOpen(false); }} className="p-1 -mr-1">
+          <button
+            type="button"
+            aria-label="Clear"
+            onClick={() => { seq.current += 1; setQ(""); setSelectedLabel(""); setResults([]); setOpen(false); }}
+            className="-mr-3 grid h-11 w-11 shrink-0 place-items-center rounded-full"
+          >
             <X className="w-4 h-4 text-ecrn-secondary" />
           </button>
         )}

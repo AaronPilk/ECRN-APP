@@ -26,7 +26,8 @@
   /* Idle drift only: a sine-like curve so a looping float never seems to stop. */
   --ease-drift: cubic-bezier(0.37, 0, 0.63, 1);
 
-  --site-header-h: 4rem;
+  /* 60 px on phones, 72 px from lg. Heroes and anchors read these. */
+  --site-header-h: 3.75rem;
   --site-header-total: calc(var(--site-header-h) + env(safe-area-inset-top, 0px));
   --site-display: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   --site-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -66,6 +67,37 @@
   outline-offset: 3px;
 }
 
+/* No orphans: headings balance their lines, running text avoids a lone last word. */
+.site-root :where(h1, h2, h3, h4) {
+  text-wrap: balance;
+}
+
+.site-root :where(p, li, dd, figcaption, blockquote) {
+  text-wrap: pretty;
+}
+
+/* ── Spacing system (phones first) ────────────────────────────────────────
+   Gutter: 20 px on phones, 32 px from sm (Container: px-5 sm:px-8).
+   Sections: 56 px top and bottom on phones, 80 from sm, 96 from lg
+   (Section: py-14 sm:py-20 lg:py-24; 64 px next to a hero).
+   Inside a section: eyebrow → 12 px → heading → 16 px → intro → 32 px → content
+   (SectionHeading sets the first two; put mt-8 on the content).
+   Islands (dark panels inset 8 / 12 px from the screen edge) take the
+   difference back from their Container, so every left edge on the page sits
+   on the same line. */
+.site-island .site-container {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .site-island .site-container {
+    max-width: calc(1200px - 1.5rem);
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
 /* Tone: a section sets these once, everything inside reads them. */
 .site-tone-dark {
   --site-fg: #ffffff;
@@ -99,18 +131,23 @@
   text-wrap: balance;
 }
 
-/* Home hero: 36 → 68 px. Sized so the headline sets in three lines on a
-   360 px phone. From lg it shares the row with the floating cards, so it
-   tracks the column width instead of jumping to the cap. */
+/* Phones (the product): H1 34–40 px at line-height 1.05 and −0.03em,
+   H2 28 px at 1.12, H3 19–20 px, intro 17 px at 1.6. From sm the scale
+   opens up to the desktop sizes. */
+
+/* Home hero: 35.5 px at 360 (three lines in 320 px), 39 at 390, 40 up to
+   sm; 48 → 68 px above. */
 .site-display-1 {
-  font-size: clamp(2.25rem, 11.1vw - 0.25rem, 2.625rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  font-size: clamp(2.125rem, 11.67vw - 0.40625rem, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 @media (min-width: 640px) {
   .site-display-1 {
     font-size: clamp(3rem, 7.2vw + 0.75rem, 4.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
   }
 }
 
@@ -120,25 +157,49 @@
   }
 }
 
-/* Page hero: 36 → 60 px */
+/* Page hero: 36 px on phones, 40 → 60 px above. */
 .site-display-2 {
-  font-size: clamp(2.25rem, 4.4vw + 1.15rem, 3.75rem);
-  line-height: 1.04;
-  letter-spacing: -0.038em;
+  font-size: 2.25rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
-/* Section heading: 31 → 52 px */
+@media (min-width: 640px) {
+  .site-display-2 {
+    font-size: clamp(2.5rem, 4.4vw + 1.15rem, 3.75rem);
+    line-height: 1.04;
+    letter-spacing: -0.038em;
+  }
+}
+
+/* Section heading: 28 px on phones, 36 → 52 px above. */
 .site-display-3 {
-  font-size: clamp(1.9375rem, 3.3vw + 1.15rem, 3.25rem);
-  line-height: 1.06;
-  letter-spacing: -0.035em;
+  font-size: 1.75rem;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
 }
 
-/* Card heading: 24 → 30 px */
+@media (min-width: 640px) {
+  .site-display-3 {
+    font-size: clamp(2.25rem, 3.3vw + 1.15rem, 3.25rem);
+    line-height: 1.06;
+    letter-spacing: -0.035em;
+  }
+}
+
+/* Card heading: 20 px on phones, 24 → 30 px above. */
 .site-display-4 {
-  font-size: clamp(1.5rem, 0.8vw + 1.3rem, 1.875rem);
-  line-height: 1.14;
-  letter-spacing: -0.028em;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 640px) {
+  .site-display-4 {
+    font-size: clamp(1.5rem, 0.8vw + 1.3rem, 1.875rem);
+    line-height: 1.14;
+    letter-spacing: -0.028em;
+  }
 }
 
 /* Small heading: 19 → 21 px */
@@ -151,28 +212,30 @@
 /* Intro paragraph: 17 → 20 px */
 .site-lede {
   font-size: clamp(1.0625rem, 0.35vw + 0.98rem, 1.25rem);
-  line-height: 1.55;
+  line-height: 1.6;
   text-wrap: pretty;
 }
 
-.site-eyebrow {
-  font-family: var(--site-mono);
-  font-size: 0.6875rem;
-  line-height: 1.35;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+@media (min-width: 640px) {
+  .site-lede {
+    line-height: 1.55;
+  }
 }
 
-@media (max-width: 374px) {
-  .site-eyebrow {
-    letter-spacing: 0.09em;
-  }
+/* The small label over a heading. Set in the display face at 13 px (never
+   smaller on a phone), in the case it is written in: a quiet label, not a
+   mono uppercase stamp on every section. */
+.site-eyebrow {
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 
 @media (min-width: 640px) {
   .site-eyebrow {
-    font-size: 0.75rem;
-    letter-spacing: 0.16em;
+    font-size: 0.875rem;
   }
 }
 
@@ -364,21 +427,25 @@
 /* ── Buttons and links ─────────────────────────────────────────────────── */
 
 /* display is left to utilities (inline-flex, flex, hidden…), so responsive
-   show/hide works: the components add inline-flex themselves. */
+   show/hide works: the components add inline-flex themselves.
+   52 px tall at least; a long label wraps onto a second, balanced line
+   instead of running out of the button on a narrow phone. */
 .site-btn {
   isolation: isolate;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  height: 3.25rem;
-  padding: 0 1.5rem;
+  min-height: 3.25rem;
+  max-width: 100%;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.9375rem;
   font-family: var(--site-display);
   font-size: 1rem;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: -0.01em;
-  white-space: nowrap;
+  text-align: center;
+  text-wrap: balance;
   -webkit-user-select: none;
   user-select: none;
   transition: transform 160ms var(--ease-out);
@@ -460,10 +527,11 @@
 
 /* Header size: 40 px tall to the eye, 48 px to the finger. */
 .site-btn-sm {
-  height: 2.5rem;
+  min-height: 2.5rem;
   padding: 0 0.875rem;
   border-radius: 0.75rem;
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .site-btn-sm::after {
@@ -609,15 +677,39 @@
   }
 }
 
+/* Menu and close buttons: a 44 px target whose icon sits on the gutter line
+   (the target hangs 12 px into the gutter). */
+.site-menu-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: -0.75rem;
+  border-radius: 9999px;
+  color: #fff;
+  transition: transform 150ms var(--ease-out);
+}
+
+.site-menu-btn:active {
+  transform: scale(0.9);
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 
+/* 44 px rows with 8 px between them on touch screens; tighter with a mouse. */
+.site-foot-list {
+  display: grid;
+  row-gap: 0.5rem;
+}
+
 .site-foot-link {
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-  min-width: 2.75rem;
   min-height: 2.75rem;
   font-size: 0.9375rem;
-  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.8);
   transition: color 160ms ease;
 }
 
@@ -625,9 +717,13 @@
   color: #fff;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .site-foot-list {
+    row-gap: 0.125rem;
+  }
+
   .site-foot-link {
-    min-height: 2.375rem;
+    min-height: 2.25rem;
   }
 }
 
@@ -671,12 +767,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background:
-    radial-gradient(90% 50% at 100% 0%, rgba(22, 193, 114, 0.14), transparent 70%),
-    radial-gradient(80% 45% at 0% 100%, rgba(6, 85, 206, 0.22), transparent 70%),
-    #0a100c;
+  background: #0a100c;
   box-shadow:
     -1px 0 0 rgba(255, 255, 255, 0.08),
     -32px 0 80px rgba(0, 0, 0, 0.55);
@@ -686,6 +777,108 @@
   transition:
     opacity 180ms ease,
     transform 220ms var(--ease-out);
+}
+
+/* The top bar repeats the header: same height, same gutter, same lockup. */
+.site-menu-top {
+  flex: none;
+  box-sizing: content-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--site-header-h);
+  padding: env(safe-area-inset-top, 0px) 1.25rem 0;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.site-menu-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem 1.25rem 1.25rem;
+}
+
+/* Account actions, pinned above the home bar. */
+.site-menu-actions {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  padding: 0.75rem 1.25rem max(env(safe-area-inset-bottom, 0px), 1rem);
+  background: #0a100c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.site-menu-actions > :only-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 420px) {
+  .site-menu-top,
+  .site-menu-scroll,
+  .site-menu-actions {
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+  }
+}
+
+.site-menu-more {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.site-menu-more-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-family: var(--site-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.site-menu-more-link[aria-current="page"] {
+  color: var(--site-mint);
+}
+
+.site-menu-more-link:active {
+  opacity: 0.6;
+}
+
+/* Delta's card: navy into cobalt, the site's colour for Delta. */
+.site-menu-delta {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(80% 90% at 100% 0%, rgba(47, 124, 240, 0.32) 0%, transparent 65%),
+    linear-gradient(140deg, #041a36 0%, var(--site-navy) 50%, #063889 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --site-ring: var(--site-sky);
+}
+
+.site-menu-delta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  margin-top: 0.25rem;
+  font-family: var(--site-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--site-sky);
+}
+
+.site-menu-delta-link:active {
+  opacity: 0.6;
 }
 
 .site-menu[data-state="open"] .site-menu-panel {
@@ -715,12 +908,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: 3.75rem;
+  min-height: 3.25rem;
   font-family: var(--site-display);
-  font-size: 1.625rem;
+  font-size: 1.5rem;
   font-weight: 500;
   line-height: 1.1;
-  letter-spacing: -0.028em;
+  letter-spacing: -0.025em;
   color: #fff;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
@@ -948,6 +1141,22 @@
   }
   to {
     transform: translate3d(0, 8.333%, 0);
+  }
+}
+
+/* <Parallax above="md" | "lg">: still below that width (floating cards that
+   sit in the flow on phones must not slide into each other). */
+@media (max-width: 767.98px) {
+  .site-plx[data-above="md"] {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .site-plx[data-above="lg"] {
+    animation: none !important;
+    transform: none !important;
   }
 }
 
@@ -1456,31 +1665,454 @@
 
 /* ── FAQ ───────────────────────────────────────────────────────────────── */
 
-/* Always open: every answer is on the page. Question left, answer right when
-   the list itself is wide enough (a container query, so it also behaves
-   inside a narrow article column). */
-.site-faq {
-  container-type: inline-size;
-}
-
-.site-faq-row {
-  display: grid;
-  gap: 0.625rem;
-  padding: 1.5rem 0;
+/* A disclosure list (<details>): every answer is in the HTML (and in the
+   FAQPage data, word for word), one tap opens it. The whole question row is
+   the toggle, at least 56 px tall; the plus sits on the first line of the
+   question and turns into a minus. No JavaScript. */
+.site-faq-item {
   box-shadow: inset 0 -1px 0 var(--site-rule, #d9dfd8);
 }
 
-.site-faq-row:first-child {
+.site-faq-item:first-child {
   box-shadow:
     inset 0 1px 0 var(--site-rule, #d9dfd8),
     inset 0 -1px 0 var(--site-rule, #d9dfd8);
 }
 
-@container (min-width: 46rem) {
-  .site-faq-row {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 3rem;
-    padding: 1.875rem 0;
+.site-faq-q {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 1rem 0;
+  cursor: pointer;
+  list-style: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.site-faq-q::-webkit-details-marker {
+  display: none;
+}
+
+.site-faq-q:active .site-faq-icon {
+  transform: scale(0.9);
+}
+
+/* 28 px circle centred on the first line of a 19 px / 1.24 question. */
+.site-faq-icon {
+  position: relative;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.1rem;
+  border-radius: 9999px;
+  color: var(--site-fg, #0f1612);
+  box-shadow: inset 0 0 0 1px var(--site-rule, #d9dfd8);
+  transition: transform 150ms var(--ease-out);
+}
+
+.site-faq-icon::before,
+.site-faq-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.75rem;
+  height: 1.5px;
+  margin: -0.75px 0 0 -0.375rem;
+  border-radius: 1px;
+  background: currentColor;
+  transition: transform 240ms var(--ease-out);
+}
+
+.site-faq-icon::after {
+  transform: rotate(90deg);
+}
+
+.site-faq-item[open] .site-faq-icon::after {
+  transform: rotate(0deg);
+}
+
+.site-faq-a {
+  max-width: 44rem;
+  padding: 0 2.75rem 1.375rem 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-faq-item[open] .site-faq-a {
+    animation: site-faq-in 260ms var(--ease-out);
+  }
+}
+
+@keyframes site-faq-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-faq-q:hover .site-faq-icon {
+    box-shadow: inset 0 0 0 1px var(--site-fg-3, #5f6e66);
+  }
+}
+
+/* ── Stacked table: a real table from 640 px, cards below ─────────────── */
+
+.site-stable-cards {
+  display: block;
+}
+
+.site-stable-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.site-stable-caption {
+  margin-bottom: 0.75rem;
+  font-family: var(--site-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--site-fg-2, #506158);
+}
+
+.site-stable-table {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 640px) {
+  .site-stable-cards {
+    display: none;
+  }
+
+  .site-stable-table {
+    display: table;
+  }
+}
+
+.site-stable-table caption {
+  caption-side: top;
+  padding-bottom: 0.75rem;
+  text-align: left;
+  font-family: var(--site-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--site-fg-2, #506158);
+}
+
+.site-stable-table th,
+.site-stable-table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  box-shadow: inset 0 -1px 0 var(--site-rule, #d9dfd8);
+}
+
+.site-stable-table :is(th, td):first-child {
+  padding-left: 0;
+}
+
+.site-stable-table :is(th, td):last-child {
+  padding-right: 0;
+}
+
+.site-stable-table thead th {
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--site-fg-2, #506158);
+  box-shadow: inset 0 -1px 0 var(--site-fg-3, #5f6e66);
+}
+
+.site-stable-table tbody th {
+  font-family: var(--site-display);
+  font-weight: 600;
+  color: var(--site-fg, #0f1612);
+}
+
+.site-stable-table td {
+  color: var(--site-fg-2, #506158);
+}
+
+.site-stable-table [data-num] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.site-stable-table td[data-strong] {
+  font-family: var(--site-display);
+  font-weight: 600;
+  color: var(--site-fg, #0f1612);
+}
+
+.site-stable-card {
+  padding: 1rem 1.125rem 0.375rem;
+  border-radius: 1.125rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.07),
+    0 1px 2px rgba(15, 22, 18, 0.04);
+}
+
+.site-tone-dark .site-stable-card {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.site-stable-card-title {
+  font-family: var(--site-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--site-fg, #0f1612);
+}
+
+.site-stable-card dl {
+  margin-top: 0.5rem;
+}
+
+.site-stable-card dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 0;
+  box-shadow: inset 0 1px 0 var(--site-rule, #d9dfd8);
+}
+
+.site-stable-card dt {
+  flex: 0 1 auto;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--site-fg-2, #506158);
+}
+
+.site-stable-card dd {
+  min-width: 0;
+  text-align: right;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--site-fg, #0f1612);
+}
+
+.site-stable-card dd[data-num] {
+  font-family: var(--site-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Key facts: stat tiles, two up on phones ───────────────────────────── */
+
+.site-keyfacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.site-keyfacts[data-cols="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .site-keyfacts[data-cols="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .site-keyfacts[data-cols="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.site-keyfact {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 1rem 1rem 1.125rem;
+  border-radius: 1.125rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(15, 22, 18, 0.07),
+    0 1px 2px rgba(15, 22, 18, 0.04);
+}
+
+.site-tone-dark .site-keyfact {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.site-keyfact-value {
+  font-family: var(--site-display);
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--site-keyfact-accent, var(--site-fg, #0f1612));
+}
+
+@media (min-width: 640px) {
+  .site-keyfact {
+    padding: 1.25rem 1.25rem 1.375rem;
+  }
+
+  .site-keyfact-value {
+    font-size: 2rem;
+  }
+}
+
+.site-keyfact-label {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--site-fg-2, #506158);
+}
+
+.site-keyfact-note {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--site-fg-3, #5f6e66);
+}
+
+/* ── Timeline: a vertical sequence, markers on the first line ─────────── */
+
+.site-timeline {
+  display: grid;
+}
+
+.site-tl-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  column-gap: 1rem;
+  padding-bottom: 1.75rem;
+}
+
+.site-tl-step:last-child {
+  padding-bottom: 0;
+}
+
+/* The line from this marker to the next one. */
+.site-tl-step::before {
+  content: "";
+  position: absolute;
+  left: calc(0.875rem - 1px);
+  top: 1.75rem;
+  bottom: -0.125rem;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--site-rule, #d9dfd8);
+}
+
+.site-tl-step:last-child::before {
+  display: none;
+}
+
+.site-tl-step[data-state="done"]::before {
+  background: var(--site-tl-accent, var(--site-accent, #07653e));
+}
+
+.site-tl-marker {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.1875rem;
+  border-radius: 9999px;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-fg-2, #506158);
+  background: var(--site-tl-bg, #fff);
+  box-shadow: inset 0 0 0 1.5px var(--site-rule, #d9dfd8);
+}
+
+.site-tone-dark .site-tl-marker {
+  --site-tl-bg: #111a15;
+}
+
+.site-tl-step[data-state="done"] .site-tl-marker {
+  color: #fff;
+  background: var(--site-tl-accent, var(--site-accent, #07653e));
+  box-shadow: none;
+}
+
+.site-tone-dark .site-tl-step[data-state="done"] .site-tl-marker {
+  color: #052b1a;
+}
+
+.site-tl-step[data-state="now"] .site-tl-marker {
+  color: var(--site-tl-accent, var(--site-accent, #07653e));
+  box-shadow:
+    inset 0 0 0 2px var(--site-tl-accent, var(--site-accent, #07653e)),
+    0 0 0 4px color-mix(in srgb, var(--site-tl-accent, var(--site-accent, #07653e)) 18%, transparent);
+}
+
+.site-tl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.site-tl-title {
+  font-family: var(--site-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  color: var(--site-fg, #0f1612);
+}
+
+.site-tl-meta {
+  flex: none;
+  font-family: var(--site-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--site-tl-accent, var(--site-accent, #07653e));
+}
+
+.site-tl-body {
+  margin-top: 0.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--site-fg-2, #506158);
+}
+
+/* ── Delta statement (compact) ─────────────────────────────────────────── */
+
+.site-delta-note {
+  padding: 1.25rem 1.25rem 0.625rem;
+  border-radius: 1.375rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(6, 85, 206, 0.14),
+    0 1px 2px rgba(0, 36, 75, 0.05),
+    0 14px 30px -18px rgba(0, 36, 75, 0.25);
+}
+
+@media (min-width: 640px) {
+  .site-delta-note {
+    padding: 1.75rem 1.75rem 1rem;
   }
 }
 
@@ -1626,8 +2258,17 @@
   .site-zoom,
   .site-btn,
   .site-btn > svg,
-  .site-link > svg {
+  .site-link > svg,
+  .site-menu-btn,
+  .site-faq-icon,
+  .site-faq-icon::before,
+  .site-faq-icon::after {
     transition: none;
+  }
+
+  .site-menu-btn:active,
+  .site-faq-q:active .site-faq-icon {
+    transform: none;
   }
 
   .site-lift:hover,
@@ -1742,8 +2383,16 @@
   }
 
   .site-card,
-  .site-tier {
+  .site-tier,
+  .site-keyfact,
+  .site-stable-card,
+  .site-delta-note {
     box-shadow: 0 0 0 1px #0f1612;
+  }
+
+  .site-tone-dark .site-keyfact,
+  .site-tone-dark .site-stable-card {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
   }
 
   .site-nav-link {

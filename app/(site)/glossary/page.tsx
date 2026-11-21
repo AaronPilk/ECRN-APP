@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUp } from "lucide-react";
-import { Breadcrumbs, Container, CtaLink, FinalCta, PageHero } from "@/components/site/Blocks";
+import { ArrowLink, Breadcrumbs, Container, CtaLink, FinalCta, PageHero } from "@/components/site/Blocks";
 import { JsonLd } from "@/components/site/SiteChrome";
 import { SourcesList, formatDay } from "@/components/content/ContentBlocks";
 import { DeltaBand, RoleCard, SectionHeading, SourceMark } from "@/components/careers/CareerParts";
@@ -69,6 +69,10 @@ const termSetJsonLd = {
   })),
 };
 
+/** Letter keys: a five-wide keypad on phones (every letter in view, 44 px tall), a row of squares from 640 px. */
+const KEY =
+  "career-press career-press--chip grid h-11 w-full place-items-center rounded-[12px] border border-ecrn-line bg-ecrn-paper font-display text-[16px] font-semibold text-ecrn-ink sm:w-11";
+
 export default function GlossaryPage() {
   return (
     <>
@@ -86,16 +90,16 @@ export default function GlossaryPage() {
           </p>
         }
       >
-        <CtaLink href="/careers">
+        <CtaLink href="/careers" className="w-full sm:w-auto">
           Career guides by role <ArrowRight className="h-4 w-4" aria-hidden />
         </CtaLink>
-        <CtaLink href="/jobs" variant="ghost">
+        <CtaLink href="/jobs" variant="ghost" className="w-full sm:w-auto">
           Browse open jobs
         </CtaLink>
       </PageHero>
 
-      <Container className="pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2">
+      <Container className="pt-5 sm:pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-8">
           <Breadcrumbs items={CRUMBS} />
           <p className="text-[13px] text-ecrn-secondary">
             Last updated <time dateTime={GLOSSARY_UPDATED_AT}>{formatDay(GLOSSARY_UPDATED_AT)}</time>
@@ -103,19 +107,16 @@ export default function GlossaryPage() {
         </div>
       </Container>
 
-      <Container className="pb-14 pt-6 sm:pb-20">
-        <div id="top" />
+      <Container className="pb-14 pt-4 sm:pb-20 sm:pt-6">
+        <div id="top" className="glossary-anchor" />
         <nav
           aria-label="Jump to a letter"
-          className="z-30 rounded-[18px] border border-ecrn-line bg-white px-3 py-3 before:pointer-events-none before:absolute before:inset-x-[-1px] before:bottom-full before:hidden before:h-3 before:bg-ecrn-paper sm:px-4 lg:sticky lg:top-[var(--site-header-total,4.5rem)] lg:shadow-soft lg:before:block"
+          className="z-30 rounded-[18px] border border-ecrn-line bg-white p-2.5 before:pointer-events-none before:absolute before:inset-x-[-1px] before:bottom-full before:hidden before:h-3 before:bg-ecrn-paper sm:px-4 sm:py-3 lg:sticky lg:top-[var(--site-header-total,4.5rem)] lg:shadow-soft lg:before:block"
         >
-          <ul className="flex flex-wrap gap-1.5">
+          <ul role="list" className="grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap">
             {GROUPS.map((g) => (
               <li key={g.letter}>
-                <a
-                  href={`#letter-${g.letter.toLowerCase()}`}
-                  className="career-press career-press--chip grid h-11 w-11 place-items-center rounded-[12px] border border-ecrn-line bg-ecrn-paper font-display text-[16px] font-semibold text-ecrn-ink"
-                >
+                <a href={`#letter-${g.letter.toLowerCase()}`} className={KEY}>
                   {g.letter}
                   <span className="sr-only">: {g.terms.length} terms</span>
                 </a>
@@ -124,23 +125,23 @@ export default function GlossaryPage() {
           </ul>
         </nav>
 
-        <div className="-mx-5 mt-6 border-y border-ecrn-line bg-white px-5 sm:mx-0 sm:rounded-[28px] sm:border sm:px-10 lg:px-12">
+        <div className="-mx-5 mt-5 border-y border-ecrn-line bg-white px-5 sm:mx-0 sm:mt-6 sm:rounded-[28px] sm:border sm:px-10 lg:px-12">
           {GROUPS.map((g, i) => (
             <section
               key={g.letter}
               aria-labelledby={`letter-${g.letter.toLowerCase()}`}
-              className={`grid gap-x-10 gap-y-5 py-10 sm:py-12 lg:grid-cols-[110px_minmax(0,1fr)] ${i > 0 ? "border-t border-ecrn-line" : ""}`}
+              className={`grid gap-x-10 gap-y-4 py-9 sm:py-12 lg:grid-cols-[110px_minmax(0,1fr)] ${i > 0 ? "border-t border-ecrn-line" : ""}`}
             >
-              <div className="flex items-baseline justify-between lg:block">
+              <div className="flex items-center justify-between lg:block">
                 <h2
                   id={`letter-${g.letter.toLowerCase()}`}
-                  className="glossary-anchor font-display text-[52px] font-semibold leading-none tracking-[-0.04em] text-ecrn-ink sm:text-[64px]"
+                  className="glossary-anchor font-display text-[44px] font-semibold leading-none tracking-[-0.04em] text-ecrn-ink sm:text-[64px]"
                 >
                   {g.letter}
                 </h2>
                 <a
                   href="#top"
-                  className="career-press career-press--toc inline-flex min-h-[44px] items-center gap-1 text-[13px] text-ecrn-secondary lg:mt-3 lg:min-h-0"
+                  className="career-press career-press--toc -mr-2 inline-flex min-h-[44px] items-center gap-1 px-2 text-[13.5px] text-ecrn-secondary lg:-ml-2 lg:mr-0 lg:mt-3"
                 >
                   <ArrowUp className="h-3.5 w-3.5" aria-hidden /> A to Z
                 </a>
@@ -149,25 +150,28 @@ export default function GlossaryPage() {
                 {g.terms.map((t) => {
                   const label = t.href ? deeperLink(t.href) : null;
                   return (
-                    <div key={t.slug} className="py-6 first:pt-0 last:pb-0">
-                      <dt id={t.slug} className="glossary-term glossary-anchor font-display text-[21px] font-semibold leading-snug tracking-[-0.015em] text-ecrn-ink">
+                    <div key={t.slug} className="py-5 first:pt-0 last:pb-0 sm:py-6">
+                      <dt
+                        id={t.slug}
+                        className="glossary-term glossary-anchor text-balance font-display text-[20px] font-semibold leading-snug tracking-[-0.015em] text-ecrn-ink sm:text-[21px]"
+                      >
                         <a href={`#${t.slug}`} className="career-link">
                           {t.term}
                         </a>
                       </dt>
-                      <dd className="mt-2 max-w-[68ch]">
-                        <p className="text-[17px] leading-[1.7] text-[#2B3A32]">
+                      <dd className="mt-1.5 max-w-[68ch]">
+                        <p className="text-pretty text-[17px] leading-[1.6] text-[#2B3A32]">
                           {t.definition}
                           {t.source != null && <SourceMark id={t.source} />}
                         </p>
-                        {t.aka && t.aka.length > 0 && <p className="mt-2 text-[14px] text-ecrn-secondary">Also known as: {t.aka.join(", ")}</p>}
+                        {t.aka && t.aka.length > 0 && <p className="mt-2 text-[14px] leading-[1.5] text-ecrn-secondary">Also known as: {t.aka.join(", ")}</p>}
                         {t.href && label && (
-                          <p className="mt-2.5">
+                          <p className="mt-1">
                             <Link
                               href={t.href}
-                              className="career-press inline-flex min-h-[44px] items-center gap-1.5 text-[15px] font-semibold text-ecrn-green-text sm:min-h-0"
+                              className="career-press inline-flex min-h-[44px] items-center gap-1.5 text-[15px] font-semibold text-ecrn-green-text"
                             >
-                              {label} <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                              <span className="text-pretty">{label}</span> <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                             </Link>
                           </p>
                         )}
@@ -182,7 +186,7 @@ export default function GlossaryPage() {
 
         <div className="mx-auto max-w-4xl">
           <SourcesList sources={GLOSSARY_SOURCES} />
-          <p className="mt-6 text-[14px] leading-relaxed text-ecrn-secondary">
+          <p className="mt-6 text-pretty text-[14px] leading-relaxed text-ecrn-secondary">
             Definitions describe common usage on United States job sites. Codes, license rules and contract terms vary by state, by
             project and by contract, so check the document that governs your job.
           </p>
@@ -191,13 +195,11 @@ export default function GlossaryPage() {
 
       <section aria-labelledby="glossary-roles-heading" className="border-t border-ecrn-line bg-white py-14 sm:py-20">
         <Container>
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
             <SectionHeading id="glossary-roles-heading">The roles behind the terms</SectionHeading>
-            <Link href="/careers" className="career-press inline-flex min-h-[44px] items-center gap-1.5 text-[16px] font-semibold text-ecrn-green-text">
-              All career guides <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
+            <ArrowLink href="/careers">All career guides</ArrowLink>
           </div>
-          <ul className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ul role="list" className="mt-5 grid gap-3 sm:mt-8 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {ROLES.map((r) => (
               <li key={r.slug}>
                 <RoleCard role={r} compact />
@@ -207,7 +209,7 @@ export default function GlossaryPage() {
         </Container>
       </section>
 
-      <DeltaBand />
+      <DeltaBand title="ECRN is powered by Delta Construction Partners." image="site-office-plans" />
       <FinalCta />
     </>
   );

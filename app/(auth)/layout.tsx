@@ -6,25 +6,34 @@ export const metadata = { robots: { index: false, follow: false } };
 
 /**
  * Shared layout for /login, /signup, /forgot-password, /onboarding.
- * Centered card on a soft light background.
+ * Keep the logo, form and footer together. Auto margins center short forms;
+ * long forms remain in normal document flow and can scroll above the keyboard.
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-ecrn-paper flex flex-col">
-      <header className="px-[22px] sm:px-8 py-4 pt-safe-plus">
-        <Link href="/" className="inline-flex">
-          <DeltaLockup />
-        </Link>
-      </header>
-      <main className="flex-1 flex items-start sm:items-center justify-center px-[22px] sm:px-8 pb-12">
-        <div className="w-full max-w-md">{children}</div>
-      </main>
-      <footer className="text-center text-xs text-ecrn-secondary/80 pb-6 pb-safe space-x-3">
-        <span>A Delta Construction Partners Initiative</span>
-        <Link href="/privacy" className="hover:text-slate-600">Privacy</Link>
-        <Link href="/terms" className="hover:text-slate-600">Terms</Link>
-        <Link href="/support" className="hover:text-slate-600">Support</Link>
-      </footer>
+    <div
+      className="flex min-h-dvh flex-col items-center bg-ecrn-paper px-5 sm:px-8"
+      style={{
+        paddingTop: "max(1.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))",
+        paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))",
+      }}
+    >
+      <div className="my-auto w-full max-w-md">
+        <header className="mb-6 flex justify-center">
+          <Link href="/" aria-label="ECRN home" className="inline-flex min-h-11 items-center">
+            <DeltaLockup />
+          </Link>
+        </header>
+        <main>{children}</main>
+        <footer className="mt-6 flex flex-col items-center text-center text-xs text-ecrn-secondary/80">
+          <p>A Delta Construction Partners Initiative</p>
+          <nav aria-label="Account information" className="mt-1 flex flex-wrap justify-center gap-x-5">
+            <Link href="/privacy" className="inline-flex min-h-11 items-center px-1 hover:text-slate-600">Privacy</Link>
+            <Link href="/terms" className="inline-flex min-h-11 items-center px-1 hover:text-slate-600">Terms</Link>
+            <Link href="/support" className="inline-flex min-h-11 items-center px-1 hover:text-slate-600">Support</Link>
+          </nav>
+        </footer>
+      </div>
     </div>
   );
 }

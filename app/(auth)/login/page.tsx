@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-4 animate-slide-up">
-      <Card className="p-7">
+      <Card className="p-5 sm:p-7">
         <h1 className="text-2xl font-bold tracking-tight text-ecrn-ink">Welcome back</h1>
         <p className="mt-1.5 text-sm text-slate-500">
           {linkMode
@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         <div className="mt-6 grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 text-sm font-medium">
           <Link
             href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-            className={`text-center py-2 rounded-lg transition-colors ${
+            className={`flex min-h-11 items-center justify-center text-center px-2 py-2 rounded-lg transition-colors ${
               !linkMode ? "bg-white shadow-soft text-ecrn-ink" : "text-slate-500"
             }`}
           >
@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           </Link>
           <Link
             href={`/login?mode=link${next ? `&next=${encodeURIComponent(next)}` : ""}`}
-            className={`text-center py-2 rounded-lg transition-colors ${
+            className={`flex min-h-11 items-center justify-center text-center px-2 py-2 rounded-lg transition-colors ${
               linkMode ? "bg-white shadow-soft text-ecrn-ink" : "text-slate-500"
             }`}
           >
@@ -81,7 +81,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           </form>
         )}
 
-        <div className="mt-6 pt-6 border-t border-slate-100 text-center text-sm">
+        <div className="mt-5 pt-4 border-t border-slate-100 text-center text-sm">
           <span className="text-slate-500">New to ECRN?</span>{" "}
           <Link href="/signup" className="font-medium text-ecrn-ink hover:underline">
             Create an account

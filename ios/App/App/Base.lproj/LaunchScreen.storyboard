@@ -27,7 +27,9 @@
                         <constraints>
                             <constraint firstItem="ECRN-Logo-View" firstAttribute="centerX" secondItem="snD-IY-ifK" secondAttribute="centerX" id="ECRN-Logo-CenterX"/>
                             <constraint firstItem="ECRN-Logo-View" firstAttribute="centerY" secondItem="snD-IY-ifK" secondAttribute="centerY" id="ECRN-Logo-CenterY"/>
-                            <constraint firstItem="ECRN-Logo-View" firstAttribute="width" secondItem="snD-IY-ifK" secondAttribute="width" multiplier="0.72" priority="750" id="ECRN-Logo-Width"/>
+                            <!-- Keep the original image's intrinsic size from expanding past the phone. -->
+                            <constraint firstItem="ECRN-Logo-View" firstAttribute="width" relation="lessThanOrEqual" secondItem="snD-IY-ifK" secondAttribute="width" multiplier="0.72" id="ECRN-Logo-ScreenLimit"/>
+                            <constraint firstItem="ECRN-Logo-View" firstAttribute="width" secondItem="snD-IY-ifK" secondAttribute="width" multiplier="0.72" priority="999" id="ECRN-Logo-Width"/>
                         </constraints>
                     </view>
                 </viewController>
